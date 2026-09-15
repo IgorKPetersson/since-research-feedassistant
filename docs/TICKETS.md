@@ -14,54 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-007 — Verify KB-007's think claim, write CLAUDE.md hard rules, grill-me Phase 0
-
-**Status:** todo
-**Size:** M  ·  **Branch:** `t/T-007-phase0-checkpoint`
-
-**Goal:** close the Phase 0 checkpoint's three loose ends — confirm KB-007's `think:false`
-finding wasn't an artifact of the wrong endpoint, turn Phase 0's findings into enforceable
-project rules, and get an adversarial pass on Phase 0 as a whole before Phase 1 starts.
-
-**Why:** KB-007's `think:false` test used `/api/generate`; Ollama's `think` parameter may
-behave differently on `/api/chat`, so the finding needs re-checking via the correct
-endpoint before it's trusted. `CLAUDE.md`'s "Hard rules" and "Stack" sections are still
-placeholders even though Phase 0 now has concrete findings (KB-005, KB-006) and decisions
-(D-001–D-005) to derive them from. `docs/PLAN.md` requires a `grill-me` pass at every
-checkpoint before declaring a phase complete, and that hasn't been run on Phase 0 as a
-whole yet — only on individual tickets as they closed.
-
-**Acceptance criteria**
-- [ ] The exact JSON request body sent in KB-007's `think:false` test (from
-  `scripts/t006_model_stack.py`) is quoted, confirming `think` was a top-level field, not
-  nested under `options`
-- [ ] The same think:true/false comparison is re-run against `/api/chat` (not
-  `/api/generate`) with `think` at the top level, to check whether the endpoint explains
-  KB-007's result
-- [ ] If reasoning is actually suppressed when sent via `/api/chat`, a new KB entry is
-  written recording that, and KB-007 is marked `superseded by KB-0NN` (not edited in
-  place); if KB-007's finding holds even via `/api/chat`, that is recorded too, not
-  silently dropped
-- [ ] `CLAUDE.md`'s "Hard rules" section states, as enforceable rules: `num_ctx` is always
-  set explicitly on every Ollama call, never left to the default (KB-005); every LLM call
-  compares `prompt_eval_count` against the `num_ctx` it sent and warns when truncation risk
-  is present; embeddings are always created with `bge-m3`, passed explicitly — ChromaDB's
-  default embedder is never used (KB-006)
-- [ ] `CLAUDE.md`'s "Stack" section names the choices made in D-001, D-002, D-004 and D-005
-  (transcript source, feed date semantics, vector store, model stack)
-- [ ] `grill-me` (design-decision mode) is run on Phase 0 as a whole — the four tickets and
-  five decisions together, not any one in isolation — and its findings are recorded;
-  anything Fatal or Serious is fixed or explicitly deferred as a new ticket, not silently
-  dropped
-
-**Out of scope:** any Phase 1 work.
-
-**Depends on:** T-002, T-003, T-004, T-005, T-006
-**Notes:** Bundles three different kinds of work (verification, doc update, adversarial
-review) into one ticket per my explicit instruction — normally this would be split.
-**Do not start before I say so** — written during the Phase 0 checkpoint review,
-same as T-006 was.
-
 ## Done
 
 ### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
@@ -331,3 +283,64 @@ merges it into `response`; (3) frame D-005 by VRAM footprint (~6GB vs ~20GB), no
 large/small, since `qwen3:30b-a3b` (MoE) has fewer active parameters per token than the
 dense `qwen3:8b` — done. `docs/PLAN.md`'s "Local model" Phase 0 checkbox re-ticked now that
 this is done.
+
+---
+
+### T-007 — Verify KB-007's think claim, write CLAUDE.md hard rules, grill-me Phase 0
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-007-phase0-checkpoint`
+
+**Goal:** close the Phase 0 checkpoint's three loose ends — confirm KB-007's `think:false`
+finding wasn't an artifact of the wrong endpoint, turn Phase 0's findings into enforceable
+project rules, and get an adversarial pass on Phase 0 as a whole before Phase 1 starts.
+
+**Why:** KB-007's `think:false` test used `/api/generate`; Ollama's `think` parameter may
+behave differently on `/api/chat`, so the finding needs re-checking via the correct
+endpoint before it's trusted. `CLAUDE.md`'s "Hard rules" and "Stack" sections are still
+placeholders even though Phase 0 now has concrete findings (KB-005, KB-006) and decisions
+(D-001–D-005) to derive them from. `docs/PLAN.md` requires a `grill-me` pass at every
+checkpoint before declaring a phase complete, and that hasn't been run on Phase 0 as a
+whole yet — only on individual tickets as they closed.
+
+**Acceptance criteria**
+- [x] The exact JSON request body sent in KB-007's `think:false` test is quoted → confirmed
+  `think` was already top-level, not nested under `options`:
+  `{"model": "qwen3:30b-a3b", "prompt": "...", "stream": false, "think": false, "options": {"num_ctx": 16000}}`
+- [x] The same comparison re-run against `/api/chat` → `scripts/t007_verify_think_chat.py`,
+  identical shape of result: `think:false` leaves `thinking` empty but the reasoning
+  narrative appears inside `message.content` anyway
+- [x] Finding recorded → KB-007 held up on the second endpoint too (not superseded);
+  updated in place with the `/api/chat` confirmation, since the claim itself wasn't wrong,
+  just under-evidenced on one endpoint. Separately, while checking this, found and
+  **corrected** a real error in KB-007's own "Confidence and limits": it speculated VRAM
+  headroom might shrink under a longer conversation because "the KV cache grows with
+  actual usage" — verified directly that this is false (`nvidia-smi`: 21410 MiB at a
+  trivial prompt vs 21431 MiB at an 8002-token prompt, same `num_ctx=16000` — no meaningful
+  growth). Ollama pre-allocates the KV cache for the full `num_ctx` at load
+- [x] `CLAUDE.md`'s "Hard rules" filled in with the three rules (num_ctx always explicit,
+  every call compares `prompt_eval_count` to `num_ctx`, embeddings always `bge-m3` never
+  Chroma's default)
+- [x] `CLAUDE.md`'s "Stack" section updated with D-001, D-002, D-004, D-005
+- [x] `grill-me` (design-decision mode) run on Phase 0 as a whole. Findings:
+  - **Serious, fixed:** KB-007's VRAM-growth speculation was wrong — corrected above with
+    real evidence, not just reworded
+  - **Serious, deferred (not silently dropped):** the real risk hiding behind the VRAM
+    question is token budget, not VRAM — nobody has estimated whether a real RAG prompt
+    (system + retrieved chunks + history + question) stays under `num_ctx=16000`, and
+    KB-005 already proved silent front-truncation is real. Added to `docs/PLAN.md`'s risk
+    register with a concrete mitigation (estimate token counts before finalizing Phase 1
+    chunk size / retrieval top-k)
+  - **Minor, reported not fixed:** D-002's "feed date" label covers two structurally
+    different real-world events (HF's curatorial feed-inclusion date vs. YouTube's actual
+    upload date) — not wrong, but worth remembering when designing citations, so the label
+    doesn't imply more uniformity than the underlying sources actually have
+
+**Out of scope:** any Phase 1 work.
+
+**Depends on:** T-002, T-003, T-004, T-005, T-006
+**Notes:** Bundled three different kinds of work into one ticket per my explicit
+instruction. The most valuable output wasn't the planned verification (KB-007's claim held
+up) — it was the review process surfacing and fixing a real error in KB-007's own
+speculative caveat, and identifying a Serious token-budget risk for Phase 1 that nothing
+upstream had flagged. Phase 0 is now genuinely complete; Phase 1 has not been started.

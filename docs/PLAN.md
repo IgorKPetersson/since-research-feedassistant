@@ -88,3 +88,4 @@ offline, one run catches up.
 | Local model invents content beyond the sources | Medium | Answers must cite sources; evaluation checks it |
 | Scope creep | High | § Parked in `docs/GOAL.md`. One ticket at a time |
 | Phase 0 or 1 overruns | Medium | Cut from Phase 2 UI polish, never from evaluation |
+| Real RAG prompt (system + retrieved chunks + history + question) exceeds `num_ctx=16000`, silently dropping the **front** of the prompt with no error (KB-005) — if retrieved chunks are placed there, the exact evidence citations depend on vanishes with no signal | Medium — untested; found at the Phase 0 checkpoint (T-007), not yet estimated against real chunk size/top-k | Before finalizing chunk size and retrieval top-k in Phase 1, estimate or measure real prompt token counts against `num_ctx`; keep retrieved chunks and instructions ordered so the least recoverable content isn't first to be dropped |

@@ -41,6 +41,17 @@ embedded via `bge-m3`, compared by cosine similarity against 4 English sentences
 stock market, cats, an ML paper). Ranking: rain sentence `0.6810`, stock market `0.3821`,
 cats `0.3409`, ML paper `0.2965` — correct sentence clearly first.
 
+**Confirmed on a second endpoint (T-007):** the same `think:true`/`think:false` comparison
+was re-run against `/api/chat` (messages-based), not just `/api/generate`, to rule out the
+endpoint as the explanation. Exact request bodies used:
+`{"model": "qwen3:30b-a3b", "messages": [{"role": "user", "content": "What causes rain?"}], "stream": false, "think": false, "options": {"num_ctx": 16000}}`
+(and the `think: true` equivalent). Result was the same shape as the `/api/generate` test:
+with `think:false`, the `thinking` field was empty (0 chars) but `message.content` itself
+opened with visible chain-of-thought ("Okay, the user is asking...", 5602 chars total) vs.
+`think:true`'s clean `content` (2578 chars) plus a separate `thinking` field (3144 chars).
+This rules out the endpoint as the explanation — `think:false` not suppressing reasoning is
+a real Ollama/Qwen3 behavior, not an artifact of using `/api/generate`.
+
 ## Consequences
 This stack (KB-007) plus KB-005 (num_ctx) and KB-006 (Chroma's default embedder's 256-token
 limit — `bge-m3` should be used instead, since it comfortably shares the GPU and supports a
@@ -52,10 +63,22 @@ would need the reasoning narrative stripped out of `response` some other way, wh
 attempted here. The `~35%` time difference between the two think modes is one sample and
 should not be treated as a reliable benchmark number.
 
+**Correction (T-007 Phase 0 checkpoint review):** this entry originally speculated that
+VRAM headroom might shrink under a longer real conversation because "the KV cache grows
+with actual usage." That's wrong. Verified directly: with `qwen3:30b-a3b` loaded at
+`num_ctx=16000`, `nvidia-smi` showed 21410 MiB after a trivial one-word prompt and 21431
+MiB after an 8002-token prompt (half the context window) — a ~21 MiB difference,
+consistent with noise, not growth. Ollama pre-allocates the KV cache for the full `num_ctx`
+at load time; VRAM usage does not meaningfully change as more of that window fills up. The
+real risk headroom-adjacent risk isn't VRAM at all — it's **token budget**: if a real
+prompt (system instructions + retrieved chunks + conversation history + question) exceeds
+`num_ctx=16000` tokens, KB-005's silent front-truncation kicks in, not an out-of-memory
+error. That's a correctness risk to plan around in Phase 1, not a VRAM one.
+
 ## Confidence and limits
-One machine, one run of each configuration, one question for the think-mode comparison, one
-query for the cross-lingual test. Not tested: `qwen3:8b`'s own behavior with `think`,
-whether the VRAM headroom holds under a longer real conversation (KV cache grows with
-actual usage, not just the allocated `num_ctx` buffer size — 16000 is the ceiling, not the
-live usage), or `bge-m3`'s accuracy on the project's real evaluation questions rather than
-one illustrative example.
+One machine, one run of each configuration per endpoint, one question for the think-mode
+comparison (now checked on both `/api/generate` and `/api/chat`, same result each time),
+one query for the cross-lingual test, one VRAM-growth check (trivial vs. half-context
+prompt). Not tested: `qwen3:8b`'s own behavior with `think`, whether a *full* 16000-token
+prompt changes VRAM further (only checked up to ~8000), or `bge-m3`'s accuracy on the
+project's real evaluation questions rather than one illustrative example.

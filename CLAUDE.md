@@ -27,15 +27,37 @@ See `docs/GOAL.md` for the full goal, problem, success criteria and non-goals, a
 ## Stack — settled, do not re-litigate
 
 - Python (version not yet pinned)
-- Everything else — framework, storage, key libraries — undecided; no code exists yet
+- Local models via Ollama: `qwen3:8b` (~6GB VRAM) and `qwen3:30b-a3b` (MoE, ~20GB VRAM) —
+  differentiated by VRAM footprint, not "small vs large" model size — D-005
+- Embeddings: `bge-m3` via Ollama, always passed in explicitly — never ChromaDB's default
+  embedder — D-005
+- Vector store: ChromaDB, embedded `PersistentClient`, no server — D-004
+- YouTube transcript source: captions via `youtube-transcript-api` primary, title +
+  description as fallback — D-001
+- Date semantics: "feed date" (the date something appeared in the source we watch — HF's
+  `submittedOnDailyAt`, a video's upload date), not the item's original publish date, is
+  what all filtering and catch-up ingestion use — D-002
+- Everything else — web framework, chat UI, evaluation harness — still undecided; no code
+  exists yet beyond the Phase 0 feasibility scripts in `scripts/`
 
 If you think one of these is wrong, say so and stop. Don't route around it.
 
 ## Hard rules
 
-Not yet written — there is no code to derive real rules from. Write these once the stack
-and architecture in `docs/DESIGN.md` are settled, not before; invented rules are worse than
-none.
+- `num_ctx` is always set explicitly on every Ollama call, never left to the default.
+  Ollama's default is 32768 — not the model's trained max, and easy to assume is smaller or
+  larger than it really is. See KB-005.
+- Every LLM call compares the response's `prompt_eval_count` against the `num_ctx` that was
+  sent, and warns when there's truncation risk. An undersized `num_ctx` silently drops the
+  **front** of the prompt with no error — a normal-looking response can hide a completely
+  missing system prompt, early retrieved chunk, or early conversation turn. See KB-005.
+- Embeddings are always created with `bge-m3`, passed in explicitly. ChromaDB's default
+  embedding function must never be used: it silently truncates at 256 tokens with no error,
+  and the library's own "document too long" safety check is dead code that can never fire.
+  See KB-006.
+
+These are the first hard rules the project has, derived from real Phase 0 findings — add
+more here as Phase 1 code creates situations that need them, not before.
 
 ## In-loop: when to stop and ask
 
