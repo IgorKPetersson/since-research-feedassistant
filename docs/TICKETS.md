@@ -14,36 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-004 — Local model test on the RTX 4090 (Ollama)
-
-**Status:** todo
-**Size:** S  ·  **Branch:** `t/T-004-local-model`
-
-**Goal:** know that one large (~30B class, quantized) and one small (~8B) model both run on
-this PC via Ollama and can answer a question from pasted context, with speed and VRAM
-recorded.
-
-**Why:** `docs/PLAN.md` Phase 0 requires the model pair chosen and recorded before later
-phases build retrieval and evaluation around them.
-
-**Acceptance criteria**
-- [ ] One ~30B-class quantized model and one ~8B model are pulled and run via Ollama on the
-  RTX 4090
-- [ ] Each model is given the same test question with pasted context and produces an answer
-- [ ] Response time and peak VRAM usage are recorded for each model
-- [ ] Findings are written to `docs/kb/` via `kb-entry`
-- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen model pair, with the
-  evidence cited
-
-**Out of scope:** the retrieval/answer-generation pipeline (Phase 2) — this only confirms
-the models run and answer from pasted context.
-
-**Depends on:** T-001
-**Notes:** Ollama and the two model pulls are already implied by `docs/PLAN.md`'s hardware
-section, not a new dependency decision — no need to stop and ask for these specifically.
-
----
-
 ### T-005 — Vector store date-range filtering test
 
 **Status:** todo
@@ -195,3 +165,43 @@ doesn't publish on Sat/Sun) — that's expected, not a bug. The `publishedAt` vs
 (`submittedOnDailyAt` for papers, YouTube upload date for videos); arXiv `publishedAt` is
 stored as extra metadata and shown in citations only. `docs/GOAL.md` and `docs/PLAN.md`
 Phase 1 updated to match.
+
+---
+
+### T-004 — Local model test on the RTX 4090 (Ollama)
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-004-local-model`
+
+**Goal:** know that one large (~30B class, quantized) and one small (~8B) model both run on
+this PC via Ollama and can answer a question from pasted context, with speed and VRAM
+recorded.
+
+**Why:** `docs/PLAN.md` Phase 0 requires the model pair chosen and recorded before later
+phases build retrieval and evaluation around them.
+
+**Acceptance criteria**
+- [x] One ~30B-class quantized model and one ~8B model are pulled and run via Ollama on the
+  RTX 4090 → `llama3.1:8b` and `qwen2.5:32b`, Ollama 0.34.0
+- [x] Each model is given the same test question with pasted context and produces an
+  answer → `scripts/t004_local_model.py`, both answered correctly
+- [x] Response time and peak VRAM usage are recorded for each model → cold and warm timings
+  recorded; VRAM readings come with an honest methodology caveat (see KB-003 — `nvidia-smi`
+  measures total GPU memory, not per-process)
+- [x] Findings are written to `docs/kb/` via `kb-entry` →
+  [KB-003](kb/KB-003-ollama-vram-and-timing.md)
+- [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen model pair, with the
+  evidence cited → D-003
+
+**Out of scope:** the retrieval/answer-generation pipeline (Phase 2) — this only confirms
+the models run and answer from pasted context.
+
+**Depends on:** T-001
+**Notes:** Ollama was already installed on this machine (0.34.0); confirmed via
+`nvidia-smi` that this session is running on the real RTX 4090 from `docs/PLAN.md`'s
+hardware section, not a generic sandbox — so the GPU-dependent result is real, not
+simulated. Two findings worth carrying into Phase 2 planning (both in KB-003): a cold-start
+run made the large model look faster than the small one (it was disk-load overhead, not
+inference — always compare warm timings), and `qwen2.5:32b` doesn't fit entirely in 24GB
+VRAM at its default context (20% spills to CPU), and the two models evict each other rather
+than co-residing.

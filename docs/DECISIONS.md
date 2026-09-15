@@ -73,6 +73,37 @@ re-opening this decision, not silently switching fields in code.
 
 ---
 
+## D-003 — Model pair for evaluation: llama3.1:8b (small) and qwen2.5:32b (large)
+**Status:** accepted
+
+**Decision:** Use `llama3.1:8b` as the small model and `qwen2.5:32b` as the large model for
+the large-vs-small evaluation in `docs/GOAL.md`, both at Ollama's default quantization and
+settings for now.
+
+**Why:** T-004 confirmed both run on the RTX 4090 via Ollama 0.34.0 and answer correctly
+from pasted context (see KB-003). Both are widely used, well-documented model families,
+which matters for a course project others may need to reproduce.
+
+**Rejected:** No other model sizes/families were pulled or tested — this is the first pair
+that fit the ~8B/~30B brief in `docs/PLAN.md`, not a comparison winner. Larger quantized
+options (e.g. 70B-class) were not attempted given KB-003 already shows `qwen2.5:32b`
+spilling onto CPU at 24GB; a bigger model would spill further and likely cost more in speed
+than it buys in quality for this project's scope.
+
+**Cost:** KB-003's findings are a real cost, not just a note: `qwen2.5:32b` runs 20% on CPU
+at its default 32768 context (not fully GPU-resident), and the two models do not
+comfortably co-reside in 24GB — switching between them for the large-vs-small evaluation
+will pay a reload cost each time. If evaluation runtime becomes a problem, revisit
+`num_ctx` for the large model before switching model choice.
+
+**Would change our mind:** If Phase 2 answer generation needs materially faster large-model
+latency than the ~19s warm response seen here, or if the reload cost between models makes
+the evaluation script impractically slow — either would justify trying a smaller `num_ctx`,
+a different quantization, or a different large model, and updating this decision with that
+evidence.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 
