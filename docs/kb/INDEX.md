@@ -13,12 +13,14 @@ edited in place — it is superseded by a new one and marked.
 ## Areas
 
 - YouTube ingest — fetching channel video lists and captions
+- HF Daily Papers API — fetching and shape of the papers feed
 
 ## Entries
 
 | ID | Claim | Area | Status | Date |
 |---|---|---|---|---|
 | [KB-001](KB-001-youtube-caption-availability.md) | Auto-generated English captions available for all 20 sampled videos across the 4 chosen channels | YouTube ingest — captions | provisional | 2026-09-15 |
+| [KB-002](KB-002-hf-daily-papers-shape.md) | HF Daily Papers returns 200 with an empty list on weekends; arXiv id is at `paper.id`; `publishedAt` ≠ the date `date=` matched on (`paper.submittedOnDailyAt` is) | HF Daily Papers API | provisional | 2026-09-15 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 

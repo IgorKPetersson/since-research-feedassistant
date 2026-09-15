@@ -14,36 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-003 — HF Daily Papers API feasibility test
-
-**Status:** todo
-**Size:** S  ·  **Branch:** `t/T-003-hf-daily-papers`
-
-**Goal:** know that the HF Daily Papers API gives the fields the project needs, for both
-recent and past dates.
-
-**Why:** `docs/PLAN.md` Phase 0 requires confirming which fields exist and that past dates
-work, before Phase 1 builds a collector on top of the API.
-
-**Acceptance criteria**
-- [ ] A script calls `/api/daily_papers?date=` for each of the last 14 days
-- [ ] For each response, presence of title, abstract, publication date and arXiv id is
-  confirmed (or the missing ones are named)
-- [ ] At least one date more than 10 days in the past returns data, confirming historical
-  dates work
-- [ ] One raw JSON response is saved into the repo (per the risk register: "raw JSON is
-  saved")
-- [ ] Findings (field shapes, gaps, rate limits if hit) are written to `docs/kb/` via
-  `kb-entry`
-
-**Out of scope:** normalizing the response into the Phase 1 document shape — this only
-confirms the raw API's behaviour.
-
-**Depends on:** T-001
-**Notes:** —
-
----
-
 ### T-004 — Local model test on the RTX 4090 (Ollama)
 
 **Status:** todo
@@ -185,3 +155,43 @@ auto-generated (not manual), which risks misspelled proper nouns (model/company/
 names) — the Phase 1 evaluation question set must include at least a couple of questions
 built around a proper noun likely to be garbled by auto-captions, to actually measure this
 rather than assume it's fine.
+
+---
+
+### T-003 — HF Daily Papers API feasibility test
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-003-hf-daily-papers`
+
+**Goal:** know that the HF Daily Papers API gives the fields the project needs, for both
+recent and past dates.
+
+**Why:** `docs/PLAN.md` Phase 0 requires confirming which fields exist and that past dates
+work, before Phase 1 builds a collector on top of the API.
+
+**Acceptance criteria**
+- [x] A script calls `/api/daily_papers?date=` for each of the last 14 days →
+  `scripts/t003_hf_daily_papers.py`, 2026-09-02 through 2026-09-15, all HTTP 200
+- [x] For each response, presence of title, abstract, publication date and arXiv id is
+  confirmed (or the missing ones are named) → all present, but not where assumed: abstract
+  is `summary` not `abstract`, arXiv id is `paper.id` not top-level — see
+  [KB-002](kb/KB-002-hf-daily-papers-shape.md)
+- [x] At least one date more than 10 days in the past returns data, confirming historical
+  dates work → 2026-09-02/03/04 all returned entries
+- [x] One raw JSON response is saved into the repo → trimmed to 3 entries at
+  `docs/kb/samples/daily_papers_2026-09-15_sample.json` (the full day is ~250KB of mostly
+  author/avatar metadata, not worth committing in full)
+- [x] Findings written to `docs/kb/` via `kb-entry` → KB-002
+
+**Out of scope:** normalizing the response into the Phase 1 document shape — this only
+confirms the raw API's behaviour.
+
+**Depends on:** T-001
+**Notes:** No new dependency needed — `requests` was already a transitive dependency from
+T-002. **Important open question for Phase 1, not resolved here:** the 4 weekend dates in
+the 14-day window returned an empty list (HF Daily Papers doesn't publish on
+Sat/Sun) — that's expected, not a bug. More importantly, `publishedAt` (top-level and
+`paper.publishedAt`) is *not* the date `date=` matches on; `paper.submittedOnDailyAt` is.
+`docs/GOAL.md`'s date-aware retrieval is framed around "publication date" without saying
+which of these it means, and they can differ by several days — this needs an my explicit
+decision before Phase 1 locks in which field the collector and citations use.
