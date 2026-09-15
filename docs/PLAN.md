@@ -18,19 +18,22 @@ Hardware: i9-14900K, RTX 4090 (24 GB VRAM), 64 GB RAM, Windows 11. The PC is off
 
 Test the assumptions everything else rests on, cheaply, before building anything on top.
 
-- [ ] **YouTube captions:** from this PC, fetch captions for the latest videos of each chosen
-  channel (3–5 channels). Record success rate and error types in `docs/kb/`
-- [ ] **HF Daily Papers:** fetch the last 14 days via `/api/daily_papers?date=`. Confirm
+- [x] **YouTube captions:** from this PC, fetch captions for the latest videos of each chosen
+  channel (3–5 channels). Record success rate and error types in `docs/kb/` — T-002, KB-001
+- [x] **HF Daily Papers:** fetch the last 14 days via `/api/daily_papers?date=`. Confirm
   which fields exist (title, abstract, publication date, arXiv id) and that past dates work
-- [ ] **Local model:** run Ollama on the RTX 4090 with one large (~30B class, quantized) and
+  — T-003, KB-002
+- [x] **Local model:** run Ollama on the RTX 4090 with one large (~30B class, quantized) and
   one small (~8B) model. Each answers a question from pasted context. Note speed and VRAM
-- [ ] **Vector store:** confirm that date-range filtering works in the chosen store before
-  committing to it
+  — T-004, KB-003 (pair since flagged for revision, see T-006)
+- [x] **Vector store:** confirm that date-range filtering works in the chosen store before
+  committing to it — T-005, KB-004
 
 **Exit criteria:** each item answered with evidence. Transcript source decided (captions,
 or title + description). Model pair and vector store chosen and recorded in
 `docs/DECISIONS.md`.
-**Checkpoint:** I review findings.
+**Checkpoint:** I review findings. **T-006 (needle test + same-family model pair
+re-selection) is written but deliberately not started — waits for this review.**
 
 ---
 
