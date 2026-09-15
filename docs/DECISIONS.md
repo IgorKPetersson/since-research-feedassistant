@@ -104,6 +104,36 @@ evidence.
 
 ---
 
+## D-004 — Vector store: ChromaDB (embedded, no server)
+**Status:** accepted
+
+**Decision:** Use ChromaDB's embedded `PersistentClient` as the vector store for Phase 1,
+storing feed date (D-002) as a numeric field (an ordinal or timestamp) for range filtering
+alongside similarity search.
+
+**Why:** T-005 confirmed ChromaDB combines a metadata range filter with similarity search
+correctly — a query filtered to a feed-date range returned a strict, correctly-bounded
+subset of the unfiltered results (KB-004). It runs fully local and embedded, satisfying
+`docs/GOAL.md`'s non-goals (no Docker, no server, no always-on process).
+
+**Rejected:** LanceDB and sqlite-vec were not tested — ChromaDB was chosen up front as the
+most commonly used option for this kind of RAG setup, with the most available
+documentation for a course project others may need to reproduce, and the first candidate
+tried already met the bar. This is not a comparison result; if ChromaDB later proves
+inadequate at real scale, LanceDB is the next candidate to try, not a rejected one.
+
+**Cost:** ChromaDB's default embedding function is not bundled — it downloads an ~80MB
+model to a user-level cache on first use (KB-004), outside the project and
+`requirements.txt`. This must be called out in the README (`docs/GOAL.md`'s "fresh clone
+reaches a first answer" criterion needs network access for this, not just for model APIs),
+and is a one-time cost per machine, not a recurring one.
+
+**Would change our mind:** Filtering or query performance degrading unacceptably at
+realistic document counts (hundreds to thousands of chunks) — untested here, only a
+hand-built 8-document collection.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

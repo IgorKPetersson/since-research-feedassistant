@@ -14,38 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-005 — Vector store date-range filtering test
-
-**Status:** todo
-**Size:** M  ·  **Branch:** `t/T-005-vector-store-date-filter`
-
-**Goal:** know that a candidate vector store can filter by feed-date metadata
-combined with similarity search, before committing to it for Phase 1.
-
-**Why:** `docs/GOAL.md`'s claim under test is that date-aware retrieval beats plain
-similarity search; that only works if the store can filter by date range at all.
-`docs/PLAN.md` Phase 0 requires this confirmed before committing to a store.
-
-**Acceptance criteria**
-- [ ] A small test collection of documents with varying feed dates (as metadata, per D-002)
-  is inserted into a candidate vector store
-- [ ] A query demonstrates similarity search restricted to a date range, returning only
-  documents inside that range
-- [ ] A second query without the date filter is run against the same data to confirm the
-  filtered and unfiltered results differ as expected
-- [ ] Findings are written to `docs/kb/` via `kb-entry`
-- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen vector store, with
-  the evidence cited
-
-**Out of scope:** the production schema for Phase 1 storage — this is a throwaway test
-collection.
-
-**Depends on:** T-001
-**Notes:** Adding a vector store library is a new dependency — per `CLAUDE.md` "In-loop",
-stop and ask before adding it.
-
----
-
 ### T-006 — Needle test and same-family model pair re-selection
 
 **Status:** todo
@@ -257,3 +225,42 @@ run made the large model look faster than the small one (it was disk-load overhe
 inference — always compare warm timings), and `qwen2.5:32b` doesn't fit entirely in 24GB
 VRAM at its default context (20% spills to CPU), and the two models evict each other rather
 than co-residing.
+
+---
+
+### T-005 — Vector store date-range filtering test
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-005-vector-store-date-filter`
+
+**Goal:** know that a candidate vector store can filter by feed-date metadata
+combined with similarity search, before committing to it for Phase 1.
+
+**Why:** `docs/GOAL.md`'s claim under test is that date-aware retrieval beats plain
+similarity search; that only works if the store can filter by date range at all.
+`docs/PLAN.md` Phase 0 requires this confirmed before committing to a store.
+
+**Acceptance criteria**
+- [x] A small test collection of documents with varying feed dates (as metadata, per D-002)
+  is inserted into a candidate vector store → 8 docs in ChromaDB, `feed_date` spanning
+  2026-06-01 to 2026-09-14
+- [x] A query demonstrates similarity search restricted to a date range, returning only
+  documents inside that range → all 4 filtered results confirmed inside
+  [2026-09-01, 2026-09-14]
+- [x] A second query without the date filter is run against the same data to confirm the
+  filtered and unfiltered results differ as expected → confirmed, filtered set is a strict
+  subset dropping the June/August documents
+- [x] Findings are written to `docs/kb/` via `kb-entry` →
+  [KB-004](kb/KB-004-chromadb-date-filtering.md)
+- [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen vector store, with
+  the evidence cited → D-004
+
+**Out of scope:** the production schema for Phase 1 storage — this is a throwaway test
+collection.
+
+**Depends on:** T-001
+**Notes:** Candidate (ChromaDB) chosen with me before installing, per `CLAUDE.md`
+"In-loop" — asked, got ChromaDB over LanceDB/sqlite-vec, then installed. KB-004 flags a
+real cost worth remembering: Chroma's default embedding model isn't bundled, it's an
+~80MB silent download on first use to a user-level cache outside the project — needs a
+README mention for the "fresh clone reaches a first answer" success criterion.
