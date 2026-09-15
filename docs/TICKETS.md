@@ -188,10 +188,10 @@ confirms the raw API's behaviour.
 
 **Depends on:** T-001
 **Notes:** No new dependency needed — `requests` was already a transitive dependency from
-T-002. **Important open question for Phase 1, not resolved here:** the 4 weekend dates in
-the 14-day window returned an empty list (HF Daily Papers doesn't publish on
-Sat/Sun) — that's expected, not a bug. More importantly, `publishedAt` (top-level and
-`paper.publishedAt`) is *not* the date `date=` matches on; `paper.submittedOnDailyAt` is.
-`docs/GOAL.md`'s date-aware retrieval is framed around "publication date" without saying
-which of these it means, and they can differ by several days — this needs an my explicit
-decision before Phase 1 locks in which field the collector and citations use.
+T-002. The 4 weekend dates in the 14-day window returned an empty list (HF Daily Papers
+doesn't publish on Sat/Sun) — that's expected, not a bug. The `publishedAt` vs
+`paper.submittedOnDailyAt` divergence this ticket surfaced was resolved by me as
+**D-002**: "publication date" throughout the project means feed date
+(`submittedOnDailyAt` for papers, YouTube upload date for videos); arXiv `publishedAt` is
+stored as extra metadata and shown in citations only. `docs/GOAL.md` and `docs/PLAN.md`
+Phase 1 updated to match.

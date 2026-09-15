@@ -37,8 +37,9 @@ or title + description). Model pair and vector store chosen and recorded in
 ## Phase 1 — Ingest (rest of week 1)
 
 - [ ] Collectors for HF and YouTube produce one normalized document shape: source, url,
-  title, publication date, text
-- [ ] Chunk, embed and store with publication date as metadata. Re-running is idempotent
+  title, feed date, text — plus arXiv `publishedAt` as extra metadata for papers (D-002)
+- [ ] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
+  alongside for citations, never used for filtering (D-002). Re-running is idempotent
 - [ ] Catch-up: ingest everything since the last successful run
 - [ ] Write the 15–20 evaluation questions with expected sources — **before** retrieval is
   built, so the system isn't tuned to them

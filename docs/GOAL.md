@@ -18,9 +18,18 @@ always-on server — doesn't exist in a form that's simple to install.
 
 ## The claim we're testing
 
-Date-aware retrieval — filtering chunks by publication date before similarity search —
+Date-aware retrieval — filtering chunks by **feed date** before similarity search —
 answers time-bound questions ("in the last n weeks") measurably better than plain
 similarity search, on a hand-written question set of 15–20 questions.
+
+**Feed date** is the date something appeared in the source we watch, not necessarily when
+it was first published elsewhere: HF Daily Papers' `submittedOnDailyAt` for papers, a
+video's YouTube upload date for videos. All date filtering and catch-up ingestion use feed
+date. A paper's original arXiv `publishedAt` is stored as extra metadata and shown in
+citations, but never used for filtering — see D-002. HF's daily selection includes papers
+already published on arXiv earlier, so filtering on arXiv `publishedAt` would hide papers
+that just appeared in the feed, which is exactly the "what's new" case the project cares
+about.
 
 If plain similarity search scores the same, the claim is wrong, and that is a valid result
 to report.
@@ -29,7 +38,8 @@ to report.
 
 - After the PC has been off for up to 7 days, one catch-up run ingests everything missed
   from HF Daily Papers, with no duplicates when run again
-- Every answer cites its sources: link, title and publication date
+- Every answer cites its sources: link, title, feed date, and — for papers — the arXiv
+  publication date
 - The three question types work end to end: "what's new", "did X come up", "has Q
   progressed in the last n weeks"
 - The evaluation compares date-aware vs plain retrieval, and a large vs a small local model,
