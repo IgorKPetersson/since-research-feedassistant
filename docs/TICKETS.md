@@ -14,6 +14,54 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-007 — Verify KB-007's think claim, write CLAUDE.md hard rules, grill-me Phase 0
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-007-phase0-checkpoint`
+
+**Goal:** close the Phase 0 checkpoint's three loose ends — confirm KB-007's `think:false`
+finding wasn't an artifact of the wrong endpoint, turn Phase 0's findings into enforceable
+project rules, and get an adversarial pass on Phase 0 as a whole before Phase 1 starts.
+
+**Why:** KB-007's `think:false` test used `/api/generate`; Ollama's `think` parameter may
+behave differently on `/api/chat`, so the finding needs re-checking via the correct
+endpoint before it's trusted. `CLAUDE.md`'s "Hard rules" and "Stack" sections are still
+placeholders even though Phase 0 now has concrete findings (KB-005, KB-006) and decisions
+(D-001–D-005) to derive them from. `docs/PLAN.md` requires a `grill-me` pass at every
+checkpoint before declaring a phase complete, and that hasn't been run on Phase 0 as a
+whole yet — only on individual tickets as they closed.
+
+**Acceptance criteria**
+- [ ] The exact JSON request body sent in KB-007's `think:false` test (from
+  `scripts/t006_model_stack.py`) is quoted, confirming `think` was a top-level field, not
+  nested under `options`
+- [ ] The same think:true/false comparison is re-run against `/api/chat` (not
+  `/api/generate`) with `think` at the top level, to check whether the endpoint explains
+  KB-007's result
+- [ ] If reasoning is actually suppressed when sent via `/api/chat`, a new KB entry is
+  written recording that, and KB-007 is marked `superseded by KB-0NN` (not edited in
+  place); if KB-007's finding holds even via `/api/chat`, that is recorded too, not
+  silently dropped
+- [ ] `CLAUDE.md`'s "Hard rules" section states, as enforceable rules: `num_ctx` is always
+  set explicitly on every Ollama call, never left to the default (KB-005); every LLM call
+  compares `prompt_eval_count` against the `num_ctx` it sent and warns when truncation risk
+  is present; embeddings are always created with `bge-m3`, passed explicitly — ChromaDB's
+  default embedder is never used (KB-006)
+- [ ] `CLAUDE.md`'s "Stack" section names the choices made in D-001, D-002, D-004 and D-005
+  (transcript source, feed date semantics, vector store, model stack)
+- [ ] `grill-me` (design-decision mode) is run on Phase 0 as a whole — the four tickets and
+  five decisions together, not any one in isolation — and its findings are recorded;
+  anything Fatal or Serious is fixed or explicitly deferred as a new ticket, not silently
+  dropped
+
+**Out of scope:** any Phase 1 work.
+
+**Depends on:** T-002, T-003, T-004, T-005, T-006
+**Notes:** Bundles three different kinds of work (verification, doc update, adversarial
+review) into one ticket per my explicit instruction — normally this would be split.
+**Do not start before I say so** — written during the Phase 0 checkpoint review,
+same as T-006 was.
+
 ## Done
 
 ### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
