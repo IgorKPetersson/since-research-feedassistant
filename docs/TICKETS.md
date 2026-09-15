@@ -14,55 +14,67 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-006 — Needle test and same-family model pair re-selection
+### T-006 — Needle test and same-family model pair + embedding model re-selection
 
 **Status:** todo
 **Size:** M  ·  **Branch:** `t/T-006-model-pair-revision`
 
 **Goal:** know Ollama's real context-window behavior (num_ctx, silent truncation), and
-replace T-004's model pair with a same-family pair where the large model fits entirely on
-GPU at 16k context with room left for an embedding model.
+replace T-004's model pair with a same-family chat pair plus a deliberately chosen
+embedding model, all verified to share the RTX 4090's 24GB VRAM without evicting each
+other.
 
 **Why:** T-004 paired `llama3.1:8b` with `qwen2.5:32b` — different families, which
 confounds size with family in the planned large-vs-small evaluation (`docs/GOAL.md`).
-KB-003 also showed `qwen2.5:32b` spills 20% onto CPU at its default context, leaving no
-verified headroom for the embedding model Phase 1/2 will also need resident. Bundled as one
-ticket rather than two because the needle test's num_ctx findings are a direct input to
-which context length the model-pair check in part 2 is run at (16k) — not two independent
-concerns.
+KB-003 also showed `qwen2.5:32b` spills 20% onto CPU at its default context. KB-004 flagged
+that ChromaDB's default embedding model was accepted silently, not chosen — and it shares
+the same GPU as the chat models, so it has to be verified alongside them, not assumed to
+just fit. Bundled as one ticket rather than several because the needle test's num_ctx
+finding is a direct input to the chat-pair check (16k context), and the embedding model's
+VRAM footprint is a direct input to whether the chat pair actually leaves room for it — not
+independent concerns.
 
 **Acceptance criteria**
 - [ ] A needle-in-haystack test (~12k tokens of filler with one unique fact planted at the
   very start, then a question requiring that fact back) is run against at least one
-  currently-pulled model to establish current baseline behaviour
-- [ ] `docs/kb/` gets a `kb-entry` documenting: what `num_ctx` Ollama actually used for that
-  request (via `ollama ps` and/or `/api/show`), how `num_ctx` is set (default vs explicit
-  `options.num_ctx`), and whether content beyond `num_ctx` is silently truncated or
-  surfaced as an error/warning
-- [ ] Before downloading any new model, candidate same-family pairs (a ~27B/MoE-class model
-  plus an ~8B-or-smaller model from the same family — e.g. Qwen 3.x, Gemma) from Ollama's
-  library are identified and presented to me for approval; nothing is pulled without
-  that approval
-- [ ] Once approved, the chosen large model is pulled and, run with an explicit
-  `num_ctx=16000`, `ollama ps` shows 100% GPU (no CPU split) and `nvidia-smi` confirms it
-  fits with an estimated VRAM headroom for a small embedding model
-- [ ] If no same-family pair meets that bar, the fallback `qwen2.5:14b` + `qwen2.5:7b` is
-  tried and verified the same way
-- [ ] `docs/DECISIONS.md` gets a new `D-0NN` recording the chosen pair, its VRAM headroom
-  and the num_ctx findings; `D-003` is marked `Superseded by D-0NN` (its own text otherwise
-  left intact, per the append-only decision log convention). I originally called this
-  "D-004", written before T-005 — check what's actually next in the sequence when this
-  ticket starts, since IDs are assigned by write order, not by ticket number
+  currently-pulled model. `docs/kb/` gets a `kb-entry` documenting what `num_ctx` Ollama
+  actually used for that request (via `ollama ps` and/or `/api/show`), how `num_ctx` is set
+  (default vs explicit `options.num_ctx`), and whether content beyond `num_ctx` is silently
+  truncated or surfaced as an error/warning
+- [ ] ChromaDB's default embedding model (`all-MiniLM-L6-v2`, KB-004) is checked for its
+  real max sequence length and whether text beyond that length is silently truncated;
+  documented in `docs/kb/`
+- [ ] Before downloading anything: candidate same-family chat pairs (a ~27B/MoE-class model
+  plus an ~8B-or-smaller model from the same family — e.g. Qwen 3.x, Gemma) AND a candidate
+  multilingual embedding model available via Ollama (e.g. `bge-m3`, if it exists in the
+  library) are identified and **presented to me for approval**; nothing is pulled
+  without that approval
+- [ ] Once approved: the chat pair is pulled, and the large model run with an explicit
+  `num_ctx=16000` shows 100% GPU (no CPU split) via `ollama ps`, confirmed by `nvidia-smi`.
+  The embedding model is pulled and tested with a Swedish question against English text, to
+  confirm cross-lingual retrieval actually works, not just that the model loads
+- [ ] With the large chat model (at `num_ctx=16000`) and the embedding model **both**
+  loaded, `ollama ps` confirms both are resident simultaneously without evicting each
+  other, and the real remaining VRAM headroom is recorded (not just estimated, as T-004 had
+  to do)
+- [ ] If no same-family chat pair meets the GPU bar, the fallback `qwen2.5:14b` +
+  `qwen2.5:7b` is tried and verified the same way
+- [ ] `docs/DECISIONS.md` gets a new decision recording the full stack (chat pair +
+  embedding model + real VRAM headroom + num_ctx findings). This will be **D-005**
+  (`D-004` is already taken — ChromaDB, from T-005). `D-003` is marked
+  `Superseded by D-005` (its own text otherwise left intact, per the append-only decision
+  log convention)
 
 **Out of scope:** re-running the actual large-vs-small evaluation (Phase 2) — this only
-re-establishes the pair and its context-window behaviour.
+re-establishes the stack and its context-window/VRAM behaviour.
 
-**Depends on:** T-004
-**Notes:** **Hard stop-and-ask, not optional:** no new model may be downloaded before the
-candidates are presented to me and approved — per my explicit instruction, not
-just the general "adding a dependency" rule. **Do not start this ticket before I
-says so** — it was written during the Phase 0 checkpoint review and waits for that review
-to conclude.
+**Depends on:** T-004, T-005
+**Notes:** **Hard stop-and-ask, not optional:** no new model — chat or embedding — may be
+downloaded before the candidates are presented to me and approved, per my explicit
+instruction, not just the general "adding a dependency" rule. `docs/PLAN.md`'s
+"Local model" Phase 0 checkbox stays unticked until this ticket is done — Phase 0 isn't
+complete until the model stack (including the embedding model) is settled, not just the
+chat pair from T-004.
 
 ## Done
 

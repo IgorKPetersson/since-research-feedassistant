@@ -23,9 +23,10 @@ Test the assumptions everything else rests on, cheaply, before building anything
 - [x] **HF Daily Papers:** fetch the last 14 days via `/api/daily_papers?date=`. Confirm
   which fields exist (title, abstract, publication date, arXiv id) and that past dates work
   — T-003, KB-002
-- [x] **Local model:** run Ollama on the RTX 4090 with one large (~30B class, quantized) and
+- [ ] **Local model:** run Ollama on the RTX 4090 with one large (~30B class, quantized) and
   one small (~8B) model. Each answers a question from pasted context. Note speed and VRAM
-  — T-004, KB-003 (pair since flagged for revision, see T-006)
+  — T-004 done, KB-003, but the pair is not final: superseded pending T-006 (same-family
+  chat pair + embedding model, since they share the GPU). Not ticked until T-006 is done.
 - [x] **Vector store:** confirm that date-range filtering works in the chosen store before
   committing to it — T-005, KB-004
 
