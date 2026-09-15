@@ -19,7 +19,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 **Status:** todo
 **Size:** M  ·  **Branch:** `t/T-005-vector-store-date-filter`
 
-**Goal:** know that a candidate vector store can filter by publication-date metadata
+**Goal:** know that a candidate vector store can filter by feed-date metadata
 combined with similarity search, before committing to it for Phase 1.
 
 **Why:** `docs/GOAL.md`'s claim under test is that date-aware retrieval beats plain
@@ -27,8 +27,8 @@ similarity search; that only works if the store can filter by date range at all.
 `docs/PLAN.md` Phase 0 requires this confirmed before committing to a store.
 
 **Acceptance criteria**
-- [ ] A small test collection of documents with varying publication dates (as metadata) is
-  inserted into a candidate vector store
+- [ ] A small test collection of documents with varying feed dates (as metadata, per D-002)
+  is inserted into a candidate vector store
 - [ ] A query demonstrates similarity search restricted to a date range, returning only
   documents inside that range
 - [ ] A second query without the date filter is run against the same data to confirm the
@@ -43,6 +43,56 @@ collection.
 **Depends on:** T-001
 **Notes:** Adding a vector store library is a new dependency — per `CLAUDE.md` "In-loop",
 stop and ask before adding it.
+
+---
+
+### T-006 — Needle test and same-family model pair re-selection
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-006-model-pair-revision`
+
+**Goal:** know Ollama's real context-window behavior (num_ctx, silent truncation), and
+replace T-004's model pair with a same-family pair where the large model fits entirely on
+GPU at 16k context with room left for an embedding model.
+
+**Why:** T-004 paired `llama3.1:8b` with `qwen2.5:32b` — different families, which
+confounds size with family in the planned large-vs-small evaluation (`docs/GOAL.md`).
+KB-003 also showed `qwen2.5:32b` spills 20% onto CPU at its default context, leaving no
+verified headroom for the embedding model Phase 1/2 will also need resident. Bundled as one
+ticket rather than two because the needle test's num_ctx findings are a direct input to
+which context length the model-pair check in part 2 is run at (16k) — not two independent
+concerns.
+
+**Acceptance criteria**
+- [ ] A needle-in-haystack test (~12k tokens of filler with one unique fact planted at the
+  very start, then a question requiring that fact back) is run against at least one
+  currently-pulled model to establish current baseline behaviour
+- [ ] `docs/kb/` gets a `kb-entry` documenting: what `num_ctx` Ollama actually used for that
+  request (via `ollama ps` and/or `/api/show`), how `num_ctx` is set (default vs explicit
+  `options.num_ctx`), and whether content beyond `num_ctx` is silently truncated or
+  surfaced as an error/warning
+- [ ] Before downloading any new model, candidate same-family pairs (a ~27B/MoE-class model
+  plus an ~8B-or-smaller model from the same family — e.g. Qwen 3.x, Gemma) from Ollama's
+  library are identified and presented to me for approval; nothing is pulled without
+  that approval
+- [ ] Once approved, the chosen large model is pulled and, run with an explicit
+  `num_ctx=16000`, `ollama ps` shows 100% GPU (no CPU split) and `nvidia-smi` confirms it
+  fits with an estimated VRAM headroom for a small embedding model
+- [ ] If no same-family pair meets that bar, the fallback `qwen2.5:14b` + `qwen2.5:7b` is
+  tried and verified the same way
+- [ ] `docs/DECISIONS.md` gets a new `D-004` recording the chosen pair, its VRAM headroom
+  and the num_ctx findings; `D-003` is marked `Superseded by D-004` (its own text otherwise
+  left intact, per the append-only decision log convention)
+
+**Out of scope:** re-running the actual large-vs-small evaluation (Phase 2) — this only
+re-establishes the pair and its context-window behaviour.
+
+**Depends on:** T-004
+**Notes:** **Hard stop-and-ask, not optional:** no new model may be downloaded before the
+candidates are presented to me and approved — per my explicit instruction, not
+just the general "adding a dependency" rule. **Do not start this ticket before I
+says so** — it was written during the Phase 0 checkpoint review and waits for that review
+to conclude.
 
 ## Done
 
