@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-002 — YouTube captions feasibility test
 
-**Status:** todo
+**Status:** review
 **Size:** M  ·  **Branch:** `t/T-002-youtube-captions`
 
 **Goal:** know, with evidence from this machine, whether captions can be fetched for the
@@ -27,22 +27,30 @@ chosen YouTube channels — the input the transcript-source decision rests on.
 gate Whisper on this test failing.
 
 **Acceptance criteria**
-- [ ] A script fetches captions for the latest videos of 3–5 chosen channels (at least 3
-  videos attempted per channel)
-- [ ] For each attempt, success/failure and error type (no captions, blocked, other) is
-  recorded
-- [ ] Success rate and error types are written to `docs/kb/` via `kb-entry`
+- [x] A script fetches captions for the latest videos of 3–5 chosen channels (at least 3
+  videos attempted per channel) → `scripts/t002_youtube_captions.py`, run against all 4
+  channels, 5 videos each (20 total)
+- [x] For each attempt, success/failure and error type (no captions, blocked, other) is
+  recorded → per-video result in `data/t002_youtube_captions.json` (gitignored, local only)
+- [x] Success rate and error types are written to `docs/kb/` via `kb-entry` →
+  [KB-001](kb/KB-001-youtube-caption-availability.md)
 - [ ] The title + description fallback is confirmed available for at least one video that
-  has no captions
-- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the transcript-source choice,
-  with the evidence cited
+  has no captions → **not met as literally stated.** 20/20 videos had captions, so there
+  was no real failure to test the fallback against. Confirmed instead that `yt-dlp`'s same
+  call returns non-empty `title`/`description` for every video (see KB-001), which is
+  necessary but not sufficient — the fallback path itself has never actually run.
+- [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the transcript-source choice,
+  with the evidence cited → D-001
 
 **Out of scope:** the real ingest pipeline, chunking, storage — this only establishes
 whether the source works.
 
 **Depends on:** T-001
-**Notes:** Fetching captions likely needs a new library (e.g. a YouTube transcript
-package) — per `CLAUDE.md` "In-loop", stop and ask before adding it.
+**Notes:** Added `yt-dlp` and `youtube-transcript-api` (see `requirements.txt`) — approved
+by me for this ticket up front. Left in `review` rather than `done` because of the
+unmet criterion above; needs my call on whether the strong 100%-success result is
+enough to accept D-001 as-is, or whether the fallback should be exercised against a
+deliberately caption-less video before this closes.
 
 ---
 

@@ -4,38 +4,46 @@ description: How to run this project's infrastructure — the dev server, the te
 ---
 
 <!--
-  STILL A TEMPLATE. VG-09 has no code yet, so none of this has been verified by running it —
-  only Python as a stack choice is confirmed (see CLAUDE.md). Update this the moment real
-  commands and dependencies exist; don't trust the proposed commands below until then.
+  PARTIALLY VERIFIED as of T-002. Still no app to run (no server, no chat UI, no test
+  suite) — only the venv/dependency workflow and the Phase 0 feasibility scripts exist.
+  Update the rest as real commands and dependencies show up in Phase 1+.
 -->
 
 # Development environment
 
-Assume nothing external is running until checked. No dev server, database or external
-service is known to exist yet — the repo is empty.
+Assume nothing external is running until checked. No dev server or database exists yet.
+What does exist: a local `.venv` and a handful of one-off Phase 0 feasibility scripts under
+`scripts/` that make real network calls (YouTube, HF Daily Papers, Ollama).
 
 ## What runs
 
-Not yet known. Nothing has been built.
+Nothing long-running yet. `scripts/*.py` are one-shot feasibility checks, run manually, not
+part of any test suite.
 
 ## Commands
 
-Proposed only, not yet verified against real project files (no `pyproject.toml` /
-`requirements.txt` exists yet):
+Verified (Windows, Python 3.12 via the `py` launcher):
 
 ```
-<install>   e.g. pip install -e . / uv sync — once a manifest exists
-<run tests> e.g. pytest
-<lint>      e.g. ruff check
-<typecheck> e.g. mypy
+py -3.12 -m venv .venv                              # create the venv (once)
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pip freeze > requirements.txt   # after adding a new package
+.venv/Scripts/python.exe scripts/<name>.py           # run a feasibility script
 ```
 
-Run these rather than inventing equivalents once they're real. If a command here is wrong,
-fix this skill in the same change.
+`<run tests>` / `<lint>` / `<typecheck>` — still not decided; no test suite, linter or
+type-checker config exists yet. Add real commands here the moment they do.
+
+`.venv/` and `data/` are gitignored. `data/` holds raw output from feasibility scripts
+(e.g. `data/t002_youtube_captions.json`) — never committed, regenerate by rerunning the
+script.
 
 ## Checking before assuming
 
-No external dependency is known to exist yet. Add a healthcheck here once one does.
+The feasibility scripts hit real external services (YouTube, HF Daily Papers, Ollama) with
+no mock/fake mode — that's the point of Phase 0. A script failing outright (not a recorded
+per-item error) most likely means the dependency changed shape or network access is down,
+not a bug in the script; check that before changing the script's logic.
 
 No response means it isn't running. That is not a bug in our code — and it is also the
 state a new developer or a first-time user is most likely to be in, so it should be a

@@ -12,13 +12,13 @@ edited in place — it is superseded by a new one and marked.
 
 ## Areas
 
-<list the subsystems and dependencies this project will accumulate knowledge about>
+- YouTube ingest — fetching channel video lists and captions
 
 ## Entries
 
 | ID | Claim | Area | Status | Date |
 |---|---|---|---|---|
-| | | | | |
+| [KB-001](KB-001-youtube-caption-availability.md) | Auto-generated English captions available for all 20 sampled videos across the 4 chosen channels | YouTube ingest — captions | provisional | 2026-09-15 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
