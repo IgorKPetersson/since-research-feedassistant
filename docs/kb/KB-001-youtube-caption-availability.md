@@ -38,6 +38,15 @@ channels, with title+description as a fallback that is available but currently u
 against a real caption failure. `docs/GOAL.md`'s Whisper non-goal condition ("unless
 captions can't be fetched") is not triggered by this evidence.
 
+All 20 transcripts were **auto-generated**, not manual, captions. Auto-generated captions
+are known to misspell proper nouns — model names, company names, people — since YouTube's
+ASR has no ground truth for them (e.g. "Fable 5.1" or a less common model/company name
+could plausibly come out garbled). That matters here specifically because the project's
+core query type is "did anyone cover X" for an exact proper noun. The 15–20 evaluation
+questions (`docs/PLAN.md` Phase 1) must include at least a couple of questions built around
+a proper noun that plausibly gets misspelled in auto-captions, so retrieval quality against
+this failure mode is actually measured rather than assumed.
+
 ## Confidence and limits
 One run, one point in time, 20 videos across 4 channels — all channels the project actually
 uses, which is what matters here, but still a small, non-adversarial sample. Not tested:

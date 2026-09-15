@@ -14,46 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-002 — YouTube captions feasibility test
-
-**Status:** review
-**Size:** M  ·  **Branch:** `t/T-002-youtube-captions`
-
-**Goal:** know, with evidence from this machine, whether captions can be fetched for the
-chosen YouTube channels — the input the transcript-source decision rests on.
-
-**Why:** `docs/PLAN.md` Phase 0 exit criteria requires the transcript source decided
-(captions vs. title+description) before Phase 1 ingest is built; `docs/GOAL.md` non-goals
-gate Whisper on this test failing.
-
-**Acceptance criteria**
-- [x] A script fetches captions for the latest videos of 3–5 chosen channels (at least 3
-  videos attempted per channel) → `scripts/t002_youtube_captions.py`, run against all 4
-  channels, 5 videos each (20 total)
-- [x] For each attempt, success/failure and error type (no captions, blocked, other) is
-  recorded → per-video result in `data/t002_youtube_captions.json` (gitignored, local only)
-- [x] Success rate and error types are written to `docs/kb/` via `kb-entry` →
-  [KB-001](kb/KB-001-youtube-caption-availability.md)
-- [ ] The title + description fallback is confirmed available for at least one video that
-  has no captions → **not met as literally stated.** 20/20 videos had captions, so there
-  was no real failure to test the fallback against. Confirmed instead that `yt-dlp`'s same
-  call returns non-empty `title`/`description` for every video (see KB-001), which is
-  necessary but not sufficient — the fallback path itself has never actually run.
-- [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the transcript-source choice,
-  with the evidence cited → D-001
-
-**Out of scope:** the real ingest pipeline, chunking, storage — this only establishes
-whether the source works.
-
-**Depends on:** T-001
-**Notes:** Added `yt-dlp` and `youtube-transcript-api` (see `requirements.txt`) — approved
-by me for this ticket up front. Left in `review` rather than `done` because of the
-unmet criterion above; needs my call on whether the strong 100%-success result is
-enough to accept D-001 as-is, or whether the fallback should be exercised against a
-deliberately caption-less video before this closes.
-
----
-
 ### T-003 — HF Daily Papers API feasibility test
 
 **Status:** todo
@@ -181,3 +141,47 @@ harness scaffolding (`.claude/`, `docs/DESIGN.md`, `docs/DECISIONS.md`, `docs/HA
 `docs/kb/INDEX.md`, `docs/sessions/README.md`, `docs/skill-template.md`), all of it
 untracked placeholder content with nothing to review — not scope creep, just what "first
 commit of a new repo" means.
+
+---
+
+### T-002 — YouTube captions feasibility test
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-002-youtube-captions`
+
+**Goal:** know, with evidence from this machine, whether captions can be fetched for the
+chosen YouTube channels — the input the transcript-source decision rests on.
+
+**Why:** `docs/PLAN.md` Phase 0 exit criteria requires the transcript source decided
+(captions vs. title+description) before Phase 1 ingest is built; `docs/GOAL.md` non-goals
+gate Whisper on this test failing.
+
+**Acceptance criteria**
+- [x] A script fetches captions for the latest videos of 3–5 chosen channels (at least 3
+  videos attempted per channel) → `scripts/t002_youtube_captions.py`, run against all 4
+  channels, 5 videos each (20 total)
+- [x] For each attempt, success/failure and error type (no captions, blocked, other) is
+  recorded → per-video result in `data/t002_youtube_captions.json` (gitignored, local only)
+- [x] Success rate and error types are written to `docs/kb/` via `kb-entry` →
+  [KB-001](kb/KB-001-youtube-caption-availability.md)
+- [x] The title + description fallback is confirmed available for at least one video that
+  has no captions → **accepted as not fully met, deferred rather than blocking.** 20/20
+  videos had captions, so there was no real failure to exercise the fallback against in this
+  throwaway script; only that `yt-dlp` returns non-empty `title`/`description` for every
+  video was confirmed (KB-001). I accepted D-001 on the strength of the 100%-success
+  result. **Deferred to Phase 1:** the fallback path must be verified with a unit test that
+  simulates a failed caption fetch inside the real ingest/collector code, not re-tested here.
+  That requirement belongs on the Phase 1 collector ticket when it's written.
+- [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the transcript-source choice,
+  with the evidence cited → D-001
+
+**Out of scope:** the real ingest pipeline, chunking, storage — this only establishes
+whether the source works.
+
+**Depends on:** T-001
+**Notes:** Added `yt-dlp` and `youtube-transcript-api` (see `requirements.txt`) — approved
+by me up front. KB-001 additionally records that all 20 captions were
+auto-generated (not manual), which risks misspelled proper nouns (model/company/people
+names) — the Phase 1 evaluation question set must include at least a couple of questions
+built around a proper noun likely to be garbled by auto-captions, to actually measure this
+rather than assume it's fine.
