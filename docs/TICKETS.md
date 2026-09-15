@@ -1,0 +1,173 @@
+# TICKETS
+
+The backlog. `docs/PLAN.md` holds phases and exit criteria; this file holds the work.
+
+IDs are `T-001`, `T-002`, … assigned in order, never reused, never renumbered. Use the
+`ticket-write` skill to add one and the `ticket-done` skill to close one.
+
+**Statuses:** `todo` · `in-progress` · `blocked` · `review` · `done`
+
+**Git linkage:** branch `t/T-0NN-slug` · commit `T-0NN: imperative summary` ·
+PR title `T-0NN — Title`. One ticket ID per commit.
+
+---
+
+## Open
+
+### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-001-bootstrap-docs`
+
+**Goal:** the repo's docs describe a real project instead of an empty placeholder, and that
+state is committed so it survives.
+
+**Why:** `docs/GOAL.md` and `docs/PLAN.md` are filled in but uncommitted, and
+`docs/CLAUDE.md`'s "What this is" section still says the repo is undefined. Every later
+ticket depends on this being true and in git.
+
+**Acceptance criteria**
+- [ ] `CLAUDE.md`'s "What this is" section is rewritten to give the one-sentence summary
+  from `docs/GOAL.md` and points to `docs/GOAL.md` (goal) and `docs/PLAN.md` (phases)
+  instead of saying the repo is empty/undefined
+- [ ] `CLAUDE.md` no longer contains the placeholder line "VG-09 is an empty repository —
+  no code, README or stated goal exists yet"
+- [ ] `git log` shows one commit, message `T-001: ...`, containing `CLAUDE.md`,
+  `docs/GOAL.md`, `docs/PLAN.md`, and `docs/TICKETS.md` (with this ticket set)
+- [ ] `git status` is clean after the commit
+- [ ] The commit message carries a `T-001` prefix so the pre-commit hook accepts it
+
+**Out of scope:** `docs/DESIGN.md`, the "Stack" and "Hard rules" sections of `CLAUDE.md` —
+those stay placeholders until Phase 0 produces real architecture decisions.
+
+**Depends on:** —
+**Notes:** This is the bootstrap commit; nothing else in Phase 0 should be committed before
+it lands, so history reads goal → plan → tickets → work.
+
+---
+
+### T-002 — YouTube captions feasibility test
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-002-youtube-captions`
+
+**Goal:** know, with evidence from this machine, whether captions can be fetched for the
+chosen YouTube channels — the input the transcript-source decision rests on.
+
+**Why:** `docs/PLAN.md` Phase 0 exit criteria requires the transcript source decided
+(captions vs. title+description) before Phase 1 ingest is built; `docs/GOAL.md` non-goals
+gate Whisper on this test failing.
+
+**Acceptance criteria**
+- [ ] A script fetches captions for the latest videos of 3–5 chosen channels (at least 3
+  videos attempted per channel)
+- [ ] For each attempt, success/failure and error type (no captions, blocked, other) is
+  recorded
+- [ ] Success rate and error types are written to `docs/kb/` via `kb-entry`
+- [ ] The title + description fallback is confirmed available for at least one video that
+  has no captions
+- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the transcript-source choice,
+  with the evidence cited
+
+**Out of scope:** the real ingest pipeline, chunking, storage — this only establishes
+whether the source works.
+
+**Depends on:** T-001
+**Notes:** Fetching captions likely needs a new library (e.g. a YouTube transcript
+package) — per `CLAUDE.md` "In-loop", stop and ask before adding it.
+
+---
+
+### T-003 — HF Daily Papers API feasibility test
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-003-hf-daily-papers`
+
+**Goal:** know that the HF Daily Papers API gives the fields the project needs, for both
+recent and past dates.
+
+**Why:** `docs/PLAN.md` Phase 0 requires confirming which fields exist and that past dates
+work, before Phase 1 builds a collector on top of the API.
+
+**Acceptance criteria**
+- [ ] A script calls `/api/daily_papers?date=` for each of the last 14 days
+- [ ] For each response, presence of title, abstract, publication date and arXiv id is
+  confirmed (or the missing ones are named)
+- [ ] At least one date more than 10 days in the past returns data, confirming historical
+  dates work
+- [ ] One raw JSON response is saved into the repo (per the risk register: "raw JSON is
+  saved")
+- [ ] Findings (field shapes, gaps, rate limits if hit) are written to `docs/kb/` via
+  `kb-entry`
+
+**Out of scope:** normalizing the response into the Phase 1 document shape — this only
+confirms the raw API's behaviour.
+
+**Depends on:** T-001
+**Notes:** —
+
+---
+
+### T-004 — Local model test on the RTX 4090 (Ollama)
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-004-local-model`
+
+**Goal:** know that one large (~30B class, quantized) and one small (~8B) model both run on
+this PC via Ollama and can answer a question from pasted context, with speed and VRAM
+recorded.
+
+**Why:** `docs/PLAN.md` Phase 0 requires the model pair chosen and recorded before later
+phases build retrieval and evaluation around them.
+
+**Acceptance criteria**
+- [ ] One ~30B-class quantized model and one ~8B model are pulled and run via Ollama on the
+  RTX 4090
+- [ ] Each model is given the same test question with pasted context and produces an answer
+- [ ] Response time and peak VRAM usage are recorded for each model
+- [ ] Findings are written to `docs/kb/` via `kb-entry`
+- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen model pair, with the
+  evidence cited
+
+**Out of scope:** the retrieval/answer-generation pipeline (Phase 2) — this only confirms
+the models run and answer from pasted context.
+
+**Depends on:** T-001
+**Notes:** Ollama and the two model pulls are already implied by `docs/PLAN.md`'s hardware
+section, not a new dependency decision — no need to stop and ask for these specifically.
+
+---
+
+### T-005 — Vector store date-range filtering test
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-005-vector-store-date-filter`
+
+**Goal:** know that a candidate vector store can filter by publication-date metadata
+combined with similarity search, before committing to it for Phase 1.
+
+**Why:** `docs/GOAL.md`'s claim under test is that date-aware retrieval beats plain
+similarity search; that only works if the store can filter by date range at all.
+`docs/PLAN.md` Phase 0 requires this confirmed before committing to a store.
+
+**Acceptance criteria**
+- [ ] A small test collection of documents with varying publication dates (as metadata) is
+  inserted into a candidate vector store
+- [ ] A query demonstrates similarity search restricted to a date range, returning only
+  documents inside that range
+- [ ] A second query without the date filter is run against the same data to confirm the
+  filtered and unfiltered results differ as expected
+- [ ] Findings are written to `docs/kb/` via `kb-entry`
+- [ ] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen vector store, with
+  the evidence cited
+
+**Out of scope:** the production schema for Phase 1 storage — this is a throwaway test
+collection.
+
+**Depends on:** T-001
+**Notes:** Adding a vector store library is a new dependency — per `CLAUDE.md` "In-loop",
+stop and ask before adding it.
+
+## Done
+
+<none yet>
