@@ -74,7 +74,7 @@ re-opening this decision, not silently switching fields in code.
 ---
 
 ## D-003 — Model pair for evaluation: llama3.1:8b (small) and qwen2.5:32b (large)
-**Status:** accepted
+**Status:** superseded by D-005
 
 **Decision:** Use `llama3.1:8b` as the small model and `qwen2.5:32b` as the large model for
 the large-vs-small evaluation in `docs/GOAL.md`, both at Ollama's default quantization and
@@ -131,6 +131,48 @@ and is a one-time cost per machine, not a recurring one.
 **Would change our mind:** Filtering or query performance degrading unacceptably at
 realistic document counts (hundreds to thousands of chunks) — untested here, only a
 hand-built 8-document collection.
+
+---
+
+## D-005 — Model stack: qwen3:8b + qwen3:30b-a3b (VRAM-differentiated, same family) + bge-m3 embedding
+**Status:** accepted
+
+**Decision:** Replace D-003's pair with `qwen3:8b` and `qwen3:30b-a3b`, both from the same
+family, run at an explicit `num_ctx=16000`. Use `bge-m3` as the embedding model instead of
+ChromaDB's silent default (D-004's "Cost" section — the default embedder itself is
+unchanged as the store decision, but the embedding *model* is now a deliberate choice, not
+an inherited default). The two chat models are described by **VRAM footprint** (~6GB vs
+~20GB), not "small vs large" — `qwen3:30b-a3b` is MoE with far fewer active parameters per
+token than the dense `qwen3:8b`, so calling it "large" is misleading about compute cost
+even though its VRAM footprint is bigger.
+
+**Why:** T-004's pair (`llama3.1:8b` + `qwen2.5:32b`) mixed families, confounding size with
+family in the planned evaluation, and `qwen2.5:32b` didn't fit 24GB VRAM at its default
+context (KB-003). T-006 confirmed `qwen3:30b-a3b` at `num_ctx=16000` **and** `bge-m3`
+loaded simultaneously both run 100% GPU with ~2.4GB headroom to spare (KB-007) — the bar
+D-003 never met. `bge-m3` also fixes KB-006's 256-token silent-truncation ceiling (its own
+context window is 8192) and is genuinely multilingual, confirmed by a correct Swedish-query
+retrieval against English text (KB-007) — relevant to `docs/GOAL.md`'s known limitation
+that Swedish questions may retrieve worse than English ones.
+
+**Rejected:** Gemma3 (27b + 4b) — same-family but not MoE, and the jump from 4b to 27b is
+bigger than Qwen3's 8b→30b-a3b, with no evidence it would fit 24GB any better than
+`qwen2.5:32b` did. The `qwen2.5:14b` + `qwen2.5:7b` fallback named in the ticket was not
+needed since `qwen3` cleared the VRAM bar on the first attempt.
+
+**Cost:** `qwen3:30b-a3b`'s reasoning (`think`) mode adds real latency and cannot be cleanly
+disabled — `think:false` does not suppress the model's chain-of-thought, it only merges it
+into the `response` field instead of separating it into `thinking` (KB-007). Getting a
+clean final-answer-only string requires `think:true` and reading only `response`, at
+whatever latency cost that carries (one sample here: 10.4s vs 7.7s for the same question -
+not a reliable benchmark, just a directional cost to plan around). `bge-m3`'s retrieval
+quality was checked on one illustrative example, not the project's real evaluation
+questions.
+
+**Would change our mind:** VRAM headroom (~2.4GB) proving too tight once real document
+chunks and longer conversations grow the KV cache beyond this test's single-question probe
+— `num_ctx=16000` is a ceiling, not measured live usage. If that happens, the next lever is
+a smaller `num_ctx` before changing model choice again.
 
 ---
 

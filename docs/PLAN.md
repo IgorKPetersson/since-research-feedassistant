@@ -23,18 +23,19 @@ Test the assumptions everything else rests on, cheaply, before building anything
 - [x] **HF Daily Papers:** fetch the last 14 days via `/api/daily_papers?date=`. Confirm
   which fields exist (title, abstract, publication date, arXiv id) and that past dates work
   — T-003, KB-002
-- [ ] **Local model:** run Ollama on the RTX 4090 with one large (~30B class, quantized) and
-  one small (~8B) model. Each answers a question from pasted context. Note speed and VRAM
-  — T-004 done, KB-003, but the pair is not final: superseded pending T-006 (same-family
-  chat pair + embedding model, since they share the GPU). Not ticked until T-006 is done.
+- [x] **Local model:** run Ollama on the RTX 4090 with a same-family chat pair
+  (`qwen3:8b` + `qwen3:30b-a3b`, VRAM-differentiated per D-005) plus a deliberately chosen
+  embedding model (`bge-m3`), both verified 100% GPU-resident together at `num_ctx=16000`.
+  — T-004 (chat models run), T-006 (same-family pair, embedding model, VRAM headroom),
+  KB-003, KB-005, KB-006, KB-007, D-005 (supersedes D-003)
 - [x] **Vector store:** confirm that date-range filtering works in the chosen store before
   committing to it — T-005, KB-004
 
 **Exit criteria:** each item answered with evidence. Transcript source decided (captions,
 or title + description). Model pair and vector store chosen and recorded in
 `docs/DECISIONS.md`.
-**Checkpoint:** I review findings. **T-006 (needle test + same-family model pair
-re-selection) is written but deliberately not started — waits for this review.**
+**Checkpoint:** I review findings. All four items done, including T-006's model-stack
+revision. Phase 1 has not started — waits for this review.
 
 ---
 
