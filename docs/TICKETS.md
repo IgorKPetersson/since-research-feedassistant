@@ -80,9 +80,11 @@ concerns.
   fits with an estimated VRAM headroom for a small embedding model
 - [ ] If no same-family pair meets that bar, the fallback `qwen2.5:14b` + `qwen2.5:7b` is
   tried and verified the same way
-- [ ] `docs/DECISIONS.md` gets a new `D-004` recording the chosen pair, its VRAM headroom
-  and the num_ctx findings; `D-003` is marked `Superseded by D-004` (its own text otherwise
-  left intact, per the append-only decision log convention)
+- [ ] `docs/DECISIONS.md` gets a new `D-0NN` recording the chosen pair, its VRAM headroom
+  and the num_ctx findings; `D-003` is marked `Superseded by D-0NN` (its own text otherwise
+  left intact, per the append-only decision log convention). I originally called this
+  "D-004", written before T-005 — check what's actually next in the sequence when this
+  ticket starts, since IDs are assigned by write order, not by ticket number
 
 **Out of scope:** re-running the actual large-vs-small evaluation (Phase 2) — this only
 re-establishes the pair and its context-window behaviour.
