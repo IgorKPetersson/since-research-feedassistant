@@ -14,38 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
-
-**Status:** todo
-**Size:** S  ·  **Branch:** `t/T-001-bootstrap-docs`
-
-**Goal:** the repo's docs describe a real project instead of an empty placeholder, and that
-state is committed so it survives.
-
-**Why:** `docs/GOAL.md` and `docs/PLAN.md` are filled in but uncommitted, and
-`docs/CLAUDE.md`'s "What this is" section still says the repo is undefined. Every later
-ticket depends on this being true and in git.
-
-**Acceptance criteria**
-- [ ] `CLAUDE.md`'s "What this is" section is rewritten to give the one-sentence summary
-  from `docs/GOAL.md` and points to `docs/GOAL.md` (goal) and `docs/PLAN.md` (phases)
-  instead of saying the repo is empty/undefined
-- [ ] `CLAUDE.md` no longer contains the placeholder line "VG-09 is an empty repository —
-  no code, README or stated goal exists yet"
-- [ ] `git log` shows one commit, message `T-001: ...`, containing `CLAUDE.md`,
-  `docs/GOAL.md`, `docs/PLAN.md`, and `docs/TICKETS.md` (with this ticket set)
-- [ ] `git status` is clean after the commit
-- [ ] The commit message carries a `T-001` prefix so the pre-commit hook accepts it
-
-**Out of scope:** `docs/DESIGN.md`, the "Stack" and "Hard rules" sections of `CLAUDE.md` —
-those stay placeholders until Phase 0 produces real architecture decisions.
-
-**Depends on:** —
-**Notes:** This is the bootstrap commit; nothing else in Phase 0 should be committed before
-it lands, so history reads goal → plan → tickets → work.
-
----
-
 ### T-002 — YouTube captions feasibility test
 
 **Status:** todo
@@ -170,4 +138,38 @@ stop and ask before adding it.
 
 ## Done
 
-<none yet>
+### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (see note)
+
+**Goal:** the repo's docs describe a real project instead of an empty placeholder, and that
+state is committed so it survives.
+
+**Why:** `docs/GOAL.md` and `docs/PLAN.md` were filled in but uncommitted, and
+`CLAUDE.md`'s "What this is" section still said the repo was undefined. Every later ticket
+depends on this being true and in git.
+
+**Acceptance criteria**
+- [x] `CLAUDE.md`'s "What this is" section is rewritten to give the one-sentence summary
+  from `docs/GOAL.md` and points to `docs/GOAL.md` (goal) and `docs/PLAN.md` (phases)
+  instead of saying the repo is empty/undefined
+- [x] `CLAUDE.md` no longer contains the placeholder line "VG-09 is an empty repository —
+  no code, README or stated goal exists yet"
+- [x] `git log` shows one commit, message `T-001: ...`, containing `CLAUDE.md`,
+  `docs/GOAL.md`, `docs/PLAN.md`, and `docs/TICKETS.md` (with this ticket set) — commit
+  `56a9f09`
+- [x] `git status` is clean after the commit
+- [x] The commit message carries a `T-001` prefix so the pre-commit hook accepted it
+
+**Out of scope:** `docs/DESIGN.md`, the "Stack" and "Hard rules" sections of `CLAUDE.md` —
+those stay placeholders until Phase 0 produces real architecture decisions.
+
+**Depends on:** —
+**Notes:** Committed directly to `master` as the repo's root commit rather than on
+`t/T-001-bootstrap-docs` — there was no prior commit to branch from, so the branch
+convention starts properly with T-002. The root commit also swept in the rest of the
+harness scaffolding (`.claude/`, `docs/DESIGN.md`, `docs/DECISIONS.md`, `docs/HANDOFF.md`,
+`docs/kb/INDEX.md`, `docs/sessions/README.md`, `docs/skill-template.md`), all of it
+untracked placeholder content with nothing to review — not scope creep, just what "first
+commit of a new repo" means.
