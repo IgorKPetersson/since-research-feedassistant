@@ -54,44 +54,6 @@ lands, per explicit instruction when Phase 1 was opened.
 
 ---
 
-### T-009 — HF + YouTube collectors → normalized document shape
-
-**Status:** todo
-**Size:** M  ·  **Branch:** `t/T-009-collectors`
-
-**Goal:** the HF Daily Papers and YouTube collectors both produce documents in one shared
-shape (source, url, title, feed date, text — plus arXiv `publishedAt` as extra metadata for
-papers), so downstream chunking and storage never need to know which source a document came
-from.
-
-**Why:** `docs/PLAN.md` Phase 1's first checklist item. D-001 (transcript source) and D-002
-(feed date semantics) are decided but not yet real code.
-
-**Acceptance criteria**
-- [ ] A shared document type (source, url, title, feed_date, text, optional
-  arxiv_published_at) is defined in code
-- [ ] The HF collector produces documents in this shape, using `paper.submittedOnDailyAt` as
-  `feed_date` (D-002) and `paper.summary` as `text` (KB-002's field-name correction, not
-  `abstract`)
-- [ ] The YouTube collector produces documents in this shape, using the video's upload date
-  as `feed_date`, captions as `text` when available, falling back to title+description per
-  D-001
-- [ ] Running each collector against real data produces at least one document with every
-  required field populated — no field silently empty when the source data has it
-- [ ] Every normalized document a collector produces is written to `data/raw/` (one file per
-  document or per run — durable, not just an in-memory return value), so T-012 can build the
-  database from these files without re-fetching from YouTube or HF
-
-**Out of scope:** chunking, embedding, storage (T-012); the fallback unit test (T-010);
-catch-up logic (T-013).
-
-**Depends on:** T-001, T-002, T-003
-**Notes:** `data/raw/` is the durable normalized-document store — T-012 reads from it rather
-than calling collectors directly, and T-013's catch-up runs append to it. T-015's backfill
-uses this same collector code, so its output lands here too.
-
----
-
 ### T-010 — Fallback unit test: simulated caption failure in the real collector
 
 **Status:** todo
@@ -176,24 +138,28 @@ evaluation question set (T-014) both build on.
 
 **Why:** `docs/PLAN.md` Phase 1's catch-up checklist item and `docs/GOAL.md`'s "up to 7 days
 offline" success criterion both assume a dataset already exists to catch up onto; nothing
-has ingested that starting history yet. T-002/KB-001 already flags YouTube caption fetches
-as a resource that can be blocked at volume, and 8 weeks across several channels is enough
-requests that the same risk applies — the backfill has to be paced and interruption-safe,
-not a single unthrottled loop.
+has ingested that starting history yet. T-002/KB-001 already flagged YouTube caption fetches
+as a resource that can be blocked at volume — and T-009 hit this for real (KB-008): the same
+machine went from 20/20 successes to 100% `IpBlocked` one day later, on just 2 requests, no
+volume involved. That's not a hypothetical the backfill needs to guard against; it's the
+observed failure mode.
 
 **Acceptance criteria**
 - [ ] The HF backfill fetches daily papers for each of the last 8 weeks (56 days) via
   T-009's collector, bounded by `feed_date` (`submittedOnDailyAt`, D-002)
 - [ ] The YouTube backfill fetches each chosen channel's videos across the same 8-week
   window in batches, with a pause between batches
-- [ ] Each video's outcome (captions fetched, fallback used, or failed) is logged
-  individually, not just as an aggregate count
+- [ ] Each video's outcome (captions fetched, fallback used, or failed, with the exception
+  type) is logged individually, not just as an aggregate count
 - [ ] Interrupting the run and restarting it resumes from where it left off — already
   completed days/videos are not re-fetched (checked against what's already in `data/raw/`,
   not a separate resume log)
-- [ ] If failures cluster (e.g. several consecutive YouTube failures, or any response that
-  looks like a block rather than an ordinary miss), the run stops and reports rather than
-  continuing to retry
+- [ ] A `RequestBlocked`/`IpBlocked` result (KB-008) stops the run and reports immediately —
+  it is an IP-level block, not a per-video miss, so continuing would silently fill the whole
+  backfill with fallback-only documents instead of surfacing that captions stopped working.
+  Ordinary per-video misses (`TranscriptsDisabled`, `NoTranscriptFound`) use the D-001
+  fallback and continue; only a cluster of those (not yet defined — pick a threshold, e.g. 5
+  consecutive) also stops the run
 - [ ] The backfill's normalized documents are written to `data/raw/` via T-009's collectors
   (the same durable store T-012 reads from), and its end point (the `feed_date` it completed
   through, per source) is persisted as the starting watermark for T-013's catch-up logic
@@ -652,6 +618,62 @@ instruction. The most valuable output wasn't the planned verification (KB-007's 
 up) — it was the review process surfacing and fixing a real error in KB-007's own
 speculative caveat, and identifying a Serious token-budget risk for Phase 1 that nothing
 upstream had flagged. Phase 0 is now genuinely complete; Phase 1 has not been started.
+
+---
+
+### T-009 — HF + YouTube collectors → normalized document shape
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-009-collectors`
+
+**Goal:** the HF Daily Papers and YouTube collectors both produce documents in one shared
+shape (source, url, title, feed date, text — plus arXiv `publishedAt` as extra metadata for
+papers), so downstream chunking and storage never need to know which source a document came
+from.
+
+**Why:** `docs/PLAN.md` Phase 1's first checklist item. D-001 (transcript source) and D-002
+(feed date semantics) are decided but not yet real code.
+
+**Acceptance criteria**
+- [x] A shared document type (source, url, title, feed_date, text, optional
+  arxiv_published_at) is defined in code → `vg09/document.py`'s `Document` dataclass
+- [x] The HF collector produces documents in this shape, using `paper.submittedOnDailyAt` as
+  `feed_date` (D-002) and `paper.summary` as `text` (KB-002's field-name correction, not
+  `abstract`) → `vg09/hf_papers.py`, confirmed against a live 2026-09-16 response (20 papers,
+  sample `2609.06986` written with every field populated)
+- [x] The YouTube collector produces documents in this shape, using the video's upload date
+  as `feed_date`, captions as `text` when available, falling back to title+description per
+  D-001 → `vg09/youtube.py`; the fallback path is the one actually exercised this run (see
+  Notes)
+- [x] Running each collector against real data produces at least one document with every
+  required field populated — no field silently empty when the source data has it →
+  `scripts/t009_run_collectors.py`, both collectors, zero missing fields
+- [x] Every normalized document a collector produces is written to `data/raw/` → confirmed:
+  `data/raw/hf/2026-09-16/2609.06986.json`,
+  `data/raw/youtube/2026-09-15/9RtywbN--QE.json`, etc.
+
+**Out of scope:** chunking, embedding, storage (T-012); the fallback unit test (T-010);
+catch-up logic (T-013).
+
+**Depends on:** T-001, T-002, T-003
+**Notes:** `data/raw/` is the durable normalized-document store — T-012 reads from it rather
+than calling collectors directly, and T-013's catch-up runs append to it. T-015's backfill
+uses this same collector code, so its output lands here too.
+
+Real finding, not a simulated one: the first run against YouTube crashed with `IpBlocked` —
+the same machine that got 20/20 caption successes in T-002 (2026-09-15) was fully blocked
+one day later, on 2 requests. The original code only caught 3 of `CouldNotRetrieveTranscript`'s
+many subclasses (`TranscriptsDisabled`, `NoTranscriptFound`, `VideoUnavailable`), so it
+crashed instead of falling back — fixed to catch the shared parent class, matching D-001's
+actual intent ("captions unavailable", not an enumerated list of reasons). Re-run then
+triggered the D-001 fallback for real on both videos, producing valid documents. Recorded as
+KB-008, which also sharpens T-015's stop-on-block criterion — this is a real risk, not a
+hypothetical one. Grill-me pass (inline) found one Serious issue (the fallback discarded
+*why* captions failed, which T-015 will need) — fixed by logging the exception type at the
+point of fallback rather than swallowing it. The caption-success code path itself
+(`FetchedTranscript`'s iteration — verified against the installed library's source, not
+guessed) was not empirically exercised this session, since every attempt hit the IP block;
+only the fallback path got real execution.
 
 ---
 

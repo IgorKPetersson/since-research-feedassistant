@@ -1,0 +1,59 @@
+"""Shared normalized document shape for all collectors (T-009).
+
+Every source (HF Daily Papers, YouTube) is normalized to this one shape before
+anything downstream (T-012's chunk/embed/store) touches it, so storage never needs
+to know which source a document came from.
+
+`feed_date` is the date used for all filtering and catch-up ingestion - the date
+something appeared in the source we watch, not its original publish date. See
+docs/DECISIONS.md D-002. For papers, the arXiv `publishedAt` date is kept as extra
+metadata for citations only, never for filtering.
+
+Documents are persisted under data/raw/<source>/<feed_date>/<id>.json so the
+database (T-012) can be rebuilt from disk without re-fetching from YouTube or HF,
+and so a backfill (T-015) can tell what it has already fetched by checking for the
+file rather than keeping a separate resume log.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
+
+_UNSAFE_ID_CHARS = re.compile(r"[^A-Za-z0-9_.-]")
+
+
+def raw_path(source: str, feed_date: str, doc_id: str) -> Path:
+    """Where a document with this id would live, whether or not it exists yet.
+
+    Callers that need to check "have I already fetched this?" before doing
+    expensive work (a transcript fetch, an API call) should call this - or
+    `exists()` - first.
+    """
+    safe_id = _UNSAFE_ID_CHARS.sub("_", doc_id)
+    return RAW_DIR / source / feed_date / f"{safe_id}.json"
+
+
+def exists(source: str, feed_date: str, doc_id: str) -> bool:
+    return raw_path(source, feed_date, doc_id).exists()
+
+
+@dataclass
+class Document:
+    id: str  # stable unique id within `source` - arXiv id, or YouTube video id
+    source: str  # "hf" | "youtube"
+    url: str
+    title: str
+    feed_date: str  # ISO date (YYYY-MM-DD) - D-002
+    text: str
+    arxiv_published_at: str | None = None  # papers only; never used for filtering
+
+    def write(self) -> Path:
+        path = raw_path(self.source, self.feed_date, self.id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(asdict(self), indent=2, ensure_ascii=False), encoding="utf-8")
+        return path

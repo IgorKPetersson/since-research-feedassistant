@@ -41,8 +41,9 @@ revision. Phase 1 has not started — waits for this review.
 
 ## Phase 1 — Ingest (rest of week 1)
 
-- [ ] Collectors for HF and YouTube produce one normalized document shape: source, url,
-  title, feed date, text — plus arXiv `publishedAt` as extra metadata for papers (D-002)
+- [x] Collectors for HF and YouTube produce one normalized document shape: source, url,
+  title, feed date, text — plus arXiv `publishedAt` as extra metadata for papers (D-002) —
+  T-009, KB-008
 - [ ] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
   alongside for citations, never used for filtering (D-002). Re-running is idempotent
 - [ ] Initial backfill: 8 weeks of history for both sources, fetched in batches with pauses
