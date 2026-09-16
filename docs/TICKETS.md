@@ -78,13 +78,17 @@ from.
   D-001
 - [ ] Running each collector against real data produces at least one document with every
   required field populated — no field silently empty when the source data has it
-- [ ] A sample of normalized documents from both sources is saved for inspection
+- [ ] Every normalized document a collector produces is written to `data/raw/` (one file per
+  document or per run — durable, not just an in-memory return value), so T-012 can build the
+  database from these files without re-fetching from YouTube or HF
 
 **Out of scope:** chunking, embedding, storage (T-012); the fallback unit test (T-010);
 catch-up logic (T-013).
 
 **Depends on:** T-001, T-002, T-003
-**Notes:** —
+**Notes:** `data/raw/` is the durable normalized-document store — T-012 reads from it rather
+than calling collectors directly, and T-013's catch-up runs append to it. T-015's backfill
+uses this same collector code, so its output lands here too.
 
 ---
 
@@ -126,31 +130,37 @@ D-001's "Cost" section.
 **Status:** todo
 **Size:** M  ·  **Branch:** `t/T-012-chunk-embed-store`
 
-**Goal:** normalized documents from T-009 are chunked, embedded with `bge-m3`, and stored in
-ChromaDB with feed date as filterable metadata and arXiv `publishedAt` alongside for
-citations, and re-running ingest never creates duplicates.
+**Goal:** normalized documents from `data/raw/` (T-009's collectors, populated by T-015's
+backfill) are chunked, embedded with `bge-m3`, and stored in ChromaDB with feed date as
+filterable metadata and arXiv `publishedAt` alongside for citations — and re-running ingest
+never creates duplicates.
 
 **Why:** `docs/PLAN.md` Phase 1's second checklist item. D-004 (ChromaDB), D-005 (`bge-m3`)
 and D-002 (feed date semantics) need to land in real storage code, with chunk size and top-k
 chosen against T-008's measured budget rather than guessed.
 
 **Acceptance criteria**
+- [ ] Chunking/embedding reads normalized documents from `data/raw/` rather than calling the
+  HF/YouTube collectors directly, so the database can be rebuilt from disk without
+  re-fetching from YouTube
 - [ ] Chunk size is chosen using T-008's documented context budget, with the reasoning cited
 - [ ] Each chunk is embedded via an explicit `bge-m3` call (CLAUDE.md hard rule — never
   ChromaDB's default embedder)
 - [ ] Each chunk is stored with `feed_date` as filterable metadata (D-002/D-004); for
   papers, `arxiv_published_at` is stored alongside but never used for filtering
-- [ ] Running ingest twice over the same source data produces the same document/chunk count
-  both times
+- [ ] Running ingest twice over the same `data/raw/` contents produces the same
+  document/chunk count both times
 - [ ] A query filtered to a feed-date range returns only chunks inside that range, in the
   real schema — not just T-005's throwaway 8-document test collection
 
 **Out of scope:** catch-up logic for missed days (T-013); retrieval/answer generation
 (Phase 2).
 
-**Depends on:** T-008, T-009
+**Depends on:** T-008, T-009, T-015
 **Notes:** T-008 blocks this — chunk size and top-k must not be finalized before T-008's
-context-budget section lands, per explicit instruction when Phase 1 was opened.
+context-budget section lands, per explicit instruction when Phase 1 was opened. Run order:
+T-009 → T-010, T-015 (backfill, own terminal) with T-008 done in parallel while the backfill
+runs → T-012 → T-013 → T-014, per explicit instruction when these clarifications were added.
 
 ---
 
@@ -179,12 +189,17 @@ not a single unthrottled loop.
 - [ ] Each video's outcome (captions fetched, fallback used, or failed) is logged
   individually, not just as an aggregate count
 - [ ] Interrupting the run and restarting it resumes from where it left off — already
-  completed days/videos are not re-fetched
+  completed days/videos are not re-fetched (checked against what's already in `data/raw/`,
+  not a separate resume log)
 - [ ] If failures cluster (e.g. several consecutive YouTube failures, or any response that
   looks like a block rather than an ordinary miss), the run stops and reports rather than
   continuing to retry
-- [ ] The backfill's end point (the `feed_date` it completed through, per source) is
-  persisted as the starting watermark for T-013's catch-up logic
+- [ ] The backfill's normalized documents are written to `data/raw/` via T-009's collectors
+  (the same durable store T-012 reads from), and its end point (the `feed_date` it completed
+  through, per source) is persisted as the starting watermark for T-013's catch-up logic
+- [ ] `data/raw/` as it stands at the backfill's end date is the frozen dataset T-014 writes
+  its evaluation questions against — no partial/interrupted run is treated as that frozen
+  point, only a completed one
 
 **Out of scope:** ongoing catch-up after this point (T-013 consumes this ticket's end
 point); chunking/embedding the backfilled documents (T-012 processes whatever has been
@@ -193,7 +208,8 @@ collected, from either the backfill or later catch-up runs).
 **Depends on:** T-009
 **Notes:** Must reach a stable or fully-resumed state before T-013 starts, since T-013's
 first watermark is this ticket's end point, not an assumption. Also gates T-014 — the
-evaluation question set needs real backfilled data to verify expected sources against.
+evaluation question set needs real backfilled data in `data/raw/` to verify expected sources
+against.
 
 ---
 
@@ -214,6 +230,8 @@ criterion depends on this directly.
   or empty starting date
 - [ ] A simulated 7-day-offline scenario (watermark set 7 days in the past) results in one
   run fetching all documents with `feed_date` after the watermark, across both sources
+- [ ] New documents from a catch-up run are appended to `data/raw/` alongside the backfill's
+  existing files, keeping it the single durable normalized-document store T-012 reads from
 - [ ] Running catch-up twice in a row with no new data in between adds zero new documents,
   building on T-012's idempotency
 - [ ] The watermark only advances after a run completes successfully — a failed/partial run
@@ -244,13 +262,14 @@ backfilled data (rather than asserting them from memory) means the eval set isn'
 a source that turns out to be missing or garbled.
 
 **Acceptance criteria**
-- [ ] The dataset used for question-writing is frozen at a fixed cutoff `feed_date` (T-015's
-  backfill end point); that date is written down alongside the question set so a later
-  re-ingestion doesn't silently change what "current" meant when the questions were written
+- [ ] The dataset used for question-writing is `data/raw/` as it stood at T-015's backfill
+  end date (the frozen cutoff `feed_date`); that date is written down alongside the question
+  set so a later re-ingestion doesn't silently change what "current" meant when the
+  questions were written
 - [ ] I write 15–20 questions spanning all three question types from
   `docs/GOAL.md`: "what's new", "did X come up", "has Q progressed in the last n weeks"
 - [ ] For each question, the expected source document(s) (title + url + feed date) are
-  looked up and confirmed present in the actual backfilled data — not asserted from memory
+  looked up and confirmed present in `data/raw/` — not asserted from memory
 - [ ] At least two questions are built around a proper noun likely to be garbled by
   YouTube's auto-generated captions, per T-002's notes and KB-001
 - [ ] Questions span both sources, and at least one requires combining evidence from both
@@ -665,11 +684,19 @@ in T-008.
 - [x] T-014 rewritten on my review to reflect I writing the questions and the
   agent verifying expected sources against the frozen backfilled dataset, rather than the
   agent drafting the questions
+- [x] `data/raw/` established as the durable normalized-document contract on my review:
+  T-009 and T-015 write there, T-012 reads from there (never re-fetching from YouTube to
+  rebuild the database), T-013 appends there, and T-014's frozen dataset is defined as
+  `data/raw/` as it stood at T-015's backfill end date
+- [x] Run order recorded on my review — T-009 → T-010, T-015 (backfill, own terminal)
+  with T-008 in parallel → T-012 → T-013 → T-014 — in both `docs/PLAN.md`'s Phase 1 section
+  and T-012's notes
 - [x] None of T-008–T-015 executed — this ticket covers only the planning artifacts
 
 **Out of scope:** doing any of T-008 through T-015's actual work.
 
 **Depends on:** T-007
-**Notes:** Two-pass ticket-writing: the first pass (T-008–T-014) was revised after my
-review into this final set (T-008–T-015, plus T-011 moved to Phase 2) before anything was
-committed or started, per explicit instruction to hold all commits until review.
+**Notes:** Three-pass ticket-writing: the first pass (T-008–T-014) was revised after my
+review into a second set (T-008–T-015, plus T-011 moved to Phase 2), then a third pass added
+the `data/raw/` storage contract and run order — all before any of T-008–T-015 was committed
+or started, per explicit instruction to hold all commits until review.

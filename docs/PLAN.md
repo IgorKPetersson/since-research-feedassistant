@@ -54,6 +54,9 @@ revision. Phase 1 has not started — waits for this review.
   backfilled dataset (fixed cutoff date) — **before** retrieval is built, so the system
   isn't tuned to them
 
+**Run order:** T-009 → T-010, then T-015 (backfill, run in its own terminal) with T-008 done
+in parallel while the backfill runs → T-012 → T-013 → T-014.
+
 **Exit criteria:** running ingest twice gives the same document count. Simulating 7 days
 offline, one run catches up.
 **Checkpoint:** I review.
