@@ -38,8 +38,24 @@ def raw_path(source: str, feed_date: str, doc_id: str) -> Path:
     return RAW_DIR / source / feed_date / f"{safe_id}.json"
 
 
+def pending_path(source: str, feed_date: str, doc_id: str) -> Path:
+    """Where a *pending* marker for this id would live - a video whose fetch was
+    blocked (D-006/KB-008) rather than a source that genuinely lacks the data.
+    Kept alongside, not inside, the final document so a reader that only wants
+    finished documents can glob `*.json` and skip `*.pending.json`."""
+    safe_id = _UNSAFE_ID_CHARS.sub("_", doc_id)
+    return RAW_DIR / source / feed_date / f"{safe_id}.pending.json"
+
+
 def exists(source: str, feed_date: str, doc_id: str) -> bool:
     return raw_path(source, feed_date, doc_id).exists()
+
+
+def clear_pending(source: str, feed_date: str, doc_id: str) -> None:
+    """Remove a stale pending marker once a final document has been written for
+    the same id - otherwise a resolved video would still look pending to a
+    reader that only checks for `*.pending.json` (T-015's retry logic)."""
+    pending_path(source, feed_date, doc_id).unlink(missing_ok=True)
 
 
 @dataclass
@@ -51,9 +67,33 @@ class Document:
     feed_date: str  # ISO date (YYYY-MM-DD) - D-002
     text: str
     arxiv_published_at: str | None = None  # papers only; never used for filtering
+    text_source: str | None = None  # "captions" | "title_description" (YouTube only)
+    fallback_reason: str | None = None  # exception class name; set iff text_source is
+    # "title_description" (D-006) - lets a fallback document be told apart from a real
+    # transcript and reconsidered later without re-deriving that from `text` itself
 
     def write(self) -> Path:
         path = raw_path(self.source, self.feed_date, self.id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(asdict(self), indent=2, ensure_ascii=False), encoding="utf-8")
+        return path
+
+
+@dataclass
+class Pending:
+    """A video whose caption fetch was blocked (D-006) rather than genuinely
+    missing captions - deliberately has no `text`, since nothing was fetched.
+    Retried later (T-015), not treated as a finished document."""
+
+    id: str
+    source: str
+    url: str
+    title: str
+    feed_date: str
+    reason: str  # the exception class name that caused the block
+
+    def write(self) -> Path:
+        path = pending_path(self.source, self.feed_date, self.id)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(asdict(self), indent=2, ensure_ascii=False), encoding="utf-8")
         return path

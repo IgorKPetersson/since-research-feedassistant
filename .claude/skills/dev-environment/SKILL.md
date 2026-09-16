@@ -4,21 +4,24 @@ description: How to run this project's infrastructure — the dev server, the te
 ---
 
 <!--
-  PARTIALLY VERIFIED as of T-002. Still no app to run (no server, no chat UI, no test
-  suite) — only the venv/dependency workflow and the Phase 0 feasibility scripts exist.
-  Update the rest as real commands and dependencies show up in Phase 1+.
+  PARTIALLY VERIFIED as of T-010. Still no app to run (no server, no chat UI) — but a real
+  unit test suite now exists (tests/, stdlib unittest). Update the rest as real commands and
+  dependencies show up in Phase 1+.
 -->
 
 # Development environment
 
 Assume nothing external is running until checked. No dev server or database exists yet.
-What does exist: a local `.venv` and a handful of one-off Phase 0 feasibility scripts under
-`scripts/` that make real network calls (YouTube, HF Daily Papers, Ollama).
+What does exist: a local `.venv`, the `vg09/` collector package, a `tests/` suite (stdlib
+`unittest`, fully mocked — no live network calls), and a handful of one-off Phase 0
+feasibility scripts under `scripts/` that make real network calls (YouTube, HF Daily
+Papers, Ollama).
 
 ## What runs
 
-Nothing long-running yet. `scripts/*.py` are one-shot feasibility checks, run manually, not
-part of any test suite.
+Nothing long-running yet. `scripts/*.py` are one-shot feasibility/verification scripts, run
+manually, not part of the test suite — some of them (`t002`, `t003`, `t009_run_collectors`)
+make real network calls. `tests/` is the only thing that runs with no live dependency.
 
 ## Commands
 
@@ -28,11 +31,13 @@ Verified (Windows, Python 3.12 via the `py` launcher):
 py -3.12 -m venv .venv                              # create the venv (once)
 .venv/Scripts/python.exe -m pip install -r requirements.txt
 .venv/Scripts/python.exe -m pip freeze > requirements.txt   # after adding a new package
-.venv/Scripts/python.exe scripts/<name>.py           # run a feasibility script
+.venv/Scripts/python.exe scripts/<name>.py           # run a feasibility/verification script
+.venv/Scripts/python.exe -m unittest discover -s tests -v   # run the test suite
 ```
 
-`<run tests>` / `<lint>` / `<typecheck>` — still not decided; no test suite, linter or
-type-checker config exists yet. Add real commands here the moment they do.
+Test framework is stdlib `unittest`/`unittest.mock` — chosen at T-010 specifically to avoid
+adding a dependency (e.g. `pytest`) without asking; revisit if the suite outgrows it.
+`<lint>` / `<typecheck>` — still not decided; add real commands here the moment they do.
 
 `.venv/` and `data/` are gitignored. `data/` holds raw output from feasibility scripts
 (e.g. `data/t002_youtube_captions.json`) — never committed, regenerate by rerunning the

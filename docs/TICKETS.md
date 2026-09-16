@@ -54,38 +54,6 @@ lands, per explicit instruction when Phase 1 was opened.
 
 ---
 
-### T-010 — Fallback unit test: simulated caption failure in the real collector
-
-**Status:** todo
-**Size:** S  ·  **Branch:** `t/T-010-caption-fallback-test`
-
-**Goal:** the YouTube collector's title+description fallback path (D-001) is verified by a
-unit test that simulates a real caption-fetch failure, closing the gap T-002 explicitly left
-open.
-
-**Why:** T-002's acceptance criteria accepted the fallback as unverified — all 20 sampled
-videos had captions, so the fallback branch was never exercised against a real failure.
-T-002's notes and D-001's "Cost" section both name this as a live risk, to be handled inside
-the real Phase 1 collector, not the throwaway T-002 script.
-
-**Acceptance criteria**
-- [ ] A unit test forces a caption-fetch failure (e.g. `TranscriptsDisabled` or
-  `NoTranscriptFound`) against the real YouTube collector from T-009
-- [ ] The test asserts the collector falls back to title+description and still produces a
-  valid normalized document (T-009's shape) rather than raising or leaving `text` empty
-- [ ] The test runs with no live network call (mocked), as part of the regular test suite
-- [ ] A second unit test confirms the non-fallback path (captions available) still produces
-  the expected document, so the fallback branch is covered without regressing the primary
-  path
-
-**Out of scope:** re-testing caption availability against real channels (done, KB-001);
-Whisper (parked, `docs/GOAL.md`).
-
-**Depends on:** T-009
-**Notes:** Closes the gap explicitly deferred in T-002's acceptance criteria and named in
-D-001's "Cost" section.
-
----
 
 ### T-012 — Chunk, embed and store documents with feed date metadata (idempotent)
 
@@ -104,7 +72,8 @@ chosen against T-008's measured budget rather than guessed.
 **Acceptance criteria**
 - [ ] Chunking/embedding reads normalized documents from `data/raw/` rather than calling the
   HF/YouTube collectors directly, so the database can be rebuilt from disk without
-  re-fetching from YouTube
+  re-fetching from YouTube — reads only final `*.json` documents, skipping `*.pending.json`
+  markers (T-010/D-006), since a pending video has no `text` to chunk yet
 - [ ] Chunk size is chosen using T-008's documented context budget, with the reasoning cited
 - [ ] Each chunk is embedded via an explicit `bge-m3` call (CLAUDE.md hard rule — never
   ChromaDB's default embedder)
@@ -154,12 +123,13 @@ observed failure mode.
 - [ ] Interrupting the run and restarting it resumes from where it left off — already
   completed days/videos are not re-fetched (checked against what's already in `data/raw/`,
   not a separate resume log)
-- [ ] A `RequestBlocked`/`IpBlocked` result (KB-008) stops the run and reports immediately —
-  it is an IP-level block, not a per-video miss, so continuing would silently fill the whole
-  backfill with fallback-only documents instead of surfacing that captions stopped working.
-  Ordinary per-video misses (`TranscriptsDisabled`, `NoTranscriptFound`) use the D-001
-  fallback and continue; only a cluster of those (not yet defined — pick a threshold, e.g. 5
-  consecutive) also stops the run
+- [ ] A `RequestBlocked`/`IpBlocked` result (KB-008/D-006) stops the run and reports
+  immediately — `vg09.youtube.normalize()` already raises `IngestBlocked` for this and
+  writes a `Pending` marker for the video (T-010); the backfill orchestrator catches
+  `IngestBlocked` at the point `collect_channel` propagates it, rather than adding its own
+  detection. Ordinary per-video misses (`TranscriptsDisabled`, `NoTranscriptFound`) use the
+  D-001/D-006 fallback and continue; only a cluster of those (not yet defined — pick a
+  threshold, e.g. 5 consecutive) also stops the run
 - [ ] The backfill's normalized documents are written to `data/raw/` via T-009's collectors
   (the same durable store T-012 reads from), and its end point (the `feed_date` it completed
   through, per source) is persisted as the starting watermark for T-013's catch-up logic
@@ -674,6 +644,73 @@ point of fallback rather than swallowing it. The caption-success code path itsel
 (`FetchedTranscript`'s iteration — verified against the installed library's source, not
 guessed) was not empirically exercised this session, since every attempt hit the IP block;
 only the fallback path got real execution.
+
+---
+
+### T-010 — Fallback unit test: distinguish missing captions from being blocked
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-010-caption-fallback-test`
+
+**Goal:** the YouTube collector treats a per-video "captions missing" failure and an
+IP-level "blocked" failure (KB-008) as two different outcomes — missing falls back to
+title+description as a final document; blocked writes nothing final, marks the video
+pending, and aborts the run — each covered by a mocked unit test, with no live network call.
+
+**Why:** T-002's acceptance criteria accepted the fallback as unverified; T-009 then hit a
+real `IpBlocked` failure (KB-008) and, because the code didn't distinguish it from an
+ordinary missing-captions case, nearly wrote it as a normal fallback document — which would
+have silently produced a full backfill of weak documents in T-015 with no signal that
+captions had stopped working. The two failure modes need different handling, not the same
+fallback.
+
+**Acceptance criteria**
+- [x] The YouTube collector distinguishes two cases: captions missing
+  (`TranscriptsDisabled`, `NoTranscriptFound`, and similar non-`RequestBlocked` failures)
+  falls back to title+description and writes a final document; blocked (`RequestBlocked`,
+  `IpBlocked`) writes no final document, writes a pending marker for the video instead, and
+  aborts the run rather than continuing to the next video → `vg09/youtube.py`'s `normalize()`
+  catches `RequestBlocked` before the broader `CouldNotRetrieveTranscript`
+- [x] `Document` gains `text_source` (`"captions"` | `"title_description"`) and
+  `fallback_reason` (the exception class name, or `None` when `text_source` is `"captions"`)
+  → `vg09/document.py`
+- [x] A unit test forces a missing-captions exception and asserts a final document is
+  written with `text_source="title_description"` and the right `fallback_reason` →
+  `tests/test_youtube.py::test_missing_captions_falls_back_to_title_description`
+- [x] A unit test forces a `RequestBlocked`/`IpBlocked` exception and asserts: no final
+  document is written, a pending marker is written for that video, and the collector raises
+  rather than silently continuing →
+  `test_blocked_writes_no_final_document_marks_pending_and_raises`
+- [x] A unit test forces the caption-success path with a mocked `FetchedTranscript` (built
+  from the library's real dataclasses) and asserts `text_source="captions"`,
+  `fallback_reason=None`, and the joined transcript text →
+  `test_captions_available_uses_the_real_transcript_shape`
+- [x] All tests run with no live YouTube call (mocked `YouTubeTranscriptApi` and, for the
+  `collect_channel` test, mocked `list_videos`) → `.venv/Scripts/python.exe -m unittest
+  discover -s tests -v`, 4 tests, all pass, 0.010s
+- [x] The two YouTube documents T-009 wrote during the actual `IpBlocked` run
+  are converted to pending markers (`*.pending.json`, `reason="IpBlocked"`) via a local
+  script against the already-fetched data — no re-fetch, no YouTube call
+- [x] D-001 is updated via a new decision entry recording the missing-vs-blocked
+  distinction, superseding D-001 → **D-006**, `D-001` marked `Superseded by D-006`
+
+**Out of scope:** re-testing caption availability against real channels (done, KB-001);
+Whisper (parked, `docs/GOAL.md`); actually retrying pending videos later (T-015's job).
+
+**Depends on:** T-009
+**Notes:** No live YouTube calls (transcript or yt-dlp) made for this ticket, per explicit
+instruction — every test is mocked, and the `data/raw/` cleanup was a local file operation
+on already-fetched data. Framework: stdlib `unittest`/`unittest.mock`, not `pytest` — no
+test framework had been chosen for the project yet, and adding one is a dependency decision
+that wasn't asked for here; `dev-environment` skill updated with the real test command.
+
+Grill-me (inline) found one additional Serious issue beyond the three requested tests: a
+video blocked in one run and successfully fetched in a later run would leave a stale
+`*.pending.json` marker alongside the new final document, since nothing cleared it — a
+future retry consumer (T-015) would keep re-treating a resolved video as pending. Fixed with
+`vg09.document.clear_pending()`, called from `collect_channel` after every successful final
+write, and covered by a fourth test
+(`CollectChannelTests::test_a_later_success_clears_an_earlier_pending_marker`).
 
 ---
 

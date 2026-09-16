@@ -11,7 +11,7 @@ Format: **what** was decided, **why**, **what was rejected**, **what would chang
 ---
 
 ## D-001 — Transcript source: captions first, title+description as fallback
-**Status:** accepted
+**Status:** Superseded by D-006 (fallback still stands; D-006 splits *why* it fires)
 
 **Decision:** Phase 1 ingest uses YouTube captions (via `youtube-transcript-api`) as the
 primary transcript source for a video, falling back to title + description (already
@@ -173,6 +173,51 @@ questions.
 chunks and longer conversations grow the KV cache beyond this test's single-question probe
 — `num_ctx=16000` is a ceiling, not measured live usage. If that happens, the next lever is
 a smaller `num_ctx` before changing model choice again.
+
+---
+
+## D-006 — YouTube fallback splits "captions missing" from "blocked"; only missing falls back
+**Status:** accepted
+
+**Decision:** Supersedes D-001's undifferentiated fallback. The YouTube collector now
+treats a caption-fetch failure one of two ways, based on its exception type:
+
+- **Missing** — `TranscriptsDisabled`, `NoTranscriptFound`, and anything else under
+  `CouldNotRetrieveTranscript` that isn't `RequestBlocked` — a per-video signal that this
+  specific video has no captions. Falls back to title+description and writes a final
+  `Document`, now recorded with `text_source="title_description"` and
+  `fallback_reason=<exception class name>`.
+- **Blocked** — `RequestBlocked`/`IpBlocked` — an IP-level block, not a per-video signal.
+  No final document is written; the video is recorded as a `Pending` marker
+  (`data/raw/<source>/<feed_date>/<id>.pending.json`) for a later retry, and the collector
+  raises `IngestBlocked` so the caller stops the run rather than continuing to the next
+  video.
+
+**Why:** KB-008 — T-009 hit a real `IpBlocked` failure one day after T-002's clean 20/20
+run, on just 2 requests. Under D-001's original undifferentiated fallback, that would have
+been written as an ordinary fallback document, indistinguishable from a video that simply
+lacks captions. In T-015's planned 8-week, multi-channel backfill, that would silently
+produce a dataset of weak, title+description-only documents with no signal that captions
+had stopped working at all.
+
+**Rejected:** Keeping D-001's single fallback path for every failure — rejected because it
+can't tell a genuinely caption-less video from a transient IP-level block, and the two need
+different responses (a permanent fallback vs. a later retry). Retrying immediately inside
+the collector when blocked — rejected as pointless; an IP block does not clear within the
+same run, so an immediate retry would just fail again and waste the request.
+
+**Cost:** `Document` gained two fields (`text_source`, `fallback_reason`) every downstream
+reader should be aware of, though neither is required to act on them yet. A blocked run now
+ends in a mixed state (some videos final, one pending, the rest not attempted) rather than a
+clean success or failure — T-015's resumability has to treat a pending marker as "not yet
+done", not as "tried and gave up". The missing/blocked split itself is unverified beyond
+KB-008's single occurrence — built from reading the library's exception hierarchy, not from
+observing many blocked runs.
+
+**Would change our mind:** If `RequestBlocked` turns out to also fire for a single,
+non-systemic video failure (not an IP-wide condition) — that would make routing every
+`RequestBlocked` to "stop the whole run" too aggressive, and the split would need a third
+category or a different signal than exception type alone.
 
 ---
 
