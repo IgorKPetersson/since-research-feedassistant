@@ -118,6 +118,17 @@ server timezone isn't known, and the "always re-check today" design already self
 most of the practical impact. Worth a real check if a boundary run ever produces a
 suspiciously-sized day.
 
+**Follow-up fix (same ticket):** I flagged that re-checking only "today" wasn't
+enough — Sweden's local clock runs ahead of UTC, so a run shortly after local midnight could
+close out a day (mark it done, advance the watermark past it) while it's still open on HF's
+server clock, which is exactly the Minor timezone risk noted above turning into a real
+correctness gap. Fixed: the reopen window is now the last **2** calendar days
+(`REOPEN_DAYS=2`), not just today; the watermark now sits 2 days back, not 1. Re-ran against
+the real API: the stale `_done.json` marker 2026-09-15 had from the original run (back when
+it wasn't in the reopen window yet) was cleared and the day re-fetched (33 papers, same
+count, no duplicates - confirmed 1184 documents total, unchanged), and the watermark moved
+from `2026-09-15` to `2026-09-14`.
+
 ---
 
 ### T-017 — YouTube backfill (blocked on transcript-path decision)

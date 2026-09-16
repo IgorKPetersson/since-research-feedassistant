@@ -8,12 +8,15 @@ once it's been fetched - even a weekend day with 0 papers (KB-002) counts as
 done. A re-run skips any day that already has one, rather than re-hitting the
 API to re-confirm an empty result.
 
-`today` is deliberately never marked done and never becomes the watermark: HF
-may still add papers to today's date later in the day, so every run re-checks
-today fresh (Document.write() overwrites safely - same arXiv id, same file, no
-duplicates), and the watermark only advances through the last fully-elapsed
-day. T-013's catch-up then always re-checks "today" too, since today's
-feed_date is never <= the watermark.
+The last REOPEN_DAYS calendar days (today and yesterday) are deliberately never
+marked done and never become the watermark: HF may still add papers to a
+recent date later on, and Sweden's local clock runs ahead of UTC, so a run
+shortly after local midnight could otherwise close out a day that's still open
+on HF's server clock. Document.write() overwrites safely (same arXiv id, same
+file, no duplicates), so re-checking costs nothing extra. The watermark
+advances only through the day before the reopen window, and T-013's catch-up
+will always re-check the reopen window too, since those feed_dates are never
+<= the watermark.
 
 Makes real network calls to the HF Daily Papers API; run it manually.
 """
@@ -30,6 +33,7 @@ from vg09.watermark import read_watermark, write_watermark  # noqa: E402
 
 WEEKS_BACK = 8
 PAUSE_BETWEEN_DAYS = 0.3  # seconds - no rate limit observed (KB-002, 14 days), a courtesy pause anyway
+REOPEN_DAYS = 2  # always re-check today and yesterday - Sweden runs ahead of UTC
 
 
 def main() -> None:
@@ -45,11 +49,15 @@ def main() -> None:
     total_papers = 0
 
     for d in days:
-        if d == today:
+        if (today - d).days < REOPEN_DAYS:
+            # In the reopen window - always re-check, never trust a marker
+            # (even one left by an older run under different rules).
+            hf_papers.clear_day_marker(d)
             docs = hf_papers.collect_day(d)
             fetched_days += 1
             total_papers += len(docs)
-            print(f"{d.isoformat()}: {len(docs)} papers (today - always re-checked, not marked done)")
+            print(f"{d.isoformat()}: {len(docs)} papers (reopen window - always re-checked, not marked done)")
+            time.sleep(PAUSE_BETWEEN_DAYS)
             continue
 
         if hf_papers.is_day_done(d):
@@ -64,12 +72,12 @@ def main() -> None:
         print(f"{d.isoformat()}: {len(docs)} papers{note}")
         time.sleep(PAUSE_BETWEEN_DAYS)
 
-    watermark_date = today - timedelta(days=1)  # last fully-elapsed day, not today
+    watermark_date = today - timedelta(days=REOPEN_DAYS)  # last day before the reopen window
     write_watermark("hf", watermark_date.isoformat())
 
     print(f"\nDone. {fetched_days} days fetched this run, {skipped_days} already done (skipped), "
           f"{total_papers} papers written this run.")
-    print(f"New hf watermark: {watermark_date.isoformat()} (today excluded on purpose - see docstring)")
+    print(f"New hf watermark: {watermark_date.isoformat()} (reopen window excluded on purpose - see docstring)")
 
 
 if __name__ == "__main__":

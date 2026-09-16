@@ -75,6 +75,13 @@ def is_day_done(d: date) -> bool:
     return day_marker_path(d).exists()
 
 
+def clear_day_marker(d: date) -> None:
+    """Remove a day's completion marker, if any - used to re-open a day that
+    should always be re-checked (T-015's reopen window) even if an earlier run
+    marked it done under different rules."""
+    day_marker_path(d).unlink(missing_ok=True)
+
+
 def mark_day_done(d: date, paper_count: int) -> None:
     path = day_marker_path(d)
     path.parent.mkdir(parents=True, exist_ok=True)
