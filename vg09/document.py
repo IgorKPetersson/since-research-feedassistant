@@ -75,6 +75,7 @@ class Document:
     # [{"text": str, "start": float, "duration": float}, ...] - the real per-snippet
     # timing FetchedTranscriptSnippet provides (T-010), preserved so T-012 can chunk by
     # timestamp instead of losing timing at collection time by joining into one string
+    # (D-007 - added to the schema after T-012 shipped it, approved after the fact)
 
     def write(self) -> Path:
         path = raw_path(self.source, self.feed_date, self.id)

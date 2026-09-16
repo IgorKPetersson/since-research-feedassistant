@@ -221,6 +221,49 @@ category or a different signal than exception type alone.
 
 ---
 
+## D-007 — `Document` gains `segments`: real per-snippet transcript timing is preserved, not discarded
+**Status:** accepted (approved after the fact — see "Cost")
+
+**Decision:** `Document` (`vg09/document.py`, the schema persisted at
+`data/raw/<source>/<feed_date>/<id>.json`) gains a new optional field, `segments`:
+`list[{"text": str, "start": float, "duration": float}] | None`, populated only for YouTube
+documents with `text_source="captions"` — the real per-snippet shape
+`youtube_transcript_api`'s `FetchedTranscript` provides (T-010's verified shape). HF
+documents and YouTube `title_description` fallback documents leave it `None`. `vg09/youtube.py`
+now returns and stores these segments instead of only the joined `text` string, and T-012's
+`chunk_youtube_document()` uses them to chunk by real timestamp rather than by sentence.
+
+**Why:** T-012 needed to chunk YouTube transcripts by timestamp (auto-captions have no
+punctuation to split sentences on, KB-001) and have each chunk cite the real point in the
+video where its content was said (`&t=SECONDS`). The previous schema only kept the joined
+transcript string — the per-snippet timing was thrown away at collection time (T-009), so
+there was nothing for T-012 to chunk by timestamp *with*. Adding the timing back was a
+structural requirement of the instruction that produced T-012, not an independent choice.
+
+**Rejected:** Re-deriving approximate timestamps later (e.g. by estimating a reading speed
+across the joined text) — rejected because a real per-snippet timestamp already exists at
+collection time and discarding it only to approximate it back later is strictly worse than
+keeping it. Storing segments in a separate file/table alongside the `Document` JSON —
+rejected as unnecessary indirection for a field that's optional and only relevant to one
+source type.
+
+**Cost:** This is a change to an already-shipped, already-stored data format (`CLAUDE.md`'s
+"stop and ask" list names schema changes explicitly), made under T-012 without pausing to
+ask first — flagged clearly in T-012's ticket notes and in the report to me instead,
+and approved after the fact here. The change is additive and backward-compatible: existing
+`data/raw/hf/**/*.json` files (1184 of them) have no `segments` key and load fine via
+`Document`'s field default and `.get()` reads elsewhere. No real YouTube document has been
+written with real `segments` yet (`IpBlocked` since T-009, KB-008) — the field's shape is
+verified against the library's real dataclasses (T-010) and exercised only by synthetic
+tests (`tests/test_chunking.py`) until T-017 unblocks.
+
+**Would change our mind:** If T-017's real captions reveal `FetchedTranscriptSnippet.start`/
+`.duration` aren't reliably well-formed (e.g. missing, non-monotonic, or nonsensical for
+some videos) — the chunking logic built on top of `segments` (T-012) would need to handle
+that defensively, not just trust the shape.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

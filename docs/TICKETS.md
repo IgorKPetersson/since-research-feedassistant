@@ -90,7 +90,8 @@ preserved so YouTube chunking can use real timestamps instead of losing them whe
 consequence of this ticket's own instructions (chunk by timestamp, store the start time) —
 proceeded rather than blocking to ask, since the alternative (not implementing timestamped
 citations at all) contradicts what was explicitly asked for. Flagged here and in the final
-report for me to confirm or object, per `/deep-review`'s finding below.
+report for me to confirm or object, per `/deep-review`'s finding below. **Approved
+after the fact by me and recorded as D-007.**
 
 `/deep-review` (reviewer subagent) findings: one Minor/process (the schema change above,
 addressed by this note rather than reverted), one Minor/plausible (segment construction
