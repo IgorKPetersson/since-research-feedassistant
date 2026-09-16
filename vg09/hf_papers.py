@@ -9,13 +9,16 @@ metadata only, per D-002).
 
 from __future__ import annotations
 
+import json
 from datetime import date
+from pathlib import Path
 
 import requests
 
-from vg09.document import Document
+from vg09.document import RAW_DIR, Document
 
 API_URL = "https://huggingface.co/api/daily_papers"
+DAY_MARKER_NAME = "_done.json"
 
 
 def fetch_day(d: date) -> list[dict]:
@@ -58,3 +61,21 @@ def collect_day(d: date) -> list[Document]:
         else:
             print(f"  skipping entry missing arxiv id or feed_date: {entry.get('title')!r}")
     return docs
+
+
+def day_marker_path(d: date) -> Path:
+    """Where a completion marker for `d` would live. A day is considered "done"
+    once this exists - even a weekend day with 0 papers (KB-002) - so a resumed
+    backfill can skip it without re-hitting the API to re-confirm an empty
+    result."""
+    return RAW_DIR / "hf" / d.isoformat() / DAY_MARKER_NAME
+
+
+def is_day_done(d: date) -> bool:
+    return day_marker_path(d).exists()
+
+
+def mark_day_done(d: date, paper_count: int) -> None:
+    path = day_marker_path(d)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"paper_count": paper_count}, indent=2), encoding="utf-8")

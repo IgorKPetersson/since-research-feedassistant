@@ -61,7 +61,7 @@ added. T-015/T-017 split (HF now, YouTube blocked) doesn't change this ticket's 
 
 ### T-015 — Initial 8-week HF backfill
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-015-initial-backfill`
 
 **Goal:** the last 8 weeks of HF Daily Papers history are ingested into `data/raw/`,
@@ -76,25 +76,47 @@ still live on a same-day manual re-check — HF has no such blocker, so there's 
 hold HF's backfill hostage to a YouTube decision.
 
 **Acceptance criteria**
-- [ ] The HF backfill fetches daily papers for each of the last 8 weeks (56 days) via
-  T-009's collector, bounded by `feed_date` (`submittedOnDailyAt`, D-002)
-- [ ] Weekend/empty-list days (KB-002) are not treated as failures
-- [ ] Interrupting the run and restarting it resumes from where it left off — already
-  completed days are not re-fetched (checked against what's already in `data/raw/hf/`, not a
-  separate resume log)
-- [ ] Normalized documents are written to `data/raw/` via T-009's collector (the same
-  durable store T-012 reads from), and the backfill's end point (the earliest `feed_date`
-  covered) is persisted as HF's starting watermark for T-013's catch-up logic
-- [ ] Running the backfill twice produces the same document count both times (idempotent,
-  per T-009's overwrite-safe `Document.write()`)
+- [x] The HF backfill fetches daily papers for each of the last 8 weeks (56 days) via
+  T-009's collector, bounded by `feed_date` (`submittedOnDailyAt`, D-002) →
+  `scripts/t015_hf_backfill.py`, window 2026-07-23..2026-09-16, 1184 papers written
+- [x] Weekend/empty-list days (KB-002) are not treated as failures → all 16 weekend days in
+  the window (every Sat/Sun) returned 0 papers cleanly, no errors, matching KB-002's pattern
+  at 4x the scale originally observed
+- [x] Interrupting the run and restarting it resumes from where it left off → verified for
+  real: deleted 3 days' `_done.json` markers to simulate an interruption, re-ran, and exactly
+  those 3 days (plus "today") were re-fetched with identical paper counts (40, 38, 48); the
+  other 52 days stayed skipped
+- [x] Normalized documents are written to `data/raw/` via T-009's collector, and the
+  backfill's watermark (most recent fully-settled `feed_date`) is persisted → `vg09/watermark.py`,
+  `data/watermark_hf.json` = `2026-09-15` (yesterday, not today — see Notes)
+- [x] Running the backfill twice produces the same document count both times → confirmed:
+  1184 documents after run 1, still 1184 after run 2 (55/56 days skipped) and after the
+  simulated-interruption re-run
 
 **Out of scope:** YouTube backfill (T-017, blocked on a separate decision); ongoing catch-up
 after this point (T-013); chunking/embedding the backfilled documents (T-012).
 
 **Depends on:** T-009
-**Notes:** No YouTube calls of any kind in this ticket. Does not by itself complete T-013's
-or T-014's YouTube side — see their updated notes. T-017 covers YouTube's backfill once its
-transcript-path decision is made.
+**Notes:** No YouTube calls of any kind — verified by inspection (the script imports only
+`vg09.hf_papers` and `vg09.watermark`) as well as by not seeing any in the run output. Does
+not by itself complete T-013's or T-014's YouTube side — see their updated notes. T-017
+covers YouTube's backfill once its transcript-path decision is made.
+
+`today` is deliberately excluded from both the completion-marker mechanism and the watermark
+(set to yesterday, `2026-09-15`, not today's `2026-09-16`) — HF may add more papers to
+today's date later in the day, so every future run re-checks it fresh rather than trusting a
+snapshot, and T-013's catch-up will always re-examine "today" too since its `feed_date` is
+never `<=` the watermark. A crash mid-run leaves the watermark unwritten (it's set once,
+after the loop) and leaves already-done days marked — a resumed run picks up correctly
+without redoing settled work; not tested with an injected crash, but the simulated-marker
+deletion above exercises the same resume path a real interruption would.
+
+Grill-me (inline) flagged one Minor, not fixed: `date.today()` uses the machine's local
+timezone, not necessarily HF's server timezone, so a day-boundary run could be off by one
+relative to what `date=` actually selects server-side. Not investigated further - HF's own
+server timezone isn't known, and the "always re-check today" design already self-corrects
+most of the practical impact. Worth a real check if a boundary run ever produces a
+suspiciously-sized day.
 
 ---
 
