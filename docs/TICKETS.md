@@ -14,46 +14,6 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-008 — Context budget for the RAG prompt in docs/DESIGN.md
-
-**Status:** todo
-**Size:** S  ·  **Branch:** `t/T-008-context-budget`
-
-**Goal:** know, in measured tokens, how much of `num_ctx=16000` remains for retrieved
-chunks once the system prompt, the question, and a reasoning+answer reservation are
-accounted for — so chunk size and top-k get chosen against a real number, not a guess.
-
-**Why:** `docs/PLAN.md`'s risk register (added at T-007's `grill-me`, Phase 0 checkpoint)
-flags that nobody has estimated whether a real RAG prompt (system + retrieved chunks +
-question) stays under `num_ctx=16000` — and KB-005 already proved an undersized `num_ctx`
-silently drops the **front** of the prompt with no error. D-005's "Cost" section adds that
-`qwen3:30b-a3b`'s reasoning mode consumes real tokens of its own that must be budgeted for,
-not assumed away.
-
-**Acceptance criteria**
-- [ ] `docs/DESIGN.md` gets a new "Context budget" section giving explicit token counts for:
-  system prompt, a representative question, and a reasoning+answer reservation
-- [ ] The reasoning+answer reservation is based on a measured sample (`prompt_eval_count`
-  and `eval_count` from a real `qwen3:30b-a3b` call with `think:true`, per D-005/KB-007),
-  not an estimate
-- [ ] The remaining budget for retrieved chunks is expressed both as a token count and as a
-  resulting max top-k at an assumed chunk size (e.g. "at ~X tokens/chunk, budget allows
-  top-k=Y")
-- [ ] The section states what happens if the budget is exceeded (cites KB-005) and how
-  retrieved chunks should be ordered in the prompt so the least recoverable content isn't
-  first to be dropped, per the risk register's mitigation
-- [ ] `docs/PLAN.md`'s risk register row on this topic is updated to point at this section
-  as the resolving evidence
-
-**Out of scope:** implementing chunking/retrieval code (T-012); the real evaluation
-(Phase 3).
-
-**Depends on:** T-006, T-007
-**Notes:** Blocks T-012 — chunk size and top-k must not be finalized before this section
-lands, per explicit instruction when Phase 1 was opened.
-
----
-
 
 ### T-012 — Chunk, embed and store documents with feed date metadata (idempotent)
 
@@ -711,6 +671,72 @@ future retry consumer (T-015) would keep re-treating a resolved video as pending
 `vg09.document.clear_pending()`, called from `collect_channel` after every successful final
 write, and covered by a fourth test
 (`CollectChannelTests::test_a_later_success_clears_an_earlier_pending_marker`).
+
+---
+
+### T-008 — Context budget for the RAG prompt in docs/DESIGN.md
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-008-context-budget`
+
+**Goal:** know, in measured tokens, how much of `num_ctx=16000` remains for retrieved
+chunks once the system prompt, the question, and a reasoning+answer reservation are
+accounted for — so chunk size and top-k get chosen against a real number, not a guess.
+
+**Why:** `docs/PLAN.md`'s risk register (added at T-007's `grill-me`, Phase 0 checkpoint)
+flags that nobody has estimated whether a real RAG prompt (system + retrieved chunks +
+question) stays under `num_ctx=16000` — and KB-005 already proved an undersized `num_ctx`
+silently drops the **front** of the prompt with no error. D-005's "Cost" section adds that
+`qwen3:30b-a3b`'s reasoning mode consumes real tokens of its own that must be budgeted for,
+not assumed away.
+
+**Acceptance criteria**
+- [x] `docs/DESIGN.md` gets a new "Context budget" section giving explicit token counts for:
+  system prompt, a representative question, and a reasoning+answer reservation → § Context
+  budget (RAG prompt, `num_ctx=16000`): system prompt 171 tokens, question 40 tokens
+  reserved, reasoning+answer 2000 tokens reserved
+- [x] The reasoning+answer reservation is based on a measured sample (`prompt_eval_count`
+  and `eval_count` from a real `qwen3:30b-a3b` call with `think:true`, per D-005/KB-007),
+  not an estimate → 3 real questions run twice each (6 samples) against real HF abstracts as
+  context, `eval_count` ranged 515-1150, `num_predict:2000` set as the actual generation
+  ceiling
+- [x] The remaining budget for retrieved chunks is expressed both as a token count and as a
+  resulting max top-k at an assumed chunk size → 13789 tokens remaining; 400-qwen3-token
+  chunk cap (measured against all 20 real abstracts, max observed 363); max top-k = 34
+- [x] The section states what happens if the budget is exceeded (cites KB-005) and how
+  retrieved chunks should be ordered in the prompt so the least recoverable content isn't
+  first to be dropped → § "What happens if retrieved chunks don't fit": greedy-pack by real
+  measured token count, chunks-least-relevant-first/system+question-last ordering, drop a
+  single oversized chunk rather than send an overflowing prompt, real per-call
+  `prompt_eval_count` vs `num_ctx` check as backstop
+- [x] `docs/PLAN.md`'s risk register row on this topic is updated to point at this section
+  as the resolving evidence → updated, likelihood downgraded Medium → Low with the residual
+  YouTube-transcript caveat named explicitly
+
+**Out of scope:** implementing chunking/retrieval code (T-012); the real evaluation
+(Phase 3).
+
+**Depends on:** T-006, T-007
+**Notes:** Two tokenizers measured, not assumed equal, per explicit instruction: qwen3's
+(via `/api/generate`, `num_predict:1`, reading `prompt_eval_count`) for the real `num_ctx`
+budget, and bge-m3's (via `/api/embed`) for the embedding-time chunk-size ceiling — bge-m3
+tokenizes the same real text to ~15-20% more tokens than qwen3 at median/max, confirming
+they aren't interchangeable. All measurements against real HF Daily Papers abstracts already
+in `data/raw/` (T-009's verification run) — no synthetic filler, no YouTube calls (none were
+needed for this ticket). Caveat carried into the risk register: the 400-token chunk cap is
+sized from HF abstracts only; no real YouTube transcript text exists yet (KB-008 — captions
+still blocked as of T-010) to confirm chunking holds once T-015 backfills real transcripts.
+
+Grill-me (inline) on the measurement script itself found two real violations of `CLAUDE.md`'s
+own hard rules before this was reported done: the `/api/embed` call never set `num_ctx`
+explicitly, and nothing compared `prompt_eval_count` against `num_ctx` to warn on
+truncation risk. Both fixed (`EMBED_NUM_CTX=8192` set explicitly, a
+`_warn_if_truncation_risk()` check added to every counting/generation call) and the full
+measurement re-run to confirm the numbers held (they did, unchanged for tokenizer counts;
+`eval_count` varied run-to-run as expected from stochastic sampling — reported as a range
+from two runs, not a single sample). Also recorded **KB-009**: Ollama's `num_predict:0` does
+not mean "generate nothing" (produced 485 tokens on a 9-word prompt) — `num_predict:1` is
+the correct minimal-cost call for a tokenizer-only measurement.
 
 ---
 

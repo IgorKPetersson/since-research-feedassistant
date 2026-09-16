@@ -29,6 +29,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-006](KB-006-chroma-default-embedder-256-token-limit.md) | Chroma's default embedder silently truncates at 256 tokens; its own "too long" error can never fire | Vector store (ChromaDB) — default embedding model | verified | 2026-09-15 |
 | [KB-007](KB-007-qwen3-bge-m3-stack.md) | qwen3:30b-a3b (16k ctx) + bge-m3 both run 100% GPU simultaneously; `think:false` doesn't suppress reasoning, just merges it into the answer field | Local model (Ollama) — model stack | verified | 2026-09-15 |
 | [KB-008](KB-008-youtube-ip-blocked-one-day-later.md) | Same machine went from 20/20 caption successes to 100% `IpBlocked` one day later — first real trigger of the D-001 fallback, and the exact signal T-015's backfill must stop and report on | YouTube ingest — captions | provisional | 2026-09-16 |
+| [KB-009](KB-009-ollama-num-predict-zero-is-not-zero.md) | `num_predict:0` does not mean "generate nothing" — produced 485 tokens on a 9-word prompt; use `num_predict:1` for a cheap tokenizer-count call instead | Local model (Ollama) — generation options | verified | 2026-09-16 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
