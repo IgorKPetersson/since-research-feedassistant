@@ -1,8 +1,8 @@
-# KB-008 — the same machine went from 20/20 caption successes to 100% `IpBlocked` one day later
+# KB-008 — the same machine went from 20/20 caption successes to 100% `IpBlocked` one day later, and the block was still live on a manual re-check the same day
 
 **Area:** YouTube ingest — captions
 **Status:** provisional
-**Date:** 2026-09-16  ·  **From:** T-009
+**Date:** 2026-09-16 (T-009 occurrence); 2026-09-16, later same day (manual re-check by me)  ·  **From:** T-009, me
 
 ## Claim
 On 2026-09-16, `youtube_transcript_api.fetch()` raised `IpBlocked` (a subclass of
@@ -26,6 +26,15 @@ No configuration changed between the two runs - same machine, same network, ~24h
 under any per-day request volume that would look adversarial (20 video-metadata + 20
 transcript calls on the 15th; 2 + 2 on the 16th).
 
+**Update, same day, manual re-check by me (not an agent call - explicit instruction was no
+further agent-initiated YouTube calls after this ticket):** a single manual transcript
+request against `nZYJdwM-_nI` (one of the same two videos from the run above) still raised
+`IpBlocked`. The traceback shows the video-listing step (`yt-dlp`, channel/video metadata)
+succeeded; only the caption-text fetch (`YouTubeTranscriptApi().fetch()`) failed. This
+localizes the block to the transcript-fetch call specifically - yt-dlp's metadata listing is
+not (yet) affected, at least for this one video, on this IP, at this point in time. The
+block had not cleared within the same day.
+
 ## Consequences
 This is the first **real** trigger of D-001's title+description fallback path - T-002 only
 confirmed the fallback data was *available*, never exercised by an actual failure. That gap
@@ -43,12 +52,20 @@ that captions stopped working entirely would silently produce a much weaker data
 intended, with no error.
 
 Whether this block is transient (clears within hours/days) or durable is not yet known -
-worth checking before T-015 runs, since if it hasn't cleared, the backfill's caption
-coverage will be zero from the first video.
+still not cleared as of the same-day manual re-check. Since the block appears scoped to the
+transcript-fetch call rather than yt-dlp's metadata listing, an HF-only backfill (T-015) and
+a YouTube *metadata-only* pass (titles, descriptions, upload dates - no captions) are not
+blocked by this; only the caption text itself is. This is exactly why T-015 is being split:
+HF's backfill can run now, and YouTube's transcript path is deferred to a new ticket (T-017)
+pending a decision among waiting it out, local Whisper transcription, or title+description
+only.
 
 ## Confidence and limits
-One occurrence, one channel, two videos, one machine. Not confirmed: whether other channels
-or videos are also blocked right now (only `@theAIsearch` was tried), how long the block
-typically lasts, or whether it's IP-wide (affecting anything else on this network) or scoped
-to this specific caller pattern. Revisit this entry once T-015 actually runs and either
-confirms the block persists or finds it's cleared.
+Two occurrences (T-009's run, and one manual re-check), one channel (`@theAIsearch`), three
+videos total, one machine, same day. Not confirmed: whether other channels or videos are
+also blocked right now, how long the block typically lasts, whether it's IP-wide (affecting
+anything else on this network) or scoped to this specific caller pattern, or whether
+yt-dlp's metadata listing would also eventually get blocked under sustained use even though
+it wasn't here. Revisit this entry once T-017 (YouTube backfill, currently blocked pending a
+transcript-path decision) actually runs and either confirms the block persists or finds it's
+cleared.

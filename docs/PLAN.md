@@ -46,17 +46,24 @@ revision. Phase 1 has not started — waits for this review.
   T-009, KB-008
 - [ ] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
   alongside for citations, never used for filtering (D-002). Re-running is idempotent
-- [ ] Initial backfill: 8 weeks of history for both sources, fetched in batches with pauses
-  and resumable if interrupted, stopping and reporting rather than continuing if YouTube
-  shows blocking signals — T-015
-- [ ] Catch-up: ingest everything since the last successful run, using the backfill's (T-015)
-  end point as the first starting watermark
-- [ ] Write the 15–20 evaluation questions with expected sources, against the frozen
-  backfilled dataset (fixed cutoff date) — **before** retrieval is built, so the system
-  isn't tuned to them
+- [ ] Initial backfill: 8 weeks of HF Daily Papers history, fetched and resumable — T-015.
+  YouTube's backfill is split into its own item below, blocked on a decision
+- [ ] YouTube backfill: 8 weeks of history, fetched in batches with pauses and resumable if
+  interrupted, stopping and reporting rather than continuing if YouTube shows blocking
+  signals — T-017, **blocked**: the transcript-fetch path has been `IpBlocked` since
+  2026-09-16 (KB-008); decision among wait-it-out / local Whisper / title+description-only
+  due 2026-09-18
+- [ ] Catch-up: ingest everything since the last successful run, per source, using each
+  source's own backfill end point as its first starting watermark — HF's half (T-015) does
+  not wait on YouTube's (T-017)
+- [ ] Write the 15–20 evaluation questions with expected sources, against a frozen dataset
+  (fixed cutoff date) — **before** retrieval is built, so the system isn't tuned to them.
+  HF-side drafting can start once T-015 lands; the freeze itself waits on T-017
 
-**Run order:** T-009 → T-010, then T-015 (backfill, run in its own terminal) with T-008 done
-in parallel while the backfill runs → T-012 → T-013 → T-014.
+**Run order:** T-009 → T-010, then T-015 (HF backfill, run in its own terminal) with T-008
+done in parallel while it runs → T-012 → T-013 (HF side) → T-014 (HF-side drafting). T-017
+(YouTube backfill) and the rest of T-013/T-014 resume once the transcript-path decision
+lands.
 
 **Exit criteria:** running ingest twice gives the same document count. Simulating 7 days
 offline, one run catches up.

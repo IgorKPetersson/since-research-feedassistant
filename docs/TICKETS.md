@@ -20,10 +20,12 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 **Status:** todo
 **Size:** M  ·  **Branch:** `t/T-012-chunk-embed-store`
 
-**Goal:** normalized documents from `data/raw/` (T-009's collectors, populated by T-015's
-backfill) are chunked, embedded with `bge-m3`, and stored in ChromaDB with feed date as
-filterable metadata and arXiv `publishedAt` alongside for citations — and re-running ingest
-never creates duplicates.
+**Goal:** normalized documents from `data/raw/` (T-009's collectors, populated by T-015's HF
+backfill now and T-017's YouTube backfill once it unblocks) are chunked, embedded with
+`bge-m3`, and stored in ChromaDB with feed date as filterable metadata and arXiv
+`publishedAt` alongside for citations — and re-running ingest never creates duplicates.
+Works against HF-only data now; picks up YouTube documents automatically once T-017 adds
+them to `data/raw/`, no code change needed.
 
 **Why:** `docs/PLAN.md` Phase 1's second checklist item. D-004 (ChromaDB), D-005 (`bge-m3`)
 and D-002 (feed date semantics) need to land in real storage code, with chunk size and top-k
@@ -47,65 +49,100 @@ chosen against T-008's measured budget rather than guessed.
 **Out of scope:** catch-up logic for missed days (T-013); retrieval/answer generation
 (Phase 2).
 
-**Depends on:** T-008, T-009, T-015
+**Depends on:** T-008, T-009, T-015. Not blocked on T-017 — reads whatever `data/raw/`
+contains, HF-only or HF+YouTube.
 **Notes:** T-008 blocks this — chunk size and top-k must not be finalized before T-008's
 context-budget section lands, per explicit instruction when Phase 1 was opened. Run order:
-T-009 → T-010, T-015 (backfill, own terminal) with T-008 done in parallel while the backfill
-runs → T-012 → T-013 → T-014, per explicit instruction when these clarifications were added.
+T-009 → T-010, T-015 (HF backfill, own terminal) with T-008 done in parallel while it
+runs → T-012 → T-013 → T-014, per explicit instruction when these clarifications were
+added. T-015/T-017 split (HF now, YouTube blocked) doesn't change this ticket's own work.
 
 ---
 
-### T-015 — Initial 8-week backfill (HF + YouTube)
+### T-015 — Initial 8-week HF backfill
 
 **Status:** todo
-**Size:** M  ·  **Branch:** `t/T-015-initial-backfill`
+**Size:** S  ·  **Branch:** `t/T-015-initial-backfill`
 
-**Goal:** the last 8 weeks of history from both HF Daily Papers and YouTube are ingested
-once, with YouTube fetched in paced, resumable batches so a long historical pull doesn't
-trip a blocking response — establishing the dataset that catch-up (T-013) and the
-evaluation question set (T-014) both build on.
+**Goal:** the last 8 weeks of HF Daily Papers history are ingested into `data/raw/`,
+establishing HF's side of the dataset that catch-up (T-013) and the evaluation question set
+(T-014) build on — runnable now, independent of YouTube's transcript-path decision (T-017).
 
 **Why:** `docs/PLAN.md` Phase 1's catch-up checklist item and `docs/GOAL.md`'s "up to 7 days
 offline" success criterion both assume a dataset already exists to catch up onto; nothing
-has ingested that starting history yet. T-002/KB-001 already flagged YouTube caption fetches
-as a resource that can be blocked at volume — and T-009 hit this for real (KB-008): the same
-machine went from 20/20 successes to 100% `IpBlocked` one day later, on just 2 requests, no
-volume involved. That's not a hypothetical the backfill needs to guard against; it's the
-observed failure mode.
+has ingested that starting history yet. Split off from the original combined HF+YouTube
+backfill ticket after KB-008 confirmed the YouTube transcript-fetch block (`IpBlocked`) was
+still live on a same-day manual re-check — HF has no such blocker, so there's no reason to
+hold HF's backfill hostage to a YouTube decision.
 
 **Acceptance criteria**
 - [ ] The HF backfill fetches daily papers for each of the last 8 weeks (56 days) via
   T-009's collector, bounded by `feed_date` (`submittedOnDailyAt`, D-002)
-- [ ] The YouTube backfill fetches each chosen channel's videos across the same 8-week
-  window in batches, with a pause between batches
-- [ ] Each video's outcome (captions fetched, fallback used, or failed, with the exception
-  type) is logged individually, not just as an aggregate count
+- [ ] Weekend/empty-list days (KB-002) are not treated as failures
 - [ ] Interrupting the run and restarting it resumes from where it left off — already
-  completed days/videos are not re-fetched (checked against what's already in `data/raw/`,
-  not a separate resume log)
-- [ ] A `RequestBlocked`/`IpBlocked` result (KB-008/D-006) stops the run and reports
-  immediately — `vg09.youtube.normalize()` already raises `IngestBlocked` for this and
-  writes a `Pending` marker for the video (T-010); the backfill orchestrator catches
-  `IngestBlocked` at the point `collect_channel` propagates it, rather than adding its own
-  detection. Ordinary per-video misses (`TranscriptsDisabled`, `NoTranscriptFound`) use the
-  D-001/D-006 fallback and continue; only a cluster of those (not yet defined — pick a
-  threshold, e.g. 5 consecutive) also stops the run
-- [ ] The backfill's normalized documents are written to `data/raw/` via T-009's collectors
-  (the same durable store T-012 reads from), and its end point (the `feed_date` it completed
-  through, per source) is persisted as the starting watermark for T-013's catch-up logic
-- [ ] `data/raw/` as it stands at the backfill's end date is the frozen dataset T-014 writes
-  its evaluation questions against — no partial/interrupted run is treated as that frozen
-  point, only a completed one
+  completed days are not re-fetched (checked against what's already in `data/raw/hf/`, not a
+  separate resume log)
+- [ ] Normalized documents are written to `data/raw/` via T-009's collector (the same
+  durable store T-012 reads from), and the backfill's end point (the earliest `feed_date`
+  covered) is persisted as HF's starting watermark for T-013's catch-up logic
+- [ ] Running the backfill twice produces the same document count both times (idempotent,
+  per T-009's overwrite-safe `Document.write()`)
 
-**Out of scope:** ongoing catch-up after this point (T-013 consumes this ticket's end
-point); chunking/embedding the backfilled documents (T-012 processes whatever has been
-collected, from either the backfill or later catch-up runs).
+**Out of scope:** YouTube backfill (T-017, blocked on a separate decision); ongoing catch-up
+after this point (T-013); chunking/embedding the backfilled documents (T-012).
 
 **Depends on:** T-009
-**Notes:** Must reach a stable or fully-resumed state before T-013 starts, since T-013's
-first watermark is this ticket's end point, not an assumption. Also gates T-014 — the
-evaluation question set needs real backfilled data in `data/raw/` to verify expected sources
-against.
+**Notes:** No YouTube calls of any kind in this ticket. Does not by itself complete T-013's
+or T-014's YouTube side — see their updated notes. T-017 covers YouTube's backfill once its
+transcript-path decision is made.
+
+---
+
+### T-017 — YouTube backfill (blocked on transcript-path decision)
+
+**Status:** blocked
+**Size:** M  ·  **Branch:** `t/T-017-youtube-backfill`
+
+**Goal:** once a transcript-path decision is made, ingest 8 weeks of YouTube history for the
+chosen channels into `data/raw/`, paced/resumable/stop-on-block per D-006/KB-008 —
+completing the dataset T-013's catch-up and T-014's frozen evaluation set need to cover both
+sources.
+
+**Why:** KB-008: the transcript-fetch path (`youtube_transcript_api`) is still `IpBlocked`
+as of a same-day manual re-check (video-listing via `yt-dlp` still worked; only the caption
+fetch itself failed). Running a full 8-week backfill against a transcript path that's
+already known to be blocked would just produce 8 weeks of `Pending` markers and no real
+transcript text — a decision on how to get transcript-equivalent text is needed first.
+
+**Acceptance criteria**
+- [ ] A decision is recorded in `docs/DECISIONS.md` (new `D-0NN`) choosing among:
+  (a) wait out the IP block and retry captions once it clears,
+  (b) `yt-dlp` audio download + local Whisper transcription (currently parked in
+  `docs/GOAL.md` — un-parking it is part of this decision, not a foregone conclusion),
+  (c) title+description only for the backfill, treating D-001/D-006's fallback as the
+  primary source rather than a fallback, for this pass.
+  **Decision day: 2026-09-18** (day 4 of `docs/PLAN.md`'s 3-week plan, counting day 1 as
+  2026-09-15 — the first Phase 0 session date recorded in `docs/HANDOFF.md`; confirm or
+  correct this mapping, since the plan states days, not calendar dates)
+- [ ] The YouTube backfill fetches each chosen channel's videos across the 8-week window in
+  batches, with a pause between batches
+- [ ] Each video's outcome (captions fetched, fallback used, transcribed via Whisper, or
+  failed, with the exception type where applicable) is logged individually
+- [ ] Interrupting the run and restarting it resumes from where it left off, using
+  `data/raw/` and T-010's `.pending.json` markers
+- [ ] A `RequestBlocked`/`IpBlocked` result stops the run and reports immediately, per D-006
+  — `vg09.youtube.normalize()`/`IngestBlocked` already do this if option (a) or (c) is chosen
+- [ ] Normalized (or, under option (b), Whisper-transcribed) documents are written to
+  `data/raw/`; the backfill's end point is persisted as YouTube's starting watermark for
+  T-013's catch-up logic
+
+**Out of scope:** HF backfill (T-015, unblocked, separate ticket).
+
+**Depends on:** T-009, T-010; **blocked** on the transcript-path decision above — do not
+start implementation before that decision is recorded.
+**Notes:** Split out from the original combined T-015 so HF's backfill isn't held hostage to
+this decision. If option (b) (Whisper) is chosen, that's a new local dependency and model
+download — stop-and-ask territory per `CLAUDE.md` before pulling anything.
 
 ---
 
@@ -115,29 +152,40 @@ against.
 **Size:** M  ·  **Branch:** `t/T-013-catch-up-ingest`
 
 **Goal:** after the PC has been off for up to 7 days, one ingest run catches up everything
-missed from HF Daily Papers and YouTube, using feed date to determine what's new.
+missed from HF Daily Papers, using feed date to determine what's new. YouTube catch-up is
+part of this ticket's design but does not block starting or finishing the HF half.
 
 **Why:** `docs/PLAN.md` Phase 1's catch-up checklist item; `docs/GOAL.md`'s first success
-criterion depends on this directly.
+criterion depends on this directly. Per-source watermarks (not one combined watermark) mean
+this can start and be verified against HF alone while YouTube's backfill (T-017) is still
+blocked on its transcript-path decision.
 
 **Acceptance criteria**
-- [ ] The last successful ingest run's feed-date watermark is persisted durably (not
-  in-memory only); the very first watermark is T-015's backfill end point, not an assumed
-  or empty starting date
-- [ ] A simulated 7-day-offline scenario (watermark set 7 days in the past) results in one
-  run fetching all documents with `feed_date` after the watermark, across both sources
+- [ ] Each source keeps its own feed-date watermark, persisted durably (not in-memory only)
+  — not one combined watermark. HF's first watermark is T-015's backfill end point
+- [ ] A simulated 7-day-offline scenario against **HF alone** (watermark set 7 days in the
+  past) results in one run fetching all HF documents with `feed_date` after the watermark —
+  this must pass without any YouTube data present or any YouTube call being made
+- [ ] YouTube's watermark handling is written but doesn't have to be exercised against real
+  data yet: if no YouTube watermark exists (T-017 hasn't run), catch-up skips the YouTube
+  source and says so, rather than erroring or treating "no watermark" as "watermark is now"
 - [ ] New documents from a catch-up run are appended to `data/raw/` alongside the backfill's
   existing files, keeping it the single durable normalized-document store T-012 reads from
 - [ ] Running catch-up twice in a row with no new data in between adds zero new documents,
   building on T-012's idempotency
-- [ ] The watermark only advances after a run completes successfully — a failed/partial run
-  doesn't lose track of what's still missing
+- [ ] Each source's watermark only advances after that source's part of the run completes
+  successfully — a failed/partial run doesn't lose track of what's still missing, and one
+  source's failure doesn't roll back the other's progress
 
 **Out of scope:** a scheduler or always-on process (explicit non-goal, `docs/GOAL.md`) —
 catch-up is triggered manually/on demand.
 
-**Depends on:** T-012, T-015
-**Notes:** —
+**Depends on:** T-012, T-015. **Not** blocked on T-017 — per-source watermarks mean the HF
+half can be built, tested and shipped independently; the YouTube half activates once T-017
+produces a YouTube watermark to catch up from.
+**Notes:** Split T-015 (HF-only now, T-017 YouTube pending a decision) is exactly why this
+ticket uses per-source watermarks instead of one combined one — a single shared watermark
+would have made T-013 wait on T-017 for no real reason.
 
 ---
 
@@ -146,38 +194,48 @@ catch-up is triggered manually/on demand.
 **Status:** todo
 **Size:** M  ·  **Branch:** `t/T-014-eval-questions`
 
-**Goal:** I write 15–20 evaluation questions against the frozen backfilled dataset
-(fixed cutoff feed date), and for each one the agent finds the expected source document(s)
-and confirms they actually exist in the ingested data — all before retrieval is built, so
-the system can't be tuned to them.
+**Goal:** I write 15–20 evaluation questions against a frozen dataset (fixed
+cutoff feed date), and for each one the agent finds the expected source document(s) and
+confirms they actually exist in the ingested data — all before retrieval is built, so the
+system can't be tuned to them. HF-side work can start now; the frozen dataset isn't final
+until T-017's transcript-path decision lands, since the set must span both sources.
 
 **Why:** `docs/PLAN.md` Phase 1's evaluation-questions checklist item; `docs/GOAL.md`'s
 evaluation compares date-aware vs plain retrieval, which is only a fair test if the question
-set predates the retrieval implementation. Verifying expected sources against T-015's real
+set predates the retrieval implementation. Verifying expected sources against real
 backfilled data (rather than asserting them from memory) means the eval set isn't built on
-a source that turns out to be missing or garbled.
+a source that turns out to be missing or garbled. Splitting T-015 into HF-now/T-017-later
+means this ticket can start drafting HF-side questions immediately, but "frozen dataset"
+only means something once both sources have stopped moving.
 
 **Acceptance criteria**
-- [ ] The dataset used for question-writing is `data/raw/` as it stood at T-015's backfill
-  end date (the frozen cutoff `feed_date`); that date is written down alongside the question
-  set so a later re-ingestion doesn't silently change what "current" meant when the
-  questions were written
+- [ ] HF-side question drafting and source-verification can start against T-015's backfilled
+  `data/raw/hf/` as soon as it exists — not blocked on T-017
+- [ ] The dataset used for the **final, frozen** question set is `data/raw/` as it stood
+  after **both** T-015 (HF) and T-017 (YouTube) have completed; that combined cutoff (both
+  sources' end dates) is written down alongside the question set so a later re-ingestion
+  doesn't silently change what "current" meant when the questions were written. This ticket
+  is not closed until that freeze happens — HF-only work here is preparation, not completion
 - [ ] I write 15–20 questions spanning all three question types from
   `docs/GOAL.md`: "what's new", "did X come up", "has Q progressed in the last n weeks"
 - [ ] For each question, the expected source document(s) (title + url + feed date) are
   looked up and confirmed present in `data/raw/` — not asserted from memory
 - [ ] At least two questions are built around a proper noun likely to be garbled by
-  YouTube's auto-generated captions, per T-002's notes and KB-001
+  YouTube's auto-generated captions, per T-002's notes and KB-001 — these specifically
+  depend on T-017's real YouTube data, not HF's
 - [ ] Questions span both sources, and at least one requires combining evidence from both
-- [ ] The set is committed to the repo with the frozen cutoff date recorded, dated before
+- [ ] The set is committed to the repo with the frozen cutoff date(s) recorded, dated before
   any retrieval code exists, so the "written before retrieval" ordering is verifiable from
   git history
 
 **Out of scope:** running the evaluation itself (Phase 3); building retrieval (Phase 2).
 
-**Depends on:** T-001, T-015
+**Depends on:** T-001, T-015 (to start); **T-017 to close** — the frozen dataset and the
+auto-caption-garbling questions both need real YouTube data.
 **Notes:** I write the questions; the agent's job is finding and verifying expected
-sources against the real data, not authoring the questions.
+sources against the real data, not authoring the questions. Do not report this ticket done
+on HF-only progress — the acceptance criteria above are explicit that the freeze needs both
+sources.
 
 ---
 
