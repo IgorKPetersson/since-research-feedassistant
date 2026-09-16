@@ -65,6 +65,8 @@ Anything beyond this is bonus and belongs in § Parked.
 - **Not** all of arXiv — only the HF Daily Papers selection
 - **Not** audio transcription (Whisper) unless Phase 0 shows captions can't be fetched
   *and* time allows
+- **Not** conversation history in version 1: each question is answered independently, with
+  no memory of earlier turns in the session
 
 ## Known limitations — state these, don't hide them
 
@@ -79,6 +81,10 @@ Anything beyond this is bonus and belongs in § Parked.
 
 ## Parked
 
+- Conversation history / multi-turn memory — asking a follow-up that depends on an earlier
+  question is out of scope for version 1; revisit once the single-turn context budget
+  (system prompt + question + reasoning/answer + retrieved chunks, see `docs/DESIGN.md`) is
+  proven to have room for it under `num_ctx=16000`
 - Scheduled ingest (Task Scheduler) or an always-on device
 - Local audio transcription with Whisper for videos without captions
 - A graph of papers, authors and topics (graph database + agent)

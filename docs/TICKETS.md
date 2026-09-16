@@ -14,6 +14,295 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-008 — Context budget for the RAG prompt in docs/DESIGN.md
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-008-context-budget`
+
+**Goal:** know, in measured tokens, how much of `num_ctx=16000` remains for retrieved
+chunks once the system prompt, the question, and a reasoning+answer reservation are
+accounted for — so chunk size and top-k get chosen against a real number, not a guess.
+
+**Why:** `docs/PLAN.md`'s risk register (added at T-007's `grill-me`, Phase 0 checkpoint)
+flags that nobody has estimated whether a real RAG prompt (system + retrieved chunks +
+question) stays under `num_ctx=16000` — and KB-005 already proved an undersized `num_ctx`
+silently drops the **front** of the prompt with no error. D-005's "Cost" section adds that
+`qwen3:30b-a3b`'s reasoning mode consumes real tokens of its own that must be budgeted for,
+not assumed away.
+
+**Acceptance criteria**
+- [ ] `docs/DESIGN.md` gets a new "Context budget" section giving explicit token counts for:
+  system prompt, a representative question, and a reasoning+answer reservation
+- [ ] The reasoning+answer reservation is based on a measured sample (`prompt_eval_count`
+  and `eval_count` from a real `qwen3:30b-a3b` call with `think:true`, per D-005/KB-007),
+  not an estimate
+- [ ] The remaining budget for retrieved chunks is expressed both as a token count and as a
+  resulting max top-k at an assumed chunk size (e.g. "at ~X tokens/chunk, budget allows
+  top-k=Y")
+- [ ] The section states what happens if the budget is exceeded (cites KB-005) and how
+  retrieved chunks should be ordered in the prompt so the least recoverable content isn't
+  first to be dropped, per the risk register's mitigation
+- [ ] `docs/PLAN.md`'s risk register row on this topic is updated to point at this section
+  as the resolving evidence
+
+**Out of scope:** implementing chunking/retrieval code (T-012); the real evaluation
+(Phase 3).
+
+**Depends on:** T-006, T-007
+**Notes:** Blocks T-012 — chunk size and top-k must not be finalized before this section
+lands, per explicit instruction when Phase 1 was opened.
+
+---
+
+### T-009 — HF + YouTube collectors → normalized document shape
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-009-collectors`
+
+**Goal:** the HF Daily Papers and YouTube collectors both produce documents in one shared
+shape (source, url, title, feed date, text — plus arXiv `publishedAt` as extra metadata for
+papers), so downstream chunking and storage never need to know which source a document came
+from.
+
+**Why:** `docs/PLAN.md` Phase 1's first checklist item. D-001 (transcript source) and D-002
+(feed date semantics) are decided but not yet real code.
+
+**Acceptance criteria**
+- [ ] A shared document type (source, url, title, feed_date, text, optional
+  arxiv_published_at) is defined in code
+- [ ] The HF collector produces documents in this shape, using `paper.submittedOnDailyAt` as
+  `feed_date` (D-002) and `paper.summary` as `text` (KB-002's field-name correction, not
+  `abstract`)
+- [ ] The YouTube collector produces documents in this shape, using the video's upload date
+  as `feed_date`, captions as `text` when available, falling back to title+description per
+  D-001
+- [ ] Running each collector against real data produces at least one document with every
+  required field populated — no field silently empty when the source data has it
+- [ ] A sample of normalized documents from both sources is saved for inspection
+
+**Out of scope:** chunking, embedding, storage (T-012); the fallback unit test (T-010);
+catch-up logic (T-013).
+
+**Depends on:** T-001, T-002, T-003
+**Notes:** —
+
+---
+
+### T-010 — Fallback unit test: simulated caption failure in the real collector
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-010-caption-fallback-test`
+
+**Goal:** the YouTube collector's title+description fallback path (D-001) is verified by a
+unit test that simulates a real caption-fetch failure, closing the gap T-002 explicitly left
+open.
+
+**Why:** T-002's acceptance criteria accepted the fallback as unverified — all 20 sampled
+videos had captions, so the fallback branch was never exercised against a real failure.
+T-002's notes and D-001's "Cost" section both name this as a live risk, to be handled inside
+the real Phase 1 collector, not the throwaway T-002 script.
+
+**Acceptance criteria**
+- [ ] A unit test forces a caption-fetch failure (e.g. `TranscriptsDisabled` or
+  `NoTranscriptFound`) against the real YouTube collector from T-009
+- [ ] The test asserts the collector falls back to title+description and still produces a
+  valid normalized document (T-009's shape) rather than raising or leaving `text` empty
+- [ ] The test runs with no live network call (mocked), as part of the regular test suite
+- [ ] A second unit test confirms the non-fallback path (captions available) still produces
+  the expected document, so the fallback branch is covered without regressing the primary
+  path
+
+**Out of scope:** re-testing caption availability against real channels (done, KB-001);
+Whisper (parked, `docs/GOAL.md`).
+
+**Depends on:** T-009
+**Notes:** Closes the gap explicitly deferred in T-002's acceptance criteria and named in
+D-001's "Cost" section.
+
+---
+
+### T-012 — Chunk, embed and store documents with feed date metadata (idempotent)
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-012-chunk-embed-store`
+
+**Goal:** normalized documents from T-009 are chunked, embedded with `bge-m3`, and stored in
+ChromaDB with feed date as filterable metadata and arXiv `publishedAt` alongside for
+citations, and re-running ingest never creates duplicates.
+
+**Why:** `docs/PLAN.md` Phase 1's second checklist item. D-004 (ChromaDB), D-005 (`bge-m3`)
+and D-002 (feed date semantics) need to land in real storage code, with chunk size and top-k
+chosen against T-008's measured budget rather than guessed.
+
+**Acceptance criteria**
+- [ ] Chunk size is chosen using T-008's documented context budget, with the reasoning cited
+- [ ] Each chunk is embedded via an explicit `bge-m3` call (CLAUDE.md hard rule — never
+  ChromaDB's default embedder)
+- [ ] Each chunk is stored with `feed_date` as filterable metadata (D-002/D-004); for
+  papers, `arxiv_published_at` is stored alongside but never used for filtering
+- [ ] Running ingest twice over the same source data produces the same document/chunk count
+  both times
+- [ ] A query filtered to a feed-date range returns only chunks inside that range, in the
+  real schema — not just T-005's throwaway 8-document test collection
+
+**Out of scope:** catch-up logic for missed days (T-013); retrieval/answer generation
+(Phase 2).
+
+**Depends on:** T-008, T-009
+**Notes:** T-008 blocks this — chunk size and top-k must not be finalized before T-008's
+context-budget section lands, per explicit instruction when Phase 1 was opened.
+
+---
+
+### T-015 — Initial 8-week backfill (HF + YouTube)
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-015-initial-backfill`
+
+**Goal:** the last 8 weeks of history from both HF Daily Papers and YouTube are ingested
+once, with YouTube fetched in paced, resumable batches so a long historical pull doesn't
+trip a blocking response — establishing the dataset that catch-up (T-013) and the
+evaluation question set (T-014) both build on.
+
+**Why:** `docs/PLAN.md` Phase 1's catch-up checklist item and `docs/GOAL.md`'s "up to 7 days
+offline" success criterion both assume a dataset already exists to catch up onto; nothing
+has ingested that starting history yet. T-002/KB-001 already flags YouTube caption fetches
+as a resource that can be blocked at volume, and 8 weeks across several channels is enough
+requests that the same risk applies — the backfill has to be paced and interruption-safe,
+not a single unthrottled loop.
+
+**Acceptance criteria**
+- [ ] The HF backfill fetches daily papers for each of the last 8 weeks (56 days) via
+  T-009's collector, bounded by `feed_date` (`submittedOnDailyAt`, D-002)
+- [ ] The YouTube backfill fetches each chosen channel's videos across the same 8-week
+  window in batches, with a pause between batches
+- [ ] Each video's outcome (captions fetched, fallback used, or failed) is logged
+  individually, not just as an aggregate count
+- [ ] Interrupting the run and restarting it resumes from where it left off — already
+  completed days/videos are not re-fetched
+- [ ] If failures cluster (e.g. several consecutive YouTube failures, or any response that
+  looks like a block rather than an ordinary miss), the run stops and reports rather than
+  continuing to retry
+- [ ] The backfill's end point (the `feed_date` it completed through, per source) is
+  persisted as the starting watermark for T-013's catch-up logic
+
+**Out of scope:** ongoing catch-up after this point (T-013 consumes this ticket's end
+point); chunking/embedding the backfilled documents (T-012 processes whatever has been
+collected, from either the backfill or later catch-up runs).
+
+**Depends on:** T-009
+**Notes:** Must reach a stable or fully-resumed state before T-013 starts, since T-013's
+first watermark is this ticket's end point, not an assumption. Also gates T-014 — the
+evaluation question set needs real backfilled data to verify expected sources against.
+
+---
+
+### T-013 — Catch-up ingestion since the last successful run
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-013-catch-up-ingest`
+
+**Goal:** after the PC has been off for up to 7 days, one ingest run catches up everything
+missed from HF Daily Papers and YouTube, using feed date to determine what's new.
+
+**Why:** `docs/PLAN.md` Phase 1's catch-up checklist item; `docs/GOAL.md`'s first success
+criterion depends on this directly.
+
+**Acceptance criteria**
+- [ ] The last successful ingest run's feed-date watermark is persisted durably (not
+  in-memory only); the very first watermark is T-015's backfill end point, not an assumed
+  or empty starting date
+- [ ] A simulated 7-day-offline scenario (watermark set 7 days in the past) results in one
+  run fetching all documents with `feed_date` after the watermark, across both sources
+- [ ] Running catch-up twice in a row with no new data in between adds zero new documents,
+  building on T-012's idempotency
+- [ ] The watermark only advances after a run completes successfully — a failed/partial run
+  doesn't lose track of what's still missing
+
+**Out of scope:** a scheduler or always-on process (explicit non-goal, `docs/GOAL.md`) —
+catch-up is triggered manually/on demand.
+
+**Depends on:** T-012, T-015
+**Notes:** —
+
+---
+
+### T-014 — Write the 15–20 evaluation questions with expected sources
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-014-eval-questions`
+
+**Goal:** I write 15–20 evaluation questions against the frozen backfilled dataset
+(fixed cutoff feed date), and for each one the agent finds the expected source document(s)
+and confirms they actually exist in the ingested data — all before retrieval is built, so
+the system can't be tuned to them.
+
+**Why:** `docs/PLAN.md` Phase 1's evaluation-questions checklist item; `docs/GOAL.md`'s
+evaluation compares date-aware vs plain retrieval, which is only a fair test if the question
+set predates the retrieval implementation. Verifying expected sources against T-015's real
+backfilled data (rather than asserting them from memory) means the eval set isn't built on
+a source that turns out to be missing or garbled.
+
+**Acceptance criteria**
+- [ ] The dataset used for question-writing is frozen at a fixed cutoff `feed_date` (T-015's
+  backfill end point); that date is written down alongside the question set so a later
+  re-ingestion doesn't silently change what "current" meant when the questions were written
+- [ ] I write 15–20 questions spanning all three question types from
+  `docs/GOAL.md`: "what's new", "did X come up", "has Q progressed in the last n weeks"
+- [ ] For each question, the expected source document(s) (title + url + feed date) are
+  looked up and confirmed present in the actual backfilled data — not asserted from memory
+- [ ] At least two questions are built around a proper noun likely to be garbled by
+  YouTube's auto-generated captions, per T-002's notes and KB-001
+- [ ] Questions span both sources, and at least one requires combining evidence from both
+- [ ] The set is committed to the repo with the frozen cutoff date recorded, dated before
+  any retrieval code exists, so the "written before retrieval" ordering is verifiable from
+  git history
+
+**Out of scope:** running the evaluation itself (Phase 3); building retrieval (Phase 2).
+
+**Depends on:** T-001, T-015
+**Notes:** I write the questions; the agent's job is finding and verifying expected
+sources against the real data, not authoring the questions.
+
+---
+
+### T-011 — Separate Qwen3's reasoning from its answer before display
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-011-reasoning-answer-split`  ·  **Phase:** 2
+
+**Goal:** any code that calls a Qwen3 chat model and shows or stores its output keeps the
+reasoning (chain-of-thought) and the final answer as two distinct values, never one merged
+string.
+
+**Why:** KB-007/D-005 found `think:false` does not suppress reasoning — it merges it into
+the response/content field instead of separating it into `thinking`. A clean answer-only
+string requires `think:true`, reading `thinking` and the answer as separate fields (D-005's
+"Cost" section). Nothing that displays or stores a Qwen3 response should accidentally show
+raw chain-of-thought as if it were the answer.
+
+**Acceptance criteria**
+- [ ] A shared utility takes a raw Ollama chat/generate response called with `think:true`
+  and returns `(reasoning, answer)` as two separate strings
+- [ ] A unit test covers the response shape KB-007 confirmed (reasoning in `thinking`, not
+  merged into content, when `think:true` is used)
+- [ ] A unit test covers the failure mode KB-007 found: the utility either detects a merged
+  `think:false` response, or the code path is guarded to never call with `think:false`
+- [ ] Phase 2's answer-generation code goes through this utility rather than reading the raw
+  response field directly
+- [ ] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this as a project-wide
+  contract
+
+**Out of scope:** anything else in the answer-generation pipeline (retrieval, prompt
+assembly, citations) — this is only the reasoning/answer split.
+
+**Depends on:** T-006, T-007
+**Notes:** Moved from Phase 1 to Phase 2 — no Phase 1 code calls an LLM, so there was no
+real caller to build this utility against yet. Phase 2's answer generation is its first
+caller; see `docs/PLAN.md`'s Phase 2 checklist.
+
+---
+
 ## Done
 
 ### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
@@ -344,3 +633,43 @@ instruction. The most valuable output wasn't the planned verification (KB-007's 
 up) — it was the review process surfacing and fixing a real error in KB-007's own
 speculative caveat, and identifying a Serious token-budget risk for Phase 1 that nothing
 upstream had flagged. Phase 0 is now genuinely complete; Phase 1 has not been started.
+
+---
+
+### T-016 — Open Phase 1: PLAN/GOAL updates and the Phase 1 ticket set
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (docs-only, see note)
+
+**Goal:** Phase 1 is formally open and its work exists as checkable tickets instead of only
+as `docs/PLAN.md`'s umbrella checkboxes, so work can start from a backlog rather than from a
+chat instruction.
+
+**Why:** `docs/PLAN.md` requires turning a phase's checkboxes into tickets via `ticket-write`
+when the phase starts; T-007's handoff named this as the next session's first action.
+`docs/GOAL.md` also needed conversation history recorded as an explicit non-goal/parked item
+before Phase 1 scope could be considered settled, since it bears on the context-budget work
+in T-008.
+
+**Acceptance criteria**
+- [x] `docs/PLAN.md`'s "Current phase" is set to Phase 1
+- [x] `docs/GOAL.md` gets conversation history added under Non-goals and Parked
+- [x] Tickets T-008 through T-015 written for Phase 1's checklist items, each with
+  observable acceptance criteria and correct `Depends on` chains
+- [x] T-011 (separate Qwen3's reasoning from its answer) written, then on my review moved
+  to Phase 2 — no Phase 1 code calls an LLM, so Phase 1 had no real caller for it;
+  `docs/PLAN.md`'s Phase 2 checklist updated to reference it
+- [x] T-015 (initial 8-week backfill) added ahead of T-013 on my review, since catch-up
+  needs a real starting watermark rather than an assumed one; T-013 and T-014 updated to
+  depend on it
+- [x] T-014 rewritten on my review to reflect I writing the questions and the
+  agent verifying expected sources against the frozen backfilled dataset, rather than the
+  agent drafting the questions
+- [x] None of T-008–T-015 executed — this ticket covers only the planning artifacts
+
+**Out of scope:** doing any of T-008 through T-015's actual work.
+
+**Depends on:** T-007
+**Notes:** Two-pass ticket-writing: the first pass (T-008–T-014) was revised after my
+review into this final set (T-008–T-015, plus T-011 moved to Phase 2) before anything was
+committed or started, per explicit instruction to hold all commits until review.

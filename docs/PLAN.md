@@ -3,7 +3,7 @@
 Phases are gated. **Each phase ends at a checkpoint where the agent stops and I
 reviews.** Do not start phase N+1 without explicit go-ahead.
 
-Current phase: **Phase 0**
+Current phase: **Phase 1**
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
@@ -45,9 +45,14 @@ revision. Phase 1 has not started — waits for this review.
   title, feed date, text — plus arXiv `publishedAt` as extra metadata for papers (D-002)
 - [ ] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
   alongside for citations, never used for filtering (D-002). Re-running is idempotent
-- [ ] Catch-up: ingest everything since the last successful run
-- [ ] Write the 15–20 evaluation questions with expected sources — **before** retrieval is
-  built, so the system isn't tuned to them
+- [ ] Initial backfill: 8 weeks of history for both sources, fetched in batches with pauses
+  and resumable if interrupted, stopping and reporting rather than continuing if YouTube
+  shows blocking signals — T-015
+- [ ] Catch-up: ingest everything since the last successful run, using the backfill's (T-015)
+  end point as the first starting watermark
+- [ ] Write the 15–20 evaluation questions with expected sources, against the frozen
+  backfilled dataset (fixed cutoff date) — **before** retrieval is built, so the system
+  isn't tuned to them
 
 **Exit criteria:** running ingest twice gives the same document count. Simulating 7 days
 offline, one run catches up.
@@ -58,7 +63,10 @@ offline, one run catches up.
 ## Phase 2 — Ask (week 2)
 
 - [ ] Retrieval with an optional date range, taken from the question or set in the UI
-- [ ] Answer generation with citations: link, title, date
+- [ ] Answer generation with citations: link, title, date — every call site that reads a
+  Qwen3 model's output must separate its reasoning from the final answer before displaying
+  or storing it (moved from Phase 1: no Phase 1 code calls an LLM, so there was no caller
+  to build the utility against yet) — T-011
 - [ ] Chat UI, including the empty state "no data yet — run ingest"
 
 **Exit criteria:** the three question types in `docs/GOAL.md` work end to end with sources.
