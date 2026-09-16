@@ -30,6 +30,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-007](KB-007-qwen3-bge-m3-stack.md) | qwen3:30b-a3b (16k ctx) + bge-m3 both run 100% GPU simultaneously; `think:false` doesn't suppress reasoning, just merges it into the answer field | Local model (Ollama) — model stack | verified | 2026-09-15 |
 | [KB-008](KB-008-youtube-ip-blocked-one-day-later.md) | Same machine went from 20/20 caption successes to 100% `IpBlocked` one day later, still blocked on a same-day manual re-check — block is scoped to caption fetch, not yt-dlp metadata listing | YouTube ingest — captions | provisional | 2026-09-16 |
 | [KB-009](KB-009-ollama-num-predict-zero-is-not-zero.md) | `num_predict:0` does not mean "generate nothing" — produced 485 tokens on a 9-word prompt; use `num_predict:1` for a cheap tokenizer-count call instead | Local model (Ollama) — generation options | verified | 2026-09-16 |
+| [KB-010](KB-010-patch-target-must-match-the-importing-module.md) | Patching `vg09.document.RAW_DIR` doesn't redirect `vg09.hf_papers`'s own imported copy of the name — silently deleted 4 real `_done.json` markers via an under-isolated test before being caught and repaired | Testing — `unittest.mock.patch` target selection | verified | 2026-09-16 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 

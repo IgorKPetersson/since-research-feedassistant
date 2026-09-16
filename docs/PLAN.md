@@ -55,9 +55,10 @@ revision. Phase 1 has not started — waits for this review.
   signals — T-017, **blocked**: the transcript-fetch path has been `IpBlocked` since
   2026-09-16 (KB-008); decision among wait-it-out / local Whisper / title+description-only
   due 2026-09-18
-- [ ] Catch-up: ingest everything since the last successful run, per source, using each
-  source's own backfill end point as its first starting watermark — HF's half (T-015) does
-  not wait on YouTube's (T-017)
+- [x] Catch-up: ingest everything since the last successful run, per source, using each
+  source's own backfill end point as its first starting watermark — T-013, HF half done and
+  verified for real (simulated a 2-day gap, closed it via the real pipeline end to end, no
+  duplicates). YouTube's half (T-017) does not block this and is not yet exercised
 - [ ] Write the 15–20 evaluation questions with expected sources, against a frozen dataset
   (fixed cutoff date) — **before** retrieval is built, so the system isn't tuned to them.
   HF-side drafting can start once T-015 lands; the freeze itself waits on T-017

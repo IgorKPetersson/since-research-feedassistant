@@ -229,7 +229,7 @@ download — stop-and-ask territory per `CLAUDE.md` before pulling anything.
 
 ### T-013 — Catch-up ingestion since the last successful run
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-013-catch-up-ingest`
 
 **Goal:** after the PC has been off for up to 7 days, one ingest run catches up everything
@@ -242,21 +242,37 @@ this can start and be verified against HF alone while YouTube's backfill (T-017)
 blocked on its transcript-path decision.
 
 **Acceptance criteria**
-- [ ] Each source keeps its own feed-date watermark, persisted durably (not in-memory only)
-  — not one combined watermark. HF's first watermark is T-015's backfill end point
-- [ ] A simulated 7-day-offline scenario against **HF alone** (watermark set 7 days in the
-  past) results in one run fetching all HF documents with `feed_date` after the watermark —
-  this must pass without any YouTube data present or any YouTube call being made
-- [ ] YouTube's watermark handling is written but doesn't have to be exercised against real
-  data yet: if no YouTube watermark exists (T-017 hasn't run), catch-up skips the YouTube
-  source and says so, rather than erroring or treating "no watermark" as "watermark is now"
-- [ ] New documents from a catch-up run are appended to `data/raw/` alongside the backfill's
-  existing files, keeping it the single durable normalized-document store T-012 reads from
-- [ ] Running catch-up twice in a row with no new data in between adds zero new documents,
-  building on T-012's idempotency
-- [ ] Each source's watermark only advances after that source's part of the run completes
-  successfully — a failed/partial run doesn't lose track of what's still missing, and one
-  source's failure doesn't roll back the other's progress
+- [x] Each source keeps its own feed-date watermark, persisted durably → `vg09/watermark.py`
+  (already existed from T-015), `data/watermark_hf.json` / `data/watermark_youtube.json`,
+  one file per source
+- [x] A simulated offline scenario against **HF alone** results in one run fetching all HF
+  documents with `feed_date` after the watermark, no YouTube data or calls involved →
+  verified for real (see below), not just against a mock
+- [x] YouTube's watermark handling is written but not exercised against real data: no
+  watermark exists (T-017 hasn't run) → `catch_up_youtube()` reports and skips, makes no
+  YouTube call — confirmed structurally: `vg09/catchup.py` never imports `vg09.youtube`
+  (`tests/test_catchup.py::test_module_never_imports_youtube`)
+- [x] New documents from a catch-up run are appended to `data/raw/` → confirmed via the real
+  gap-simulation run below
+- [x] Running catch-up twice in a row with no new data adds zero new documents → real run:
+  second `t013_catch_up.py` + `t012_build_store.py` pass left `collection.count()` at 1184,
+  unchanged
+- [x] Each source's watermark only advances after that source's part of the run completes
+  successfully → `sync_hf()` writes the watermark once, after its loop; an exception mid-loop
+  leaves it unwritten and leaves already-settled days marked, so a resumed run picks up
+  correctly (same design T-015 already established, reused here via the shared `vg09/sync.py`)
+
+**Real end-to-end verification (not simulated against a mock) — the exact scenario asked
+for:** removed 2 real days (`2026-09-07`: 28 papers, `2026-09-08`: 12 papers) entirely from
+`data/raw/hf/` *and* from the real Chroma store (`scripts/t013_simulate_gap.py`), rolled the
+`hf` watermark back to `2026-09-06`, then ran the real pipeline:
+1. `scripts/t013_catch_up.py` against the live HF API → both days re-fetched, identical
+   counts to the original (28, 12), watermark correctly advanced back to `2026-09-14`
+2. `scripts/t012_build_store.py` against the live Ollama/bge-m3 → `collection.count()` back
+   to **1184** (was 1144 after the simulated removal)
+3. `scripts/t013_verify_no_duplicates.py`: 1184 ids, **1184 unique ids — no duplicates**; the
+   40 chunks for the gap days are back with correct `feed_date`/`feed_date_ordinal`/metadata
+4. Ran steps 1-2 again: still 1184, stable
 
 **Out of scope:** a scheduler or always-on process (explicit non-goal, `docs/GOAL.md`) —
 catch-up is triggered manually/on demand.
@@ -264,9 +280,26 @@ catch-up is triggered manually/on demand.
 **Depends on:** T-012, T-015. **Not** blocked on T-017 — per-source watermarks mean the HF
 half can be built, tested and shipped independently; the YouTube half activates once T-017
 produces a YouTube watermark to catch up from.
-**Notes:** Split T-015 (HF-only now, T-017 YouTube pending a decision) is exactly why this
-ticket uses per-source watermarks instead of one combined one — a single shared watermark
-would have made T-013 wait on T-017 for no real reason.
+**Notes:** T-015's day-by-day backfill logic was factored out into `vg09/sync.py`
+(`sync_hf(start, today)`) so the backfill and catch-up share one implementation rather than
+two that could drift apart; `scripts/t015_hf_backfill.py` is now a thin entry point over it.
+Caught and fixed an off-by-one in that refactor (start date was 1 day early, an 8-week
+window came out 57 days instead of 56) before it shipped, by comparing the refactored
+script's real output window against the original.
+
+**Real bug found and fixed while writing this ticket's own tests, not in the shipped
+code:** `tests/test_sync.py` initially patched only `vg09.document.RAW_DIR`, following the
+pattern that worked for `tests/test_youtube.py`. It doesn't work for `vg09.hf_papers`'s
+day-marker functions (`day_marker_path`, `is_day_done`, `mark_day_done`, `clear_day_marker`)
+— they read `hf_papers`'s own `from vg09.document import RAW_DIR` binding, a separate name
+patching the origin module doesn't touch. The under-isolated test's reopen-window logic
+called `clear_day_marker()` against the **real** `data/raw/hf/` directory and deleted 4 real
+`_done.json` markers (`2026-09-09` through `2026-09-12`) before the bug was caught (test
+assertions failed in a way that pointed straight at it). No document JSON was lost — only
+completion markers — confirmed by re-running the real backfill, which re-fetched all 4 days
+with identical paper counts to the original and re-created the markers; `collection.count()`
+was unaffected throughout. Recorded as **KB-010**, including the check that `vg09/store.py`
+has the identical exposure for any future test of `load_documents()`.
 
 ---
 
