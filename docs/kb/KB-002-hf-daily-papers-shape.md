@@ -1,8 +1,8 @@
 # KB-002 — the HF Daily Papers API returns 200 with an empty list on weekends, and the arXiv id is nested under `paper.id`, not top-level
 
 **Area:** HF Daily Papers API
-**Status:** provisional
-**Date:** 2026-09-15  ·  **From:** T-003
+**Status:** verified (upgraded from provisional — see the T-015 reinforcement below)
+**Date:** 2026-09-15 (T-003); reinforced 2026-09-16 (T-015)  ·  **From:** T-003, T-015
 
 ## Claim
 `GET https://huggingface.co/api/daily_papers?date=YYYY-MM-DD` returned HTTP 200 for all of
@@ -73,3 +73,14 @@ hit in 14 sequential requests), or whether the schema is stable across HF deploy
 `publishedAt` vs `submittedOnDailyAt` divergence was checked on only 3 entries from a
 single date — consistent on all 3, but not exhaustively confirmed across dates or verified
 against arXiv's own record for those ids.
+
+**T-015 reinforcement (2026-09-16):** the 8-week HF backfill queried 56 consecutive days
+(2026-07-23..2026-09-16) with `scripts/t015_hf_backfill.py`. Every one of the 16 weekend
+dates in that window returned an empty list, zero exceptions; every weekday returned real
+papers (12-48 per day). No rate limiting or non-200 response was hit across 56 sequential
+requests, nor across the repeated re-runs in T-013's later catch-up/verification work
+(dozens more requests against the same date range). The weekend-gap pattern and the field
+shapes (`paper.id`, `paper.submittedOnDailyAt`) both held with no exceptions at 4x the
+original sample size — upgrading this entry's status from provisional to verified. Still not
+tested: behavior across a full calendar year (holiday patterns, HF outages), or whether the
+API has a rate limit above the volumes seen so far.
