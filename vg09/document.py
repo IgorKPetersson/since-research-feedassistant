@@ -71,6 +71,10 @@ class Document:
     fallback_reason: str | None = None  # exception class name; set iff text_source is
     # "title_description" (D-006) - lets a fallback document be told apart from a real
     # transcript and reconsidered later without re-deriving that from `text` itself
+    segments: list[dict] | None = None  # YouTube captions only (text_source="captions"):
+    # [{"text": str, "start": float, "duration": float}, ...] - the real per-snippet
+    # timing FetchedTranscriptSnippet provides (T-010), preserved so T-012 can chunk by
+    # timestamp instead of losing timing at collection time by joining into one string
 
     def write(self) -> Path:
         path = raw_path(self.source, self.feed_date, self.id)

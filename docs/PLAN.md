@@ -44,8 +44,9 @@ revision. Phase 1 has not started — waits for this review.
 - [x] Collectors for HF and YouTube produce one normalized document shape: source, url,
   title, feed date, text — plus arXiv `publishedAt` as extra metadata for papers (D-002) —
   T-009, KB-008
-- [ ] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
-  alongside for citations, never used for filtering (D-002). Re-running is idempotent
+- [x] Chunk, embed and store with feed date as metadata; arXiv `publishedAt` stored
+  alongside for citations, never used for filtering (D-002). Re-running is idempotent —
+  T-012, 1184/1184/1184 (docs/chunks/collection.count()) stable across two real runs
 - [x] Initial backfill: 8 weeks of HF Daily Papers history, fetched and resumable — T-015,
   1184 papers, 2026-07-23..2026-09-16, watermark `2026-09-15`. YouTube's backfill is split
   into its own item below, blocked on a decision

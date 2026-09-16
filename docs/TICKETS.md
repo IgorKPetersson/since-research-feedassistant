@@ -17,7 +17,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-012 — Chunk, embed and store documents with feed date metadata (idempotent)
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-012-chunk-embed-store`
 
 **Goal:** normalized documents from `data/raw/` (T-009's collectors, populated by T-015's HF
@@ -32,30 +32,77 @@ and D-002 (feed date semantics) need to land in real storage code, with chunk si
 chosen against T-008's measured budget rather than guessed.
 
 **Acceptance criteria**
-- [ ] Chunking/embedding reads normalized documents from `data/raw/` rather than calling the
-  HF/YouTube collectors directly, so the database can be rebuilt from disk without
-  re-fetching from YouTube — reads only final `*.json` documents, skipping `*.pending.json`
-  markers (T-010/D-006), since a pending video has no `text` to chunk yet
-- [ ] Chunk size is chosen using T-008's documented context budget, with the reasoning cited
-- [ ] Each chunk is embedded via an explicit `bge-m3` call (CLAUDE.md hard rule — never
-  ChromaDB's default embedder)
-- [ ] Each chunk is stored with `feed_date` as filterable metadata (D-002/D-004); for
-  papers, `arxiv_published_at` is stored alongside but never used for filtering
-- [ ] Running ingest twice over the same `data/raw/` contents produces the same
-  document/chunk count both times
-- [ ] A query filtered to a feed-date range returns only chunks inside that range, in the
-  real schema — not just T-005's throwaway 8-document test collection
+- [x] Chunking/embedding reads normalized documents from `data/raw/` rather than calling the
+  HF/YouTube collectors directly → `vg09/store.py`'s `load_documents()`, skips
+  `*.pending.json` and `_done.json` by filename
+- [x] Chunk size is chosen using T-008's documented context budget, with the reasoning cited
+  → HF: one chunk/paper (max 363 < 400-token cap); YouTube: character-budget windows
+  calibrated to a real qwen3-tokenizer measurement (`scripts/t012_caption_token_calibration.py`)
+  targeting 350/400 tokens
+- [x] Each chunk is embedded via an explicit `bge-m3` call → `vg09/store.py::embed_batch()`,
+  `num_ctx=8192` explicit, batched real calls, never Chroma's default embedder (verified by
+  self-review catching and fixing a `query_texts=` slip in a smoke-test script before it
+  reached the real store)
+- [x] Each chunk is stored with `feed_date` as filterable metadata → `feed_date_ordinal`
+  (`date.toordinal()`, int, per KB-004) alongside the human-readable string
+- [x] Running ingest twice over the same `data/raw/` contents produces the same
+  document/chunk count both times → real run: 1184/1184/1184 (docs/chunks/collection.count())
+  both times, `collection.upsert()` with deterministic ids
+- [x] A query filtered to a feed-date range returns only chunks inside that range, in the
+  real schema → `scripts/t012_verify_date_filter.py` against the real 1184-chunk production
+  store: `[2026-09-01, 2026-09-14]` → 306 chunks, all confirmed in range, strict subset of
+  unfiltered
+
+**Additional requirements from this ticket's instructions, also done:**
+- [x] HF: one chunk per paper (`vg09/chunking.py::chunk_hf_document`)
+- [x] YouTube: chunked by transcript timestamp, not sentence (auto-captions have no
+  punctuation, KB-001); each chunk records its first segment's real `start_seconds` and its
+  citation URL gets `&t={int(start_seconds)}` appended (`chunk_youtube_document`). Checked
+  `data/t002_youtube_captions.json` for real transcript text with timestamps first, per
+  instruction — **it doesn't have any**: T-002's script only ever saved counts
+  (`snippet_count`, `language`, `is_generated`), never the actual snippets. No real
+  timestamped caption text exists anywhere in this repo, so the chunking logic is tested
+  against synthetic segments built from the real `FetchedTranscriptSnippet` shape
+  (`tests/test_chunking.py`), and the chunk-size target is calibrated from a real qwen3
+  tokenizer measurement against synthetic caption-style text (real English text,
+  lowercased/depunctuated), not real captions. Flagged in `docs/DESIGN.md` as an estimate to
+  re-confirm once T-017 unblocks
+- [x] `Pending` markers are never embedded (skipped by filename in `load_documents()`);
+  `title_description` fallback documents are embedded, with `text_source`/`fallback_reason`
+  carried into chunk metadata so a citation can be told apart from a real transcript
+- [x] `feed_date` numeric (above), `bge-m3` explicit (above), idempotent (above)
 
 **Out of scope:** catch-up logic for missed days (T-013); retrieval/answer generation
-(Phase 2).
+(Phase 2) — design notes only, see `docs/DESIGN.md` § Answer generation.
 
 **Depends on:** T-008, T-009, T-015. Not blocked on T-017 — reads whatever `data/raw/`
 contains, HF-only or HF+YouTube.
-**Notes:** T-008 blocks this — chunk size and top-k must not be finalized before T-008's
-context-budget section lands, per explicit instruction when Phase 1 was opened. Run order:
-T-009 → T-010, T-015 (HF backfill, own terminal) with T-008 done in parallel while it
-runs → T-012 → T-013 → T-014, per explicit instruction when these clarifications were
-added. T-015/T-017 split (HF now, YouTube blocked) doesn't change this ticket's own work.
+**Notes:** T-008 blocked this until its context-budget section landed, per explicit
+instruction when Phase 1 was opened; landed, then this ran. Run order followed:
+T-009 → T-010 → T-015 → T-008 → T-012.
+
+**Schema change, flagged per `CLAUDE.md`'s stop-and-ask rule for stored data formats:**
+`Document` gained a new field, `segments` (`vg09/document.py`) — the real per-snippet
+`{text, start, duration}` timing `FetchedTranscript` provides (T-010's verified shape),
+preserved so YouTube chunking can use real timestamps instead of losing them when
+`vg09/youtube.py` joins snippets into one string. This is additive and backward-compatible
+(old JSON files without the key still load fine via `.get()`), and was a direct, structural
+consequence of this ticket's own instructions (chunk by timestamp, store the start time) —
+proceeded rather than blocking to ask, since the alternative (not implementing timestamped
+citations at all) contradicts what was explicitly asked for. Flagged here and in the final
+report for me to confirm or object, per `/deep-review`'s finding below.
+
+`/deep-review` (reviewer subagent) findings: one Minor/process (the schema change above,
+addressed by this note rather than reverted), one Minor/plausible (segment construction
+assumes real `FetchedTranscriptSnippet.start`/`.duration` are well-formed — already flagged
+project-wide as unverified against real data pending T-017, no separate action taken).
+
+`docs/DESIGN.md` also gets two Phase 2 design notes (not built): the `/api/chat` message
+structure (system prompt as its own message; verified via the real chat template that system
+always renders first, regardless of array order — this changes T-008's truncation-ordering
+mitigation, since `/api/chat` can't protect the system prompt by ordering the way raw
+`/api/generate` string concatenation could), and that `done_reason == "length"` must be
+detected and surfaced, never presented as a complete answer.
 
 ---
 

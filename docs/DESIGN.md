@@ -100,11 +100,17 @@ not the binding constraint here.
 **Chunk size: capped at 400 qwen3 tokens.** A whole HF Daily Papers abstract is a natural
 chunk unit and already fits this cap with room to spare (max observed 363). This cap is a
 hard requirement on T-012's chunking, not just a description of HF's abstracts: a YouTube
-transcript is not naturally this short, so T-012 must split any source text longer than this
-into paragraph/window-sized sub-chunks — never embed a whole transcript as one chunk.
-**Not yet measured**: this project has no real YouTube transcript text yet (T-009's runs hit
-`IpBlocked`, KB-008) — the 400-token cap is sized from HF abstracts only, and should be
-re-checked against real transcript-derived chunks once T-015's backfill produces some.
+transcript is not naturally this short, so T-012 splits transcripts into timestamp-based
+windows (§ below) rather than embedding a whole transcript as one chunk.
+**HF confirmed (T-012):** one chunk per paper (the whole abstract) — real production run,
+1184 real chunks, all comfortably under the cap by construction (same 20-abstract
+distribution T-008 measured). **YouTube still an estimate:** this project has no real
+YouTube transcript text yet (`IpBlocked` since T-009, KB-008) — T-012's YouTube chunk-size
+target is calibrated from a real qwen3 tokenizer measurement against *synthetic*
+caption-style text (real English text, lowercased/depunctuated to mimic KB-001's
+no-punctuation auto-captions — see `scripts/t012_caption_token_calibration.py`), targeting
+350 of the 400-token cap. Re-check against real transcript-derived chunks once T-017
+unblocks and produces real captions.
 
 **Max top-k: 34** = `13789 // 400`, floored — the number of 400-token chunks that
 provably fit the remaining budget in the worst case (every chunk at the cap). This is a
@@ -134,6 +140,65 @@ chunks) must:
 4. **Every real call still checks itself, per `CLAUDE.md`'s hard rule:** compare the
    response's real `prompt_eval_count` against `num_ctx` afterward and warn on truncation
    risk — this is a backstop for when 1-3 have a bug, not a replacement for them.
+
+### YouTube chunking: by transcript timestamp, not sentence
+
+T-012. Auto-generated captions have no punctuation (KB-001), so sentence-boundary chunking
+isn't reliable. Instead, `vg09/chunking.py` groups consecutive transcript segments (the real
+per-snippet `{text, start, duration}` T-010 confirmed `FetchedTranscript` provides) into
+windows sized by real character count, closing a window once it reaches
+`TARGET_CHUNK_CHARS` (calibrated above). Each chunk records the **real timestamp of its
+first segment** (`start_seconds`), and its citation URL is
+`{video_url}&t={int(start_seconds)}` — a citation for a YouTube chunk links straight to the
+point in the video where that content was said, not just the video as a whole. A
+`title_description` fallback document (D-006 — no captions were ever fetched, so there's
+nothing to time) produces one whole-document chunk with no timestamp and an unmodified URL.
+
+This can only be exercised against synthetic segment data today (`tests/test_chunking.py`) —
+no real YouTube transcript exists yet. Re-verify chunk boundaries and citation timestamps
+look sensible against a real video once T-017 unblocks.
+
+### Fallback documents and pending markers in the store
+
+`Pending` markers (`*.pending.json`, T-010) are never embedded — `vg09/store.py`'s
+`load_documents()` skips them by filename, same as `_done.json` day-completion markers
+(T-015); neither is a document with real `text` to chunk. `title_description` fallback
+documents (D-006) **are** embedded — weaker source material is still better than no
+citation — but every chunk built from one carries `text_source: "title_description"` (and
+`fallback_reason`) in its Chroma metadata, so Phase 2's answer generation and citations can
+tell a real transcript-backed claim from a title+description-only one, rather than
+presenting both with equal confidence.
+
+## Answer generation (Phase 2 — design notes only, nothing built yet)
+
+Two things worth recording now, before Phase 2 starts, since they follow directly from work
+already done in Phase 1:
+
+**Message structure for `/api/chat`.** The system prompt goes in its own
+`{"role": "system", ...}` message; retrieved chunks and the question go together in one
+`{"role": "user", ...}` message. Verified against the real chat template
+(`scripts/t012_check_chat_template.py`, `POST /api/show`): Ollama's Go template for
+`qwen3:30b-a3b` unconditionally renders the system block
+(`<|im_start|>system ... <|im_end|>`) **before** iterating `.Messages`, regardless of where
+a system-role message sits in the `messages` array — so, unlike T-008's raw-string
+`/api/generate` experiment (which controlled prompt order by literal string concatenation),
+message *order* in the API call does not control rendered prompt order once `/api/chat` is
+used. **This changes the truncation mitigation from the Context budget section above**:
+under `/api/chat`, KB-005's front-truncation would eat the **system prompt** first, not the
+chunks, since the system block is always rendered first. The token-budget packing (this
+section, T-008/T-012) is therefore the real defense once `/api/chat` is used — ordering
+chunks least-relevant-first inside the user message's own content is still worth doing
+(free, and helps if the packing accounting has a bug), but it cannot protect the system
+prompt the way raw-string "system last" ordering could. Keeping the system prompt short
+(171 tokens, measured) limits how bad a worst-case truncation would be.
+
+**Detect and surface `done_reason == "length"`.** T-008's `num_predict:2000` reasoning+answer
+cap is a real ceiling, not just a budget estimate — it *can* cut a genuinely longer answer
+off mid-thought. Every answer-generation call must check the response's `done_reason`:
+`"stop"` means a real, complete answer (matches how T-008's own measurements were validated
+— all real samples ended `"stop"`); `"length"` means the model was still generating when the
+cap hit. A `"length"` result must be flagged to the user/UI as incomplete — never displayed
+as if it were a finished answer with nothing missing.
 
 ## Core model
 
@@ -165,6 +230,33 @@ works well when there are several.>
 
 <Anything two parts of the system agree on: API shapes, events, file formats. Changes here
 are stop-and-ask territory.>
+
+**`data/raw/<source>/<feed_date>/`** (T-009/T-015/T-017): the durable normalized-document
+store every other stage reads from, never re-fetching from YouTube/HF to rebuild anything.
+- `<id>.json` — a final `Document` (`vg09/document.py`): `id`, `source`, `url`, `title`,
+  `feed_date`, `text`, `arxiv_published_at` (papers only), `text_source`
+  (`"captions"`|`"title_description"`, YouTube only), `fallback_reason` (D-006),
+  `segments` (`[{text, start, duration}]`, YouTube captions only — preserves real per-snippet
+  timing for T-012's timestamp chunking)
+- `<id>.pending.json` — a `Pending` marker (T-010/D-006): a video whose caption fetch was
+  blocked, not genuinely missing. Never chunked/embedded (T-012 skips by filename).
+- `_done.json` — a day-completion marker (T-015, HF only). Not a document.
+
+**ChromaDB store** (`data/chroma_store`, collection `vg09_chunks`, T-012): one row per
+`Chunk` (`vg09/chunking.py`). Metadata carries `feed_date_ordinal` (`date.toordinal()`, an
+**int** — KB-004: ISO date strings aren't guaranteed to compare correctly under Chroma's
+`$gte`/`$lte`) alongside the human-readable `feed_date` string, plus `doc_id`, `source`,
+`url`, `title`, and — only when present — `text_source`, `fallback_reason`,
+`arxiv_published_at`, `start_seconds` (Chroma metadata values must be primitives; `None`
+fields are omitted, never passed). Written via `collection.upsert()`, not `add()`, keyed by
+deterministic chunk ids (`{source}:{doc_id}:{index}`) — idempotent by construction.
+
+**Never call `collection.query(query_texts=...)` or `collection.add(documents=...)` without
+also passing `embeddings=`/`query_embeddings=`.** Either silently invokes ChromaDB's default
+embedding function (CLAUDE.md hard rule: never use it — KB-006's 256-token silent
+truncation). Always embed via `vg09.store.embed_batch()` (explicit `bge-m3`,
+`num_ctx=8192`) first, then pass the vectors in directly. Caught by self-review while
+building T-012's smoke test, before it could have reached the real store.
 
 ## What we deliberately don't build
 

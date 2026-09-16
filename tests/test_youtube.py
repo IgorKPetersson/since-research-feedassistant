@@ -51,6 +51,7 @@ class YoutubeNormalizeTests(unittest.TestCase):
         self.assertEqual(doc.fallback_reason, "NoTranscriptFound")
         self.assertTrue(doc.text.startswith(VIDEO["title"]))
         self.assertIn(VIDEO["description"], doc.text)
+        self.assertIsNone(doc.segments)  # nothing was ever fetched to segment
 
         doc.write()
         final_path = self.raw_dir / "youtube" / "2026-09-10" / f"{VIDEO['id']}.json"
@@ -101,6 +102,13 @@ class YoutubeNormalizeTests(unittest.TestCase):
         self.assertEqual(doc.text_source, "captions")
         self.assertIsNone(doc.fallback_reason)
         self.assertEqual(doc.text, "Hello world")
+        self.assertEqual(
+            doc.segments,
+            [
+                {"text": "Hello", "start": 0.0, "duration": 1.0},
+                {"text": "world", "start": 1.0, "duration": 1.0},
+            ],
+        )
 
         doc.write()
         final_path = self.raw_dir / "youtube" / "2026-09-10" / f"{VIDEO['id']}.json"

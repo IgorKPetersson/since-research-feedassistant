@@ -60,13 +60,19 @@ def _feed_date(upload_date: str) -> str:
     return datetime.strptime(upload_date, "%Y%m%d").date().isoformat()
 
 
-def fetch_transcript_text(video_id: str) -> str:
-    """The caption transcript as one string. Raises `CouldNotRetrieveTranscript`
-    (or a subclass - disabled, not found, unavailable, IP-blocked, ...) if
-    captions can't be fetched; callers decide what to do about it."""
+def fetch_transcript(video_id: str) -> tuple[str, list[dict]]:
+    """The caption transcript as one joined string, plus the real per-snippet
+    segments (`{"text", "start", "duration"}`, T-010's verified
+    FetchedTranscriptSnippet shape) - preserved so T-012 can chunk by
+    timestamp instead of losing timing by only keeping the joined string.
+    Raises `CouldNotRetrieveTranscript` (or a subclass - disabled, not found,
+    unavailable, IP-blocked, ...) if captions can't be fetched; callers decide
+    what to do about it."""
     api = YouTubeTranscriptApi()
     fetched = api.fetch(video_id)
-    return " ".join(snippet.text for snippet in fetched)
+    segments = [{"text": s.text, "start": s.start, "duration": s.duration} for s in fetched]
+    text = " ".join(s["text"] for s in segments)
+    return text, segments
 
 
 def normalize(video: dict) -> Document | None:
@@ -83,7 +89,7 @@ def normalize(video: dict) -> Document | None:
     feed_date = _feed_date(upload_date)
 
     try:
-        text = fetch_transcript_text(video_id)
+        text, segments = fetch_transcript(video_id)
     except RequestBlocked as exc:
         reason = type(exc).__name__
         Pending(
@@ -103,7 +109,7 @@ def normalize(video: dict) -> Document | None:
 
     return Document(
         id=video_id, source="youtube", url=url, title=title, feed_date=feed_date,
-        text=text, text_source="captions", fallback_reason=None,
+        text=text, text_source="captions", fallback_reason=None, segments=segments,
     )
 
 
