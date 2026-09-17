@@ -3,31 +3,45 @@
 - **HF**: one chunk per paper, the whole abstract. Already well under T-008's
   400-qwen3-token chunk cap (max observed 363 tokens across all 20 real
   abstracts on disk).
-- **YouTube**: chunked by transcript *timestamp*, not sentence - KB-001 notes
-  auto-generated captions have no punctuation, so sentence splitting would be
-  unreliable. Each chunk keeps its start time so a citation can link straight
-  to `watch?v=ID&t=SECONDS` (D-002: the point in a video "did X come up"
-  actually means).
+- **YouTube**: chunked by transcript *timestamp*, not sentence, for both
+  caption- and Whisper-sourced documents (T-019 adds Whisper as a second
+  transcript source, D-009) - real segments always have a meaningful start
+  time to cite (`&t=SECONDS`, D-002), which sentence splitting would have to
+  reconstruct anyway. Whole segments are merged into a window until
+  `TARGET_CHUNK_CHARS` is reached; a window only ever closes *after* a whole
+  segment is added, so a chunk boundary is always a segment boundary, never
+  mid-segment - true for both sources since both are normalized to the same
+  `{text, start, duration}` shape before reaching this module.
+  **Correction (KB-014):** an earlier version of this docstring claimed
+  auto-generated captions have no punctuation, attributed to KB-001 - KB-001
+  never actually says that, and real fetched captions (T-017) turned out to
+  have normal punctuation and capitalization throughout. That claim was an
+  unverified assumption, not a measured fact; removed rather than repeated.
 
 The YouTube chunk-size target (`TARGET_CHUNK_CHARS`) is calibrated from a real
-qwen3 tokenizer measurement (`scripts/t012_caption_token_calibration.py`)
-against synthetic caption-style text (real English text, lowercased and
-stripped of punctuation - no real caption data exists yet, KB-008), not
-guessed from word counts. This addresses the risk T-008 flagged: its 400-token
-cap was measured on HF abstracts only. **Re-confirm against real transcript
-text once T-017 unblocks** - this is still an estimate.
+qwen3 tokenizer measurement against **real** caption text (T-019,
+`scripts/t019_caption_token_recalibration.py`, 17 real transcripts fetched by
+T-017), replacing T-012's original estimate from synthetic
+lowercased/depunctuated stand-in text (no real captions existed yet at the
+time, KB-008). The real measurement came out *worse* (fewer chars per token:
+4.16 real worst-case vs. 5.55 assumed) - the synthetic estimate under-budgeted
+real token count for a given character window, the dangerous direction per
+KB-005's silent-truncation risk. Fixed by using the real ratio.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-# Real chars/token measured for caption-style text (lowercase, no punctuation)
-# via qwen3's tokenizer on 5 real HF abstracts converted to that style: 5.55
-# (worst case, i.e. most tokens per char) to 6.71 chars/token. Using the
-# worst case with a safety margin: target 350 of T-008's 400-token cap,
-# 350 * 5.55 ~= 1942, rounded down.
-CHARS_PER_TOKEN_CAPTION_WORST_CASE = 5.55
+# Real chars/token measured via qwen3's tokenizer against 17 real caption
+# transcripts fetched by T-017 (scripts/t019_caption_token_recalibration.py):
+# 4.1566 (worst case, i.e. most tokens per char - shown rounded as 4.16 in
+# that script's own output) to 4.61 chars/token, mean 4.38. Supersedes
+# T-012's synthetic-text estimate of 5.55-6.71 (see module docstring) - real
+# captions tokenize less efficiently than the synthetic stand-in assumed.
+# Using the worst case with a safety margin: target 350 of T-008's 400-token
+# cap, 350 * 4.1566 ~= 1454, rounded down.
+CHARS_PER_TOKEN_CAPTION_WORST_CASE = 4.1566
 TARGET_CHUNK_TOKENS = 350
 TARGET_CHUNK_CHARS = int(TARGET_CHUNK_TOKENS * CHARS_PER_TOKEN_CAPTION_WORST_CASE)
 
