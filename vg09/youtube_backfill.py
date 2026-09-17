@@ -121,10 +121,18 @@ def _process_video(video: dict, result: BackfillResult) -> None:
     _pause(result)
 
 
-def run(weeks_back: int = BACKFILL_WEEKS) -> BackfillResult:
-    today = date.today()
-    start = today - timedelta(days=weeks_back * 7 - 1)
-    print(f"YouTube backfill window: {start.isoformat()} .. {today.isoformat()} ({weeks_back} weeks)")
+def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date | None = None) -> BackfillResult:
+    """`start`/`today` let a caller (T-013's `catch_up_youtube()`) reuse this
+    same paced/three-tier-fallback logic for a narrow catch-up window instead
+    of the full `weeks_back` backfill window - same idea as `vg09.sync.sync_hf`
+    serving both T-015's backfill and T-013's HF catch-up from one
+    implementation."""
+    today = today or date.today()
+    if start is None:
+        start = today - timedelta(days=weeks_back * 7 - 1)
+        print(f"YouTube backfill window: {start.isoformat()} .. {today.isoformat()} ({weeks_back} weeks)")
+    else:
+        print(f"YouTube catch-up window: {start.isoformat()} .. {today.isoformat()}")
 
     result = BackfillResult()
 

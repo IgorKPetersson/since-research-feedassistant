@@ -1,10 +1,11 @@
 """T-013: catch-up ingestion since the last successful run, per source.
 
-Per-source watermarks (`vg09.watermark`), not one combined watermark, so HF's
-catch-up (backed by T-015's completed backfill) never waits on YouTube's
-(T-017, still blocked on a transcript-path decision, KB-008). No YouTube
-calls are made from this module - if no YouTube watermark exists yet, that
-source is skipped and reported, never silently treated as "caught up"."""
+Per-source watermarks (`vg09.watermark`), not one combined watermark, so
+each source's catch-up is independent - HF's never waited on YouTube's
+having a real transcript path (D-009/T-019 now gives it one). If a source's
+watermark doesn't exist yet, that source is skipped and reported, never
+silently treated as "caught up" (the two mean different things - "never
+started" vs. "already up to date")."""
 
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from datetime import date, timedelta
 
 from vg09.sync import sync_hf
 from vg09.watermark import read_watermark
+from vg09.youtube_backfill import run as run_youtube_backfill
 
 
 def catch_up_hf(today: date | None = None) -> dict | None:
@@ -24,20 +26,25 @@ def catch_up_hf(today: date | None = None) -> dict | None:
     return sync_hf(start=start, today=today)
 
 
-def catch_up_youtube() -> None:
-    """No YouTube calls are ever made here. If a YouTube watermark doesn't
-    exist yet (T-017 hasn't run), that's reported and skipped, not treated as
-    an error or as "nothing to catch up" (the two mean different things -
-    the former is "never started", the latter is "already up to date")."""
+def catch_up_youtube(today: date | None = None):
+    """Reuses `vg09.youtube_backfill.run()`'s paced, three-tier-fallback
+    logic (D-009/T-019) for the narrow window since the last watermark,
+    instead of a full backfill window - same factoring idea as
+    `vg09.sync.sync_hf` sharing one implementation between T-015's backfill
+    and this. If no YouTube watermark exists yet (no backfill has completed,
+    T-017/T-019), that's reported and skipped - no YouTube call is made in
+    that case."""
     watermark = read_watermark("youtube")
     if watermark is None:
-        print("No youtube watermark found - T-017 hasn't run yet. Skipping YouTube catch-up "
-              "(no YouTube call made).")
-        return
-    print(f"YouTube watermark: {watermark} - YouTube catch-up logic isn't implemented yet (T-017).")
+        print("No youtube watermark found - run the backfill (T-017/T-019) first. Skipping "
+              "YouTube catch-up (no YouTube call made).")
+        return None
+    start = date.fromisoformat(watermark) + timedelta(days=1)
+    print(f"YouTube watermark: {watermark} -> catching up from {start.isoformat()}")
+    return run_youtube_backfill(start=start, today=today)
 
 
 def catch_up(today: date | None = None) -> dict:
     hf_result = catch_up_hf(today=today)
-    catch_up_youtube()
-    return {"hf": hf_result}
+    youtube_result = catch_up_youtube(today=today)
+    return {"hf": hf_result, "youtube": youtube_result}

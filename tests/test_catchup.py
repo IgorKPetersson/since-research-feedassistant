@@ -1,9 +1,11 @@
-"""Unit tests for vg09.catchup (T-013).
+"""Unit tests for vg09.catchup (T-013/T-019).
 
-No network calls of any kind - `sync_hf` is mocked for the HF tests, and
-`catch_up_youtube` is exercised directly: `vg09.catchup` never imports
-`vg09.youtube`, so a YouTube call is structurally impossible from this
-module, not just avoided by convention.
+No network calls of any kind - both `sync_hf` (HF) and `run_youtube_backfill`
+(YouTube, D-009/T-019's paced three-tier-fallback logic) are mocked, same
+pattern for both sources now that YouTube catch-up is real rather than a
+stub. The old "vg09.catchup never imports vg09.youtube" structural guarantee
+(back when YouTube's transcript path was still blocked, KB-008) no longer
+applies - D-009/T-019 gave YouTube catch-up a real implementation to call.
 """
 
 import tempfile
@@ -52,13 +54,21 @@ class CatchUpYoutubeTests(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_no_watermark_is_reported_and_skipped_not_an_error(self):
-        catch_up_youtube()  # must not raise, must not need a YouTube module at all
+    def test_no_watermark_skips_without_calling_the_backfill(self):
+        with patch("vg09.catchup.run_youtube_backfill") as mock_run:
+            result = catch_up_youtube(today=date(2026, 9, 16))
 
-    def test_module_never_imports_youtube(self):
-        import vg09.catchup as mod
+        mock_run.assert_not_called()
+        self.assertIsNone(result)
 
-        self.assertNotIn("youtube", mod.__dict__)
+    def test_watermark_present_calls_backfill_from_the_day_after(self):
+        write_watermark("youtube", "2026-09-10")
+        with patch("vg09.catchup.run_youtube_backfill") as mock_run:
+            mock_run.return_value = "fake result"
+            result = catch_up_youtube(today=date(2026, 9, 16))
+
+        mock_run.assert_called_once_with(start=date(2026, 9, 11), today=date(2026, 9, 16))
+        self.assertEqual(result, "fake result")
 
 
 if __name__ == "__main__":
