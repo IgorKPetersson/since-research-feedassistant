@@ -67,15 +67,21 @@ class Document:
     feed_date: str  # ISO date (YYYY-MM-DD) - D-002
     text: str
     arxiv_published_at: str | None = None  # papers only; never used for filtering
-    text_source: str | None = None  # "captions" | "title_description" (YouTube only)
-    fallback_reason: str | None = None  # exception class name; set iff text_source is
-    # "title_description" (D-006) - lets a fallback document be told apart from a real
+    text_source: str | None = None  # "captions" | "whisper" | "title_description"
+    # (YouTube only) - three-tier fallback, in that order (D-006, D-009/T-019)
+    fallback_reason: str | None = None  # None iff text_source == "captions". For
+    # "whisper", the caption exception's class name (why captions were skipped, D-009).
+    # For "title_description", either a plain exception class name (missing captions,
+    # D-006) or "<captions exception>;whisper:<whisper exception>" (both transcript
+    # paths failed, T-019) - lets a fallback document be told apart from a real
     # transcript and reconsidered later without re-deriving that from `text` itself
-    segments: list[dict] | None = None  # YouTube captions only (text_source="captions"):
-    # [{"text": str, "start": float, "duration": float}, ...] - the real per-snippet
-    # timing FetchedTranscriptSnippet provides (T-010), preserved so T-012 can chunk by
-    # timestamp instead of losing timing at collection time by joining into one string
-    # (D-007 - added to the schema after T-012 shipped it, approved after the fact)
+    segments: list[dict] | None = None  # YouTube only, text_source in ("captions",
+    # "whisper"): [{"text": str, "start": float, "duration": float}, ...] - captions'
+    # real per-snippet timing (T-010's FetchedTranscriptSnippet shape) or Whisper's
+    # segments converted to the same shape (T-019 - faster-whisper itself returns
+    # {text, start, end}). Preserved so T-012 can chunk by timestamp instead of losing
+    # timing at collection time (D-007, added after T-012 shipped, approved after the
+    # fact)
 
     def write(self) -> Path:
         path = raw_path(self.source, self.feed_date, self.id)

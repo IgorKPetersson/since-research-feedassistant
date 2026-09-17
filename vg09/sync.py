@@ -8,9 +8,8 @@ always re-fetched and never marked done, since HF may still add papers to a
 recent date, and Sweden runs ahead of UTC so a run shortly after local
 midnight could otherwise close out a day still open on HF's server clock.
 
-YouTube is not handled here - it's a different, per-video mechanism (T-010's
-Pending/IngestBlocked), not day-based, and T-017 (its backfill) is still
-blocked on a transcript-path decision."""
+YouTube is not handled here - it's a different, per-video mechanism
+(`vg09.youtube_backfill`, T-017/T-019), not day-based."""
 
 from __future__ import annotations
 

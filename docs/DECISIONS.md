@@ -373,6 +373,51 @@ route around it with a different downloader or proxy.
 
 ---
 
+## D-010 — YouTube collector no longer aborts the run on a caption block; every video resolves to a final document
+**Status:** accepted (amends D-006's consequence for the `RequestBlocked` case; D-006's
+missing-vs-blocked *classification* is unchanged)
+
+**Decision:** `vg09/youtube.py::normalize()` no longer writes a `Pending` marker and raises
+`IngestBlocked` when captions are `RequestBlocked`/`IpBlocked`. Instead: captions first, then
+`yt-dlp` audio + local `faster-whisper` (D-009) if captions are blocked, then
+title+description only if **both** fail. Every video now resolves to some final `Document` -
+no video causes `vg09/youtube_backfill.py`'s run to stop early any more. The "missing
+captions" case (`TranscriptsDisabled`/`NoTranscriptFound`, not `RequestBlocked`) is
+unchanged - falls back to title+description directly, D-006's original behavior.
+
+**Why:** D-006 designed the abort-on-block behavior specifically because, at the time,
+`RequestBlocked` had no better alternative than title+description - continuing past it would
+have silently written a whole run's worth of weak documents with no distinct signal.
+D-009/T-018 changed that premise: there is now a real, measured, working second path
+(Whisper) for exactly this failure. Aborting a whole backfill run because one video's
+captions are blocked no longer makes sense once a better fallback than
+"do nothing and flag it" exists - it would just delay real data collection for the channels
+the block is hitting, for no remaining benefit.
+
+**Rejected:** Keeping the abort behavior as an extra safety net for the case where Whisper
+*also* fails (e.g. `yt-dlp` audio is blocked too) - rejected per explicit instruction:
+title+description is the named third resort for that case, not a run-wide stop. Silently
+leaving `IngestBlocked`/the abort branch in place as unreachable dead code "just in case" -
+rejected per `CLAUDE.md`'s conventions; removed instead (`vg09/youtube_backfill.py`'s
+`_process_video()` no longer has a branch for it).
+
+**Cost:** The signal D-006 protected - "captions stopped working for this run, don't trust
+the data quality silently" - is weaker now: a video that falls all the way through to
+title+description still does so quietly (a printed log line, `fallback_reason` recording
+both failures), with nothing stopping the run to force a human look. If Whisper's failure
+rate turns out to be high in practice (not just the block itself, but genuine Whisper
+failures), this could silently degrade data quality across a run the same way D-006 was
+originally written to prevent - just one fallback tier further out. Not mitigated here;
+worth watching via `fetched_fallback` counts in the backfill's own reporting.
+
+**Would change our mind:** If a real run shows a meaningful fraction of videos falling all
+the way through to title+description (both captions and Whisper failing) - that would be
+the same shape of problem D-006 first caught, and would justify adding back some form of
+stop-and-report threshold (e.g. N consecutive full-fallback videos) rather than trusting
+per-video logging alone.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

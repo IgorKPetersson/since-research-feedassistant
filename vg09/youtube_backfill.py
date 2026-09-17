@@ -1,22 +1,24 @@
-"""T-017: paced YouTube backfill.
+"""T-017/T-019: paced YouTube backfill.
 
 Window cut from the originally-planned 8 weeks to 4 (BACKFILL_WEEKS) and pacing
 tightened to a randomized per-video pause plus a longer pause every 20th video
-- my explicit direction for this first pass, on top of D-008's decision to
-wait out KB-008's IpBlocked rather than switch transcript source. Caution over
-completeness: a path that was blocked two days before this ran doesn't get
-hammered just because a single manual check cleared it.
+- my explicit direction for T-017's first pass, kept unchanged here.
+Caution over completeness: still worth pacing requests even though a caption
+block is no longer fatal to the run (T-019/D-009 - see below).
 
-Order: the two videos already recorded as `.pending.json` from the 2026-09-16
-block are retried first, then each chosen channel's remaining videos inside
-the window - skipping anything already fetched, so an interrupted run resumes
-without redoing settled work (same resumability shape as T-015's HF backfill,
-via `document.exists()` instead of `hf_papers`'s day markers).
+Order: any videos already recorded as `.pending.json` (from a run before
+T-019's Whisper path existed) are retried first, then each chosen channel's
+remaining videos inside the window - skipping anything already fetched, so an
+interrupted run resumes without redoing settled work (same resumability shape
+as T-015's HF backfill, via `document.exists()` instead of `hf_papers`'s day
+markers).
 
-Stops immediately on `IngestBlocked` (D-006) rather than continuing to the
-next video or channel, and reports running totals as it goes, not only at the
-end, so a human watching the run (or its log) can see how far it got without
-waiting for a final summary that may never come if it's interrupted.
+No longer stops on a caption block (T-019/D-009 supersedes D-006's "abort the
+run" consequence for this specific case): `vg09.youtube.normalize()` now
+tries Whisper, then title+description, before giving up on a video, so every
+video resolves to a final document and the run only stops on a genuinely
+uncaught exception. Running totals (captions/whisper/fallback/already-done)
+are still reported as the run progresses, not only at the end.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ from vg09 import document
 from vg09.channels import CHANNELS
 from vg09.document import RAW_DIR, Document
 from vg09.watermark import write_watermark
-from vg09.youtube import IngestBlocked, list_videos, normalize
+from vg09.youtube import list_videos, normalize
 
 BACKFILL_WEEKS = 4  # halved from T-017's original 8-week plan to roughly halve
 # the number of transcript-fetch requests against a path that was IpBlocked
@@ -50,12 +52,10 @@ LONG_PAUSE_SECONDS = (60.0, 120.0)
 @dataclass
 class BackfillResult:
     fetched_captions: int = 0
+    fetched_whisper: int = 0
     fetched_fallback: int = 0
     already_done: int = 0
     attempts: int = 0
-    blocked: bool = False
-    blocked_video: str | None = None
-    blocked_reason: str | None = None
     channels_reached: list[str] = field(default_factory=list)
 
 
@@ -85,8 +85,9 @@ def _fetch_single_video_metadata(video_id: str) -> dict:
 def _report(result: BackfillResult) -> None:
     print(
         f"  [progress] captions={result.fetched_captions} "
-        f"fallback={result.fetched_fallback} already_done={result.already_done} "
-        f"attempts={result.attempts} pending_now={len(_pending_videos())}"
+        f"whisper={result.fetched_whisper} fallback={result.fetched_fallback} "
+        f"already_done={result.already_done} attempts={result.attempts} "
+        f"pending_now={len(_pending_videos())}"
     )
 
 
@@ -99,32 +100,25 @@ def _pause(result: BackfillResult) -> None:
     time.sleep(secs)
 
 
-def _process_video(video: dict, result: BackfillResult) -> bool:
-    """Normalizes and writes one video's document. Returns False if the run
-    should stop (blocked) - True otherwise, including for a skipped/None
-    video, so the caller's loop can keep going."""
-    try:
-        doc: Document | None = normalize(video)
-    except IngestBlocked as exc:
-        result.blocked = True
-        result.blocked_video = exc.video_id
-        result.blocked_reason = exc.reason
-        print(f"\nBLOCKED on {exc.video_id} ({exc.reason}) - aborting per D-006/D-008")
-        _report(result)
-        return False
+def _process_video(video: dict, result: BackfillResult) -> None:
+    """Normalizes and writes one video's document. Always resolves to a final
+    document (T-019/D-009: captions -> Whisper -> title+description) - there
+    is no block-and-abort case left for the caller to react to."""
+    doc: Document | None = normalize(video)
 
     if doc is not None:
         doc.write()
         document.clear_pending(doc.source, doc.feed_date, doc.id)
         if doc.text_source == "captions":
             result.fetched_captions += 1
+        elif doc.text_source == "whisper":
+            result.fetched_whisper += 1
         elif doc.text_source == "title_description":
             result.fetched_fallback += 1
 
     result.attempts += 1
     _report(result)
     _pause(result)
-    return True
 
 
 def run(weeks_back: int = BACKFILL_WEEKS) -> BackfillResult:
@@ -144,8 +138,7 @@ def run(weeks_back: int = BACKFILL_WEEKS) -> BackfillResult:
         except Exception as exc:  # noqa: BLE001 - a metadata-refetch failure isn't a block
             print(f"  could not re-fetch metadata for {video_id}: {exc!r} - skipping this pending video")
             continue
-        if not _process_video(meta, result):
-            return result
+        _process_video(meta, result)
 
     for handle, url in CHANNELS.items():
         print(f"\n== {handle} ==")
@@ -171,11 +164,13 @@ def run(weeks_back: int = BACKFILL_WEEKS) -> BackfillResult:
                 continue  # already retried in the pending pass above
 
             print(f"  {video_id} ({feed_date}) {video.get('title')!r}")
-            if not _process_video(video, result):
-                return result
+            _process_video(video, result)
 
     write_watermark("youtube", today.isoformat())
-    print(f"\nDone - full window covered with no blocks hit. YouTube watermark set to {today.isoformat()}.")
+    print(f"\nDone - full window covered. YouTube watermark set to {today.isoformat()}.")
+    if result.fetched_whisper:
+        print(f"({result.fetched_whisper} video(s) needed the Whisper fallback - "
+              f"captions were blocked for them, D-009)")
     _report(result)
     return result
 
