@@ -56,11 +56,12 @@ revision. Phase 1 has not started — waits for this review.
   (Whisper feasibility) → T-019 (NateBJones/ColeMedin via Whisper, 24/24, watermark
   2026-09-17). Window intentionally 4 weeks, not 8 — extending it is unstarted work, not a
   blocker
-- [ ] Catch-up: ingest everything since the last successful run, per source, using each
-  source's own backfill end point as its first starting watermark — T-013, HF half done and
-  verified for real (simulated a 2-day gap, closed it via the real pipeline end to end, no
-  duplicates). YouTube now has a real watermark (T-019) but `catch_up_youtube()` itself is
-  still unexercised against it — real YouTube catch-up verification remains open
+- [x] Catch-up: ingest everything since the last successful run, per source, using each
+  source's own backfill end point as its first starting watermark — T-013, both halves done
+  and verified for real. HF: simulated a 2-day gap, closed it end to end, no duplicates.
+  YouTube (completed after T-019 gave it a real transcript path): simulated a 1-day gap
+  mixing both transcript paths, closed it end to end into Chroma, no duplicates - and caught
+  a real chunking bug (`fallback_reason` dropped) along the way, fixed and verified
 - [ ] Write the 15–20 evaluation questions with expected sources, against a frozen dataset
   (fixed cutoff date) — **before** retrieval is built, so the system isn't tuned to them.
   HF-side drafting can start once T-015 lands; the freeze itself waits on T-017

@@ -433,12 +433,15 @@ matches what the code claims it should produce.
 
 ### T-013 — Catch-up ingestion since the last successful run
 
-**Status:** done
-**Size:** M  ·  **Branch:** `t/T-013-catch-up-ingest`
+**Status:** done (fully - both sources verified for real; YouTube half completed in a later
+session once T-019 gave YouTube a real transcript path)
+**Size:** M  ·  **Branch:** `t/T-013-catch-up-ingest`, YouTube half on `t/T-013-youtube-catchup`
 
 **Goal:** after the PC has been off for up to 7 days, one ingest run catches up everything
-missed from HF Daily Papers, using feed date to determine what's new. YouTube catch-up is
-part of this ticket's design but does not block starting or finishing the HF half.
+missed from both HF Daily Papers and YouTube, using feed date to determine what's new.
+Per-source watermarks meant the HF half could start and ship without waiting on YouTube's
+transcript-path decision (D-008/D-009) - it did; this entry now also covers the YouTube half,
+completed and verified once T-019 landed.
 
 **Why:** `docs/PLAN.md` Phase 1's catch-up checklist item; `docs/GOAL.md`'s first success
 criterion depends on this directly. Per-source watermarks (not one combined watermark) mean
@@ -452,10 +455,11 @@ blocked on its transcript-path decision.
 - [x] A simulated offline scenario against **HF alone** results in one run fetching all HF
   documents with `feed_date` after the watermark, no YouTube data or calls involved →
   verified for real (see below), not just against a mock
-- [x] YouTube's watermark handling is written but not exercised against real data: no
-  watermark exists (T-017 hasn't run) → `catch_up_youtube()` reports and skips, makes no
-  YouTube call — confirmed structurally: `vg09/catchup.py` never imports `vg09.youtube`
-  (`tests/test_catchup.py::test_module_never_imports_youtube`)
+- [x] YouTube catch-up is real and exercised against real data, end to end - **completed in
+  a later session** once T-019 gave YouTube a real transcript path. `catch_up_youtube()`
+  (previously a stub that only reported the watermark) now reuses
+  `vg09.youtube_backfill.run()`'s paced three-tier-fallback logic for the window since the
+  watermark - see the real gap-simulation verification below
 - [x] New documents from a catch-up run are appended to `data/raw/` → confirmed via the real
   gap-simulation run below
 - [x] Running catch-up twice in a row with no new data adds zero new documents → real run:
@@ -478,12 +482,46 @@ for:** removed 2 real days (`2026-09-07`: 28 papers, `2026-09-08`: 12 papers) en
    40 chunks for the gap days are back with correct `feed_date`/`feed_date_ordinal`/metadata
 4. Ran steps 1-2 again: still 1184, stable
 
+**Real end-to-end verification, YouTube half (completed in a later session, after T-019):**
+first built the store with the **full current YouTube dataset for the first time** -
+`scripts/t012_build_store.py` had never been run against real YouTube documents before this;
+`collection.count()` went from 1184 (HF-only) to 1994 (1184 HF + 810 YouTube chunks across 41
+documents). Then the same gap-simulation shape as the HF verification, against YouTube:
+1. `scripts/t013_simulate_youtube_gap.py` removed `2026-09-10`'s 3 real videos - a deliberate
+   mix of both transcript paths: `q9tpIc8PVKM` (captions, `@theAIsearch`) and
+   `SGodxQHnVxc`/`n5bZHETCiJA` (whisper, `@ColeMedin`/`@NateBJones`) - from `data/raw/` and
+   Chroma (50 chunks), rolled the `youtube` watermark back to `2026-09-09`
+2. `scripts/t013_youtube_catch_up.py` (`catch_up_youtube()`, real network + GPU calls) →
+   all 3 videos came back, but **not identically** to their original fetch: `n5bZHETCiJA`/
+   `SGodxQHnVxc` hit `IpBlocked` again and resolved via Whisper as before, but `q9tpIc8PVKM`
+   - previously a clean caption fetch - **also hit `IpBlocked` this time**, and its Whisper
+   fallback **also failed** (`yt-dlp` audio download: `DownloadError`/`HTTP 403`), so it
+   correctly fell through to the third resort, title+description. D-009's three-tier design
+   handled a real double-failure case correctly, not just the single-failure case exercised
+   before. Full detail in KB-008's latest update
+3. `scripts/t012_build_store.py` → `collection.count()` = 1971 (not 1994 - expected, since
+   `q9tpIc8PVKM`'s content genuinely changed from a full transcript to a short
+   title+description, producing far fewer chunks for that one document; document count
+   unchanged at 1225)
+4. `scripts/t013_verify_youtube_no_duplicates.py`: 1971 ids, **1971 unique ids — no
+   duplicates**; all 3 gap videos back with correct metadata, each showing the transcript
+   path it actually took this time
+
+**Real bug found and fixed via this verification, not in previously-shipped-and-tested
+code:** `chunk_youtube_document()`'s windowed/multi-chunk path (`flush()`) passed
+`text_source` to each `Chunk` but never `fallback_reason` - silently dropping it from every
+multi-segment YouTube chunk. Invisible for captions (`fallback_reason` is always `None`
+there) until a real Whisper-sourced document - which always has segments and a real
+non-`None` fallback_reason (`"IpBlocked"`, D-009) - went through this path for the first
+time via the check above. Fixed (`vg09/chunking.py`), covered by a new regression test, and
+confirmed against the real store: all 24 real Whisper documents' chunks were missing this
+field before a rebuild, correct after.
+
 **Out of scope:** a scheduler or always-on process (explicit non-goal, `docs/GOAL.md`) —
 catch-up is triggered manually/on demand.
 
-**Depends on:** T-012, T-015. **Not** blocked on T-017 — per-source watermarks mean the HF
-half can be built, tested and shipped independently; the YouTube half activates once T-017
-produces a YouTube watermark to catch up from.
+**Depends on:** T-012, T-015 (HF half); T-019 (YouTube half - needed a real transcript path
+before catch-up had anything real to exercise).
 **Notes:** T-015's day-by-day backfill logic was factored out into `vg09/sync.py`
 (`sync_hf(start, today)`) so the backfill and catch-up share one implementation rather than
 two that could drift apart; `scripts/t015_hf_backfill.py` is now a thin entry point over it.

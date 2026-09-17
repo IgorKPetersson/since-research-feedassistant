@@ -1,13 +1,16 @@
-# KB-008 — IpBlocked is channel-scoped and durable for @NateBJones/@ColeMedin, not a session volume cap
+# KB-008 — IpBlocked's exact trigger is still unknown; a real three-tier fallback (D-009) makes it not matter for data collection
 
 **Area:** YouTube ingest — captions
-**Status:** provisional (channel-scoped reading is now well-supported by 24 consecutive
-paced requests, but *why* these two channels specifically remains unexplained)
+**Status:** provisional (five real sessions now, still no single theory - volume,
+channel-scoping, and pure intermittency have each looked right at some point - fits none of
+them perfectly)
 **Date:** 2026-09-16 (T-009 occurrence); 2026-09-16, later same day (manual re-check by me,
 still blocked); 2026-09-17 (manual re-check by me, block cleared for one video); 2026-09-17,
 later same day (T-017's real paced backfill run, block recurred on the first `@NateBJones`
 video); 2026-09-17, still later (T-019's 24-request re-run, `@NateBJones`/`@ColeMedin` 100%
-blocked throughout)  ·  **From:** T-009, me, T-017, T-019
+blocked throughout); 2026-09-17, still later (T-013's catch-up verification, a previously
+clean `@theAIsearch` video blocked, plus the first `yt-dlp` audio-download failure)  ·
+**From:** T-009, me, T-017, T-019, T-013
 
 ## Claim
 On 2026-09-16, `youtube_transcript_api.fetch()` raised `IpBlocked` (a subclass of
@@ -110,19 +113,41 @@ least as of this run, looks **durable and channel/scope-specific** to `@NateBJon
 the Whisper fallback (D-009) with zero errors and zero title+description fallbacks needed -
 see T-019's ticket notes for the full run.
 
+**Update, 2026-09-17, still later the same day — T-013's real YouTube catch-up verification
+(`scripts/t013_youtube_catch_up.py`):** simulated a real gap (removed 2026-09-10's 3 videos
+from `data/raw/` and Chroma, rolled the youtube watermark back to 2026-09-09), then ran
+`catch_up_youtube()` for real. Two of the three gap videos behaved exactly as the
+channel-scoped reading predicts: `n5bZHETCiJA`/`SGodxQHnVxc` (`@NateBJones`/`@ColeMedin`)
+hit `IpBlocked` again and resolved via Whisper, same as before. The third,
+**`q9tpIc8PVKM`** (`@theAIsearch` - one of the two channels that had been 100% clean, 7/7,
+every time before) **also hit `IpBlocked` this time** - the first block ever seen against
+this channel. Its Whisper fallback then **also failed**: `yt-dlp`'s audio download itself
+raised `DownloadError` (`HTTP Error 403: Forbidden`) - the first time *audio* download has
+failed for any video in this project, not just the caption fetch. With both the primary and
+secondary paths down, it correctly fell through to the third resort, title+description
+(D-009's design worked exactly as intended under a real double failure, not just a
+hypothetical one).
+
+This complicates the channel-scoped reading above: `@theAIsearch` was not blocked when this
+same video was originally fetched (T-017), and is blocked now. Either the block is spreading
+to previously-clean channels over time, or it is more intermittent/random than "durably
+scoped to two specific channels" suggested - one data point can't distinguish these. The
+audio-download failure is a separate, new data point: `yt-dlp` itself is not universally
+immune to blocking (KB-008's original claim, based on the metadata-*listing* endpoint, may
+not extend to audio *download* under sustained/repeated use against the same video ID this
+session already touched once during T-018's feasibility test).
+
 ## Confidence and limits
-Four blocked occurrences (T-009's run, the 2026-09-16 same-day manual re-check, T-017's
-2026-09-17 real run, and T-019's 24-request re-run) and one cleared occurrence (the
-2026-09-17 manual re-check against one specific video, `nZYJdwM-_nI` - which itself then
-belonged to `@theAIsearch`, a channel that turned out fine anyway). Two channels have real
-caption successes across their full in-window history (`@theAIsearch`: 7/7; `@mreflow`:
-9/9), two channels are 100% blocked across every video attempted so far (`@NateBJones`:
-0/16; `@ColeMedin`: 0/8). The channel-scoped reading is now much better supported than the
-volume-threshold reading - 24 paced requests against the blocked channels never cleared,
-where 17 requests against the clean channels never blocked. Still not confirmed: *why*
-these two channels specifically are blocked (nothing else distinguishes them from
-`@theAIsearch`/`@mreflow` in this project's code), whether the block will ever clear for
-them, or whether a *new* channel added later would be blocked on its first request the way
-`@NateBJones` was. T-019's Whisper path (D-009) makes this largely moot for data collection
-going forward - captions are attempted first every time, so if the block ever clears for
-these channels, real captions resume automatically with no code change needed.
+Five blocked occurrences on the caption path and one on the audio-download path (new),
+against one cleared occurrence (the original 2026-09-17 manual re-check). `@theAIsearch` and
+`@mreflow` are no longer "100% clean" as a settled fact - `@theAIsearch` had its first
+caption block on a re-fetch of a previously-clean video, and `@mreflow` remains untested
+since the gap simulation didn't touch it. The channel-scoped reading from the T-019 update
+is now weaker than it looked - a session/time-based or fully unpredictable pattern is at
+least as plausible as strict per-channel scoping. Still not confirmed: what triggers a block
+on any given request, whether audio-download blocks will recur or were a one-off network
+issue, or whether repeating this same test tomorrow would reproduce any of today's specific
+outcomes. Practically, none of this blocks real data collection any more - D-009's
+three-tier fallback (captions → Whisper → title+description) means every video still
+resolves to a real, if occasionally weaker, document regardless of which layer of blocking
+is hit on a given day.
