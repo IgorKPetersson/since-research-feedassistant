@@ -121,6 +121,7 @@ def chunk_youtube_document(doc: dict) -> list[Chunk]:
                 feed_date=doc["feed_date"],
                 text=" ".join(window_parts),
                 text_source=doc.get("text_source"),
+                fallback_reason=doc.get("fallback_reason"),
                 start_seconds=start,
             )
         )

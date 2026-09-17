@@ -100,6 +100,26 @@ class ChunkYoutubeTests(unittest.TestCase):
         rejoined = " ".join(c.text for c in chunks)
         self.assertEqual(rejoined, " ".join(s["text"] for s in segments))
 
+    def test_fallback_reason_propagates_through_the_windowed_path_too(self):
+        """T-013 verification found this: flush() (the windowed/multi-chunk
+        path) passed text_source but not fallback_reason, so a Whisper
+        document's real fallback_reason ("IpBlocked" - why captions were
+        skipped, D-009) was silently dropped from every chunk. Invisible for
+        captions (fallback_reason is always None there) until a real
+        Whisper-sourced document with real segments exercised this path."""
+        segments = make_segments(60)
+        doc = {
+            "id": "whispervid", "source": "youtube",
+            "url": "https://www.youtube.com/watch?v=whispervid",
+            "title": "T", "feed_date": "2026-09-10", "text": "x",
+            "text_source": "whisper", "fallback_reason": "IpBlocked", "segments": segments,
+        }
+        chunks = chunk_youtube_document(doc)
+        self.assertGreater(len(chunks), 0)
+        for c in chunks:
+            self.assertEqual(c.text_source, "whisper")
+            self.assertEqual(c.fallback_reason, "IpBlocked")
+
     def test_ids_are_unique_and_ordered(self):
         segments = make_segments(60)
         doc = {
