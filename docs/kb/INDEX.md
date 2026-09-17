@@ -36,6 +36,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-012](KB-012-ctranslate2-cuda-dll-needs-path-not-add-dll-directory.md) | ctranslate2's CUDA loading ignores `os.add_dll_directory()` on Windows — only a real `PATH` prepend of the pip-installed nvidia-cublas/cudnn wheels' `bin/` dirs works | Local model (faster-whisper) — CUDA setup on Windows | verified | 2026-09-17 |
 | [KB-013](KB-013-faster-whisper-timing-vram-and-segment-shape.md) | faster-whisper `small`/GPU transcribed a 30.8-min video in 39.7s at ~1.1GB VRAM (isolated, not with Ollama loaded); segment shape is `{text, start, end}`, not `{text, start, duration}` | Local model (faster-whisper) — timing, VRAM, output shape | provisional | 2026-09-17 |
 | [KB-014](KB-014-real-auto-captions-do-have-punctuation.md) | Real fetched auto-captions DO have punctuation/capitalization, contradicting `vg09/chunking.py`'s unverified "no punctuation" premise; real proper-noun garbling examples found ("Palunteer", "Open AAI", "Sunno V6") | YouTube ingest — captions | verified | 2026-09-17 |
+| [KB-015](KB-015-whisper-fits-alongside-ollama-models.md) | faster-whisper fits alongside qwen3:30b-a3b + bge-m3 both loaded (D-005) — real peak 23646/24564 MiB, ~0.9GB headroom, neither Ollama model evicted | Local model (faster-whisper) — joint VRAM residency | verified | 2026-09-17 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
