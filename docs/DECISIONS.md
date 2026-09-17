@@ -265,9 +265,7 @@ that defensively, not just trust the shape.
 ---
 
 ## D-008 — T-017 transcript path: wait out the IP block (option a); yt-dlp + Whisper stays parked as the reserve if it recurs
-**Status:** accepted — its own contingency fired the same day (see "Would change our mind");
-recorded here rather than superseded, since the decision anticipated exactly this and the
-choice of what to do next is now my, not yet made
+**Status:** Superseded by D-009
 
 **Decision:** For T-017's YouTube backfill, use option (a) from the ticket's three-way
 choice: wait out the `IpBlocked` block and retry captions via `youtube_transcript_api` now
@@ -319,6 +317,59 @@ evidence. Per this clause, un-parking option (b) for the two channels not yet re
 (`@NateBJones`, `@ColeMedin`) is now a live choice, not implemented yet — deliberately left
 for me per `CLAUDE.md`'s stop-and-ask rule on adding a new dependency, rather than
 decided here.
+
+---
+
+## D-009 — T-017 transcript path: un-park option (b), `yt-dlp` audio + local Whisper, for the channels the IP block keeps hitting
+**Status:** accepted (supersedes D-008 — waiting out the block is no longer the plan)
+
+**Decision:** For the channels/videos `IpBlocked` is still hitting (currently `@NateBJones`
+and `@ColeMedin`, per T-017's 2026-09-17 run), stop waiting out the block and un-park option
+(b): download audio via `yt-dlp` (no `youtube_transcript_api` call at all) and transcribe it
+locally with `faster-whisper` on the RTX 4090. Captions (D-001/D-006) remain the primary
+source for any channel/video where they still work — this is scoped to the videos the block
+is actually preventing, not a wholesale replacement of the caption path.
+
+Before wiring this into the collector, **T-018** (a small, separate feasibility ticket) is
+required first: confirm audio download itself isn't also blocked, get one real
+`faster-whisper` transcription with timing/VRAM measured, and compare its output shape
+(punctuation, proper nouns, timestamp format) against what `vg09/document.py`'s `segments`
+field (D-007) currently expects. Nothing is wired into `vg09/youtube.py` or
+`vg09/youtube_backfill.py` as part of this decision — that is explicitly a later ticket, once
+T-018 confirms the path works end to end.
+
+**Why:** KB-008: the transcript-fetch path cleared once (2026-09-17 manual re-check), then
+recurred after only 17 requests in T-017's real, paced run — despite the randomized 3–8s
+pause between every video. Waiting out a block that recurs this quickly, this early into a
+4-week/4-channel backfill, does not scale within the project's 3-week timeline
+(`docs/PLAN.md`): at this rate, each channel could cost its own multi-day wait, with no
+guarantee the next wait is short. `docs/GOAL.md`'s Whisper condition ("captions can't be
+fetched and time allows") is now met on both halves — captions demonstrably fail for the
+channels this block hits, and continuing to wait is the thing time does not allow.
+
+**Rejected:** Continuing to wait out blocks channel by channel (D-008's approach) —
+rejected because KB-008 now shows the block recurs under real, paced, legitimate use well
+within a single session, not just after a long idle gap; there's no evidence a second wait
+would be materially longer- or shorter-lived than the first, and the project can't spend
+unbounded time finding out. Switching every channel to Whisper, including the two
+(`@theAIsearch`, `@mreflow`) that just proved captions work cleanly for their full in-window
+history — rejected as unnecessary: captions are strictly better data than a transcribed
+fallback per D-001, and there's no evidence those two channels are affected by this block at
+all.
+
+**Cost:** A new dependency (`faster-whisper`, plus whatever it pulls in - `ctranslate2`,
+model weights) is being added, gated on T-018 confirming it's worth it before it touches the
+collector. GPU time competes with the project's Ollama models (`qwen3:8b`/`qwen3:30b-a3b` +
+`bge-m3`, D-005) for VRAM - T-018 measures this rather than assuming headroom exists.
+Whisper's transcript timestamp shape and punctuation behavior are unknown until T-018 runs -
+T-012's chunking (D-007) was built against `youtube_transcript_api`'s
+`FetchedTranscriptSnippet` shape (`start`, `duration`, no punctuation) and may need
+adjustment if Whisper's segment shape differs materially.
+
+**Would change our mind:** If T-018 finds that `yt-dlp`'s audio download is *also* blocked
+for the same channels (not just the caption-fetch path) - per my explicit
+instruction, that stops the investigation entirely and gets reported, rather than trying to
+route around it with a different downloader or proxy.
 
 ---
 

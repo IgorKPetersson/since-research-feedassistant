@@ -274,6 +274,59 @@ pattern, before this ticket is closed for good.
 
 ---
 
+### T-018 — Whisper feasibility test: one video, audio download to transcript
+
+**Status:** in-progress
+**Size:** S  ·  **Branch:** `t/T-018-whisper-feasibility` (stacked on `t/T-017-youtube-backfill`
+— needs its real-run findings and the specific blocked video id)
+
+**Goal:** know, with evidence from this machine and this specific blocked video, whether
+`yt-dlp` audio download + local `faster-whisper` transcription is a viable transcript source
+for the channels KB-008's `IpBlocked` block is still hitting — before wiring anything into
+the collector.
+
+**Why:** D-009 un-parks option (b) but requires this feasibility check first. Building
+Whisper into `vg09/youtube.py` on the strength of the idea alone would repeat T-002's original
+mistake in the other direction — assuming a path works instead of measuring it. The audio
+path might *also* be blocked (same origin, same IP), and even if it isn't, `faster-whisper`'s
+transcript shape (timestamps, punctuation) is currently unknown and T-012's chunking (D-007)
+depends on that shape.
+
+**Acceptance criteria**
+- [ ] `yt-dlp` downloads audio-only for `YTG0rdHPTDE` (the video T-017 was blocked on) with no
+  `youtube_transcript_api`/caption call anywhere in the script — confirmed by inspection of
+  the script's imports, same pattern as T-015's "no YouTube calls" check
+- [ ] If the audio download itself fails with a blocking-type signal (HTTP 403/429, a
+  bot-check page, or any other indication this is IP-level rather than this-video-specific):
+  the script stops immediately, prints the exact error, and does **not** proceed to
+  transcription — reported as a stop condition per explicit instruction, not routed around
+- [ ] If audio download succeeds: `faster-whisper` transcribes it on the RTX 4090 (GPU, not
+  CPU fallback), and wall-clock transcription time plus peak VRAM during transcription is
+  recorded, alongside a note on whether this was measured with the Ollama chat/embedding
+  models also resident or not (D-005's existing VRAM budget)
+- [ ] The transcript's segment/timestamp shape (whatever `faster-whisper` actually returns) is
+  compared explicitly against `FetchedTranscriptSnippet`'s shape (`text`, `start`, `duration`)
+  that `vg09/document.py`'s `segments` field (D-007) currently expects, stating plainly
+  whether it's compatible as-is or would need conversion
+- [ ] The transcript text is compared against this video's own auto-captions if they're
+  reachable for comparison (they were blocked for this specific video in T-017, so this may
+  only be possible against a different, caption-available video as a stand-in) for
+  punctuation and at least one proper noun likely to be garbled per KB-001 - findings written
+  to `docs/kb/` via `kb-entry` either way
+- [ ] No code in `vg09/youtube.py` or `vg09/youtube_backfill.py` is changed to actually call
+  Whisper - this ticket is a standalone script only, kept deliberately separate from the
+  collector until this is confirmed to work
+
+**Out of scope:** wiring Whisper into the collector's fallback path (a follow-up ticket once
+this one confirms feasibility); `@ColeMedin` or the rest of `@NateBJones`'s videos (T-017
+resumes those once a path is confirmed); re-running T-017's backfill.
+
+**Depends on:** T-017 (for the blocked video id and KB-008's evidence), D-009.
+**Notes:** My explicit instruction: stop and report either way, do not build Whisper into
+the collector as part of this ticket regardless of how the feasibility test turns out.
+
+---
+
 ### T-013 — Catch-up ingestion since the last successful run
 
 **Status:** done
