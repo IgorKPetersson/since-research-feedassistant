@@ -264,6 +264,53 @@ that defensively, not just trust the shape.
 
 ---
 
+## D-008 — T-017 transcript path: wait out the IP block (option a); yt-dlp + Whisper stays parked as the reserve if it recurs
+**Status:** accepted
+
+**Decision:** For T-017's YouTube backfill, use option (a) from the ticket's three-way
+choice: wait out the `IpBlocked` block and retry captions via `youtube_transcript_api` now
+that it has cleared. Captions remain the primary transcript source (D-001/D-006), unchanged.
+Option (b) — `yt-dlp` audio download + local Whisper transcription — is not implemented now,
+but is recorded as the named reserve plan: if the block recurs during T-017's real run (or on
+a future run), switch to it for the affected channel/videos rather than treating a second
+block as a reason to wait indefinitely again. Option (c) (title+description only for this
+pass) is not needed — captions work again.
+
+**Why:** KB-008's 2026-09-17 update: a manual transcript request against `nZYJdwM-_nI` (one
+of the two videos blocked on 2026-09-16) succeeded, returning 1051 snippets of real
+transcript text. The block that motivated splitting T-017 off from T-015 and holding it
+appears to have been a transient IP-level rate limit, not a durable or permanent block —
+it cleared within roughly a day of total duration. Waiting it out cost nothing extra (HF's
+backfill, T-013's HF-side catch-up, and T-012's storage all proceeded in the meantime,
+unblocked by this), and captions are strictly better data than either fallback option per
+D-001. This decision effectively "selected itself" once the block cleared — there was no
+real tradeoff left to weigh once real evidence showed the primary source works again.
+
+**Rejected:** Option (c), title+description only for this pass — rejected because it's
+strictly weaker than a real transcript (D-001) and there is no evidence forcing it now that
+captions work. Committing to option (b) (Whisper) as the *primary* path now — rejected
+because it would add a new local dependency and a real GPU-time cost (`docs/GOAL.md`'s
+non-goal: Whisper only if captions can't be fetched and time allows) for a block that has
+already cleared; there is no evidence today that justifies paying that cost up front.
+
+**Cost:** This decision rests on one cleared video, checked once, manually, outside any
+automated retry logic — not a systematic re-test of all 4 channels or a repeated
+measurement over time (KB-008's "Confidence and limits"). If the block was scoped more
+narrowly than believed (e.g. cleared for this one video specifically, not IP-wide) or
+recurs partway through T-017's real backfill, the run is expected to hit `IngestBlocked`
+again and stop per D-006 — that is treated as expected behavior, not a decision failure,
+and is exactly the signal that would trigger falling back to option (b) for whatever
+remains unfetched.
+
+**Would change our mind:** A recurrence of `RequestBlocked`/`IpBlocked` during T-017's real
+run, especially one that doesn't clear within a similarly short window this time — at that
+point, the reserve plan (option (b), `yt-dlp` + local Whisper) should be un-parked for the
+channels/videos still outstanding, per `docs/GOAL.md`'s Whisper non-goal condition
+("captions can't be fetched and time allows"), rather than waiting out a second block on
+faith alone.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

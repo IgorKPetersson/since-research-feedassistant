@@ -1,8 +1,11 @@
-# KB-008 — the same machine went from 20/20 caption successes to 100% `IpBlocked` one day later, and the block was still live on a manual re-check the same day
+# KB-008 — the same machine went from 20/20 caption successes to 100% `IpBlocked`, stayed blocked the same day, then cleared by the next day
 
 **Area:** YouTube ingest — captions
-**Status:** provisional
-**Date:** 2026-09-16 (T-009 occurrence); 2026-09-16, later same day (manual re-check by me)  ·  **From:** T-009, me
+**Status:** provisional (upgraded from "still blocked" — see 2026-09-17 update; kept
+provisional since the clear-by-next-day pattern is one occurrence, not a repeated
+measurement)
+**Date:** 2026-09-16 (T-009 occurrence); 2026-09-16, later same day (manual re-check by me,
+still blocked); 2026-09-17 (manual re-check by me, block cleared)  ·  **From:** T-009, me
 
 ## Claim
 On 2026-09-16, `youtube_transcript_api.fetch()` raised `IpBlocked` (a subclass of
@@ -35,6 +38,14 @@ localizes the block to the transcript-fetch call specifically - yt-dlp's metadat
 not (yet) affected, at least for this one video, on this IP, at this point in time. The
 block had not cleared within the same day.
 
+**Update, 2026-09-17, manual re-check by me:** a manual transcript request against the same
+video, `nZYJdwM-_nI`, succeeded - 1051 snippets returned, containing real transcript text
+(not empty, not an error page). This is the same video that was `IpBlocked` on 2026-09-16
+(both the original run and the same-day re-check). The block cleared sometime between the
+2026-09-16 same-day re-check and this 2026-09-17 check - somewhere under roughly 24 hours of
+total duration, consistent with an IP-level rate-limit block rather than a permanent ban.
+This is the evidence D-008 rests its "wait it out" choice on.
+
 ## Consequences
 This is the first **real** trigger of D-001's title+description fallback path - T-002 only
 confirmed the fallback data was *available*, never exercised by an actual failure. That gap
@@ -61,11 +72,14 @@ pending a decision among waiting it out, local Whisper transcription, or title+d
 only.
 
 ## Confidence and limits
-Two occurrences (T-009's run, and one manual re-check), one channel (`@theAIsearch`), three
-videos total, one machine, same day. Not confirmed: whether other channels or videos are
-also blocked right now, how long the block typically lasts, whether it's IP-wide (affecting
-anything else on this network) or scoped to this specific caller pattern, or whether
-yt-dlp's metadata listing would also eventually get blocked under sustained use even though
-it wasn't here. Revisit this entry once T-017 (YouTube backfill, currently blocked pending a
-transcript-path decision) actually runs and either confirms the block persists or finds it's
-cleared.
+Two blocked occurrences (T-009's run, and the 2026-09-16 same-day manual re-check) and one
+cleared occurrence (2026-09-17 manual re-check), one channel (`@theAIsearch`), three videos
+total, one machine. Not confirmed: whether other channels or videos are also affected right
+now, whether the block clears uniformly across all videos/channels at once or was scoped
+more narrowly than it looked, how long a future block of this kind would typically last, or
+whether yt-dlp's metadata listing would also eventually get blocked under sustained use even
+though it wasn't here. Only one video (`nZYJdwM-_nI`) has actually been re-tested since the
+block cleared - the other pending video (`9RtywbN--QE`) and the rest of the 4 channels are
+still unconfirmed until T-017's real run reaches them. T-017 (now unblocked per D-008) is the
+next real test at scale; revisit this entry with whatever it finds, including if the block
+recurs mid-run.
