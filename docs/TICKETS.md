@@ -346,6 +346,77 @@ now with real evidence behind it instead of an untested plan.
 
 ---
 
+### T-019 — Wire Whisper into the collector as the second transcript path
+
+**Status:** in-progress
+**Size:** L  ·  **Branch:** `t/T-019-whisper-integration` (stacked on `t/T-018-whisper-feasibility`)
+
+**Goal:** `vg09/youtube.py` uses captions first, `yt-dlp` audio + local `faster-whisper`
+second (on `RequestBlocked`/`IpBlocked`), and title+description only as a last resort when
+both fail — so `@NateBJones` and `@ColeMedin` get real transcript-quality text instead of
+either an indefinite wait (D-008) or a weak fallback, and the backfill for those two channels
+can actually complete.
+
+**Why:** D-009 decided to un-park Whisper for the channels the block keeps hitting; T-018
+confirmed it's feasible (audio download not blocked, transcription fast and cheap on VRAM).
+This ticket does the real integration D-009 named as the next step, plus the two pieces of
+unfinished business T-018 and T-012 both flagged: `vg09/chunking.py`'s unverified
+"no punctuation" premise (KB-014) and its chunk-size calibration against synthetic rather
+than real caption text (T-012's own flagged uncertainty, now resolvable — 17 real transcripts
+exist on disk).
+
+**Acceptance criteria**
+- [ ] `vg09/chunking.py`'s docstring/comments no longer claim auto-captions lack punctuation
+  (KB-014) - corrected to state what's actually verified. The segment-windowing algorithm
+  itself is confirmed (by reading and, if needed, a test) to already only ever break at a
+  segment boundary, never mid-segment, for both caption-sourced and Whisper-sourced segments
+  (the shared `{text, start, duration}` shape after this ticket's conversion step makes this
+  automatic, not source-specific logic)
+- [ ] `TARGET_CHUNK_CHARS`'s calibration is re-measured against the 17 real caption
+  transcripts now on disk (real qwen3 tokenizer call per T-008/T-012's method), replacing the
+  synthetic lowercased/depunctuated estimate; the constant is updated if the real ratio
+  differs materially, or left unchanged with the real measurement recorded as confirming it
+- [ ] `vg09/youtube.py`: on `RequestBlocked`/`IpBlocked` from the caption fetch, `yt-dlp`
+  audio download + local `faster-whisper` transcription is attempted before falling back to
+  title+description; title+description is only used when **both** captions and Whisper fail.
+  `Document.text_source` gains a new value, `"whisper"`. The "missing captions" path
+  (`TranscriptsDisabled`/`NoTranscriptFound`, D-006) is unchanged — falls back to
+  title+description directly, Whisper is not attempted for a video that simply has no
+  captions
+- [ ] Whisper's `{text, start, end}` segments are converted to the `{text, start, duration}`
+  shape `vg09/document.py`'s `segments` field expects (`duration = end - start`) before being
+  stored, so `chunk_youtube_document()` handles a Whisper-sourced document identically to a
+  captions-sourced one with no source-specific branching
+- [ ] The downloaded audio file is deleted after transcription (disk space, copyright) -
+  whether transcription succeeds or fails, confirmed by checking the audio path no longer
+  exists after a real run
+- [ ] Whisper and the Ollama chat/embedding models (D-005) are checked for simultaneous real
+  VRAM residency, not just KB-013's isolated measurement compared against D-005's headroom on
+  paper. If they don't comfortably fit together, the Whisper model is loaded and released
+  per-video (not held resident across a whole channel/run) rather than assumed to coexist
+- [ ] The backfill is re-run for `@NateBJones` and `@ColeMedin` (the two channels T-017 never
+  reached/could not finish) using the new Whisper path; outcomes (captions/whisper/fallback
+  counts) are reported the same way T-017 reported them
+
+**Out of scope:** re-running the full 4-week backfill for `@theAIsearch`/`@mreflow` (already
+complete, T-017); extending the backfill window beyond 4 weeks; a general Whisper model-size
+sweep (T-018/KB-013 used `small` - staying with that here unless it proves inadequate);
+building a scheduler or automatic retry for `Pending` markers beyond what already exists.
+
+**Depends on:** T-017, T-018, D-009.
+**Notes:** Bundled as one ticket per my explicit instruction - the six pieces are a real
+sequential chain (chunking must accept Whisper's shape before the collector produces any;
+the VRAM check must happen before the real backfill re-run commits to a loading strategy),
+not independent work that benefits from separate tickets. Behavior change flagged for
+`docs/DECISIONS.md`: D-006's "blocked → write a Pending marker, raise `IngestBlocked`, caller
+stops the run" consequence is being retired for the caption-`RequestBlocked` case
+specifically - every video now resolves to a final document (captions → whisper →
+title+description) with no run-wide abort on a single video's block. Recorded as a new
+decision rather than silently changed, since it removes a safety behavior D-006 was
+explicitly designed around.
+
+---
+
 ### T-013 — Catch-up ingestion since the last successful run
 
 **Status:** done
