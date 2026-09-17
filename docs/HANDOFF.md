@@ -28,6 +28,93 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-09-17 — Phase 1 closed except T-014: Whisper un-parked and wired in (T-018, T-019), T-013 finished for real
+
+**Tickets:** T-017, T-018, T-019, T-013  ·  **Tree:**
+docs/sessions/2026-09-17-whisper-integration-and-catchup.md
+
+**Done this session:**
+- KB-008 re-checked: the `IpBlocked` block that ended the previous session had cleared
+  (manual re-check, 1051 real snippets) — gated **D-008** (wait it out), then T-017's real
+  paced backfill got 17 real caption successes before the block recurred on `@NateBJones`'s
+  first video, triggering D-008's own "would change our mind" clause
+- **D-009**: un-park option (b) — `yt-dlp` audio + local Whisper — for the channels the
+  block keeps hitting, scoped, not a wholesale replacement of captions
+- **T-018**: Whisper feasibility test — audio download for the blocked video was not
+  blocked at all (only the transcript-API endpoint is affected); real `faster-whisper`
+  transcription on the RTX 4090 confirmed working after a real CUDA DLL-loading fix (KB-012)
+- **T-019**: wired Whisper into `vg09/youtube.py` as a three-tier fallback (captions →
+  Whisper → title+description); fixed and recalibrated `vg09/chunking.py` against the 17
+  real transcripts then on disk (`TARGET_CHUNK_CHARS` 1942→1454 — the synthetic estimate
+  had under-budgeted real token count, the dangerous direction per KB-005); confirmed real
+  joint VRAM residency with Ollama's chat/embedding models (KB-015); re-ran the backfill for
+  `@NateBJones`/`@ColeMedin` — **24/24 videos resolved via Whisper**, 0 fallbacks. **D-010**
+  records that the collector no longer aborts a run on a caption block (amends D-006's
+  consequence, not its missing-vs-blocked classification) — `IngestBlocked` had no
+  remaining caller and was removed rather than left as dead code. T-017 marked done
+  (T-019 completed what it was blocked on)
+- Merged and pushed `t/T-017-youtube-backfill` → `t/T-018-whisper-feasibility` →
+  `t/T-019-whisper-integration` into `main` (fast-forward, ticket branches deleted)
+- **T-013 finished for real**: `catch_up_youtube()` was still a no-op stub from when
+  YouTube had no transcript path — implemented it for real (reuses
+  `youtube_backfill.run()`'s paced three-tier logic for the window since the watermark).
+  Built the store with the full YouTube dataset for the first time ever (1184 → 1994
+  chunks). Real gap simulation (removed 2026-09-10's 3 videos, mixed captions/whisper,
+  rolled the watermark back, caught up for real): 2 recovered via Whisper, the 3rd
+  (previously-clean `@theAIsearch`) hit `IpBlocked` **and** its Whisper audio download also
+  failed (403) — the first real double-failure, correctly resolved via the third resort.
+  Verified into Chroma: 1971/1971 unique ids, no duplicates. Found and fixed a real bug
+  along the way: `fallback_reason` was silently dropped in `chunk_youtube_document()`'s
+  windowed/multi-chunk path (only the single-chunk fallback path carried it) — invisible
+  for captions (always `None` there) until a real Whisper document exercised it. Merged and
+  pushed `t/T-013-youtube-catchup` into `main`
+
+**In progress / half-finished:** nothing — every ticket started this session reached `done`
+or was closed out for good (T-017 completed by T-019).
+
+**Learned (not obvious from the code):**
+- KB-012 through KB-015 (new): ctranslate2's CUDA loading ignores
+  `os.add_dll_directory()` on Windows, needs a real `PATH` prepend instead; `faster-whisper`
+  timing/VRAM/segment-shape measurements; real auto-captions DO have punctuation
+  (contradicting an unverified assumption baked into `vg09/chunking.py`, misattributed to
+  KB-001); Whisper fits alongside Ollama's chat/embedding models with real headroom to
+  spare
+- KB-008 (updated repeatedly, still unresolved): the picture shifted across the session
+  from "block cleared" → "recurred after 17 real requests despite pacing" → "looks durably
+  scoped to two specific channels" → "actually more unpredictable than that — a
+  previously-clean channel later blocked too, and `yt-dlp` audio download failed once,
+  which had never happened before". Five real data points across one day, still no single
+  theory fits. Practically moot for data collection now — D-009's three-tier fallback
+  always produces a document regardless of which layer gets blocked on a given run
+- Unverified, flagged for a future session rather than fixed here: `vg09/store.py`'s
+  `build_store()` only ever `upsert()`s — it never deletes a chunk id that a document no
+  longer produces. Not empirically observed (this session's gap-simulation script deleted
+  the affected chunks by a date-filter *before* re-adding, sidestepping the question), but
+  inferred from reading the code: if a real document's chunk count ever *shrinks* between
+  rebuilds without a manual deletion step first (e.g. captions later replaced by a shorter
+  fallback), the old higher-index chunks would be silently orphaned in Chroma forever. Worth
+  a real test before trusting `build_store()` alone as a rebuild mechanism in a scenario
+  like that.
+
+**Blocked / needs me:** nothing blocking. **T-014** (15–20 evaluation questions) is the
+only open Phase 1 item — the questions are written by hand next session; the agent's job is
+finding and verifying expected sources against the real frozen data, not authoring them.
+
+**Next session should start with:** T-014 — write the 15–20 evaluation
+questions (spanning both sources, including at least two built around a proper noun likely
+to be garbled by auto-captions — KB-014's real examples, "Palunteer"/Palantir, "Open
+AAI"/OpenAI, "Sunno V6"/Suno V6, are ready-made material), the agent finds and verifies
+expected sources against `data/raw/` and freezes the cutoff date. Only once T-014 closes is
+Phase 1 fully complete and Phase 2 (retrieval, answer generation, chat UI) can start —
+not started this session.
+
+**Doc updates made:** D-008, D-009, D-010 · KB-008 (updated four times), KB-012, KB-013,
+KB-014, KB-015 · `docs/PLAN.md` (Phase 1: YouTube backfill and catch-up checklist items
+ticked) · `docs/TICKETS.md` (T-017, T-018, T-019, T-013 all closed/done) ·
+`docs/sessions/2026-09-17-whisper-integration-and-catchup.md`
+
+---
+
 ## 2026-09-16 — Phase 1 ingest: T-016, T-009, T-010, T-008, T-015, T-017 (written, blocked), T-012, T-013
 
 **Tickets:** T-016, T-009, T-010, T-008, T-015, T-017 (blocked), T-012, T-013 · **Tree:**
