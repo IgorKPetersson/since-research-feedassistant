@@ -265,7 +265,9 @@ that defensively, not just trust the shape.
 ---
 
 ## D-008 — T-017 transcript path: wait out the IP block (option a); yt-dlp + Whisper stays parked as the reserve if it recurs
-**Status:** accepted
+**Status:** accepted — its own contingency fired the same day (see "Would change our mind");
+recorded here rather than superseded, since the decision anticipated exactly this and the
+choice of what to do next is now my, not yet made
 
 **Decision:** For T-017's YouTube backfill, use option (a) from the ticket's three-way
 choice: wait out the `IpBlocked` block and retry captions via `youtube_transcript_api` now
@@ -308,6 +310,15 @@ point, the reserve plan (option (b), `yt-dlp` + local Whisper) should be un-park
 channels/videos still outstanding, per `docs/GOAL.md`'s Whisper non-goal condition
 ("captions can't be fetched and time allows"), rather than waiting out a second block on
 faith alone.
+
+**This fired the same day.** T-017's real run (2026-09-17) got 17 consecutive real caption
+successes (both pending videos plus all of `@theAIsearch`'s and `@mreflow`'s in-window
+videos), then hit `IpBlocked` again on the first video attempted from a third channel,
+`@NateBJones` — see T-017's ticket notes and KB-008's 2026-09-17 update for the full
+evidence. Per this clause, un-parking option (b) for the two channels not yet reached
+(`@NateBJones`, `@ColeMedin`) is now a live choice, not implemented yet — deliberately left
+for me per `CLAUDE.md`'s stop-and-ask rule on adding a new dependency, rather than
+decided here.
 
 ---
 

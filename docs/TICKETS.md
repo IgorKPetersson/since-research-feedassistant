@@ -179,9 +179,9 @@ from `2026-09-15` to `2026-09-14`.
 
 ---
 
-### T-017 — YouTube backfill (unblocked — D-008)
+### T-017 — YouTube backfill (blocked again mid-run — see Blocked/needs me)
 
-**Status:** in-progress
+**Status:** blocked
 **Size:** M  ·  **Branch:** `t/T-017-youtube-backfill`
 
 **Goal:** ingest the chosen channels' YouTube history into `data/raw/`, paced, resumable and
@@ -205,37 +205,69 @@ Whisper (option b) named as the reserve plan if the block recurs mid-run.
   primary source rather than a fallback, for this pass.
   → **D-008**, option (a), self-selected once KB-008 confirmed the block had cleared;
   option (b) recorded as the named reserve, not implemented
-- [ ] The YouTube backfill fetches each chosen channel's videos across the backfill window,
+- [x] The YouTube backfill fetches each chosen channel's videos across the backfill window,
   paced to reduce load on the transcript-fetch path — **operationalized as a randomized
   3–8s pause between every video, plus a longer pause every 20th video**, at my
   explicit direction, rather than the originally-envisioned batch-level pause (a stricter,
   more cautious version of the same intent: don't hammer a path that was blocked two days
-  ago)
-- [ ] Each video's outcome (captions fetched, fallback used, or blocked, with the exception
+  ago). Real run confirmed the pacing logic executes as written; it did not prevent a
+  recurrence (see below) — pacing alone was not sufficient
+- [x] Each video's outcome (captions fetched, fallback used, or blocked, with the exception
   type where applicable) is logged individually, with running totals (captions fetched,
-  fallback used, still pending) reported as the run progresses, not only at the end
-- [ ] Interrupting the run and restarting it resumes from where it left off, using
+  fallback used, still pending) reported as the run progresses, not only at the end — real
+  run's log shows a `[progress]` line after every video
+- [x] Interrupting the run and restarting it resumes from where it left off, using
   `data/raw/` and T-010's `.pending.json` markers — the two videos already pending from the
-  2026-09-16 block (`nZYJdwM-_nI`, `9RtywbN--QE`) are retried **first**, before any new
-  channel videos, per explicit instruction
-- [ ] A `RequestBlocked`/`IpBlocked` result stops the run immediately and reports how far it
-  got, per D-006/D-008 — `vg09.youtube.normalize()`/`IngestBlocked` already do this
+  2026-09-16 block (`nZYJdwM-_nI`, `9RtywbN--QE`) were retried **first** and both succeeded
+  with real captions, confirmed by the real run's log and `data/raw/youtube/2026-09-13/` and
+  `2026-09-15/` now holding final `.json` documents instead of `.pending.json` markers.
+  Restart-resumability itself (re-running after this abort) not yet exercised — next session
+  should confirm the 17 already-fetched videos are skipped via `document.exists()`, not
+  re-fetched
+- [x] A `RequestBlocked`/`IpBlocked` result stops the run immediately and reports how far it
+  got, per D-006/D-008 — confirmed for real: aborted on the 18th attempt with no fallback
+  document written, a `Pending` marker written for the blocked video, and the run stopped
+  rather than continuing to the 4th channel
 - [ ] Normalized documents are written to `data/raw/`; the backfill's end point is persisted
   as YouTube's starting watermark for T-013's catch-up logic, **only if the run completes
-  the full window without being blocked** (matches T-015/T-013's watermark-written-once
-  pattern — a blocked, partial run must not advance the watermark past videos it never
-  reached)
+  the full window without being blocked** — **not yet met**, this run was blocked partway
+  through, so per the stated rule the watermark was correctly **not** written (confirmed:
+  `data/watermark_youtube.json` does not exist yet)
 
 **Out of scope:** HF backfill (T-015, done, separate ticket); implementing option (b)
 (Whisper) — stays a reserve plan per D-008 unless the block recurs.
 
 **Depends on:** T-009, T-010, D-008.
+
+**Real run (2026-09-17, `scripts/t017_youtube_backfill.py`), not simulated:** window
+2026-08-21..2026-09-17. Retried the 2 pending videos first (both succeeded, real captions),
+then `@theAIsearch` (6 more in-window videos, all captions) and all 9 of `@mreflow`'s
+in-window videos — **17 consecutive real caption successes, zero fallbacks, zero errors**.
+The 18th attempt — the first video ever attempted from `@NateBJones` (`YTG0rdHPTDE`,
+uploaded 2026-09-17) — raised `IpBlocked` again. The run stopped immediately per D-006: no
+fallback document written, `data/raw/youtube/2026-09-17/YTG0rdHPTDE.pending.json` written,
+`@ColeMedin` never reached. Full details and the two open readings of *why* it recurred
+(session volume vs. per-channel novelty) are in KB-008's 2026-09-17 update.
+
+**Blocked / needs me:** this is exactly the recurrence D-008's "would change our mind"
+clause named. Per this ticket's own notes and `CLAUDE.md`'s stop-and-ask rule ("about to add
+a dependency"), un-parking option (b) (`yt-dlp` + local Whisper) for `@NateBJones` and
+`@ColeMedin` is a decision for me, not something to proceed on automatically — not
+implemented, no new dependency added. Options as of this stopping point: (i) wait out this
+second block too and retry `@NateBJones`/`@ColeMedin` later, now with direct evidence that
+`@theAIsearch`/`@mreflow` are fully covered for this window; (ii) un-park option (b) for the
+two remaining channels only; (iii) accept title+description for just these two channels this
+pass (option c, scoped down from "the whole backfill" to "the two channels the block keeps
+hitting"). Next session should start by asking I to pick among these before touching
+`@NateBJones` or `@ColeMedin` again.
+
 **Notes:** Split out from the original combined T-015 so HF's backfill wasn't held hostage to
-this decision; now unblocked. The window cut from 8 weeks to 4 (halving the number of
-transcript-fetch requests against a path that was blocked two days ago) and the per-video
-pacing scheme above were both my explicit direction for this first pass, prioritizing
-caution over completeness — a second pass can extend the window once this one is shown not
-to trigger a block. No unit tests written for the new orchestration
+this decision; briefly unblocked by D-008, now blocked again by a real recurrence (see
+above). The window cut from 8 weeks to 4 (halving the number of transcript-fetch requests
+against a path that was blocked two days ago) and the per-video pacing scheme above were
+both my explicit direction for this first pass, prioritizing caution over completeness —
+pacing alone did not prevent the recurrence, so widening the window is not advisable until
+I decision above is made. No unit tests written for the new orchestration
 (`vg09/youtube_backfill.py`) this pass; the real paced run itself is this session's
 verification. Consider a mocked resumability/pacing test as a follow-up, matching T-010's
 pattern, before this ticket is closed for good.
