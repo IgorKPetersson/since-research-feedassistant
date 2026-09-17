@@ -5,6 +5,7 @@ annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
 attrs==26.1.0
+av==18.1.0
 bcrypt==5.0.0
 build==1.6.1
 certifi==2026.7.22
@@ -12,8 +13,10 @@ charset-normalizer==3.5.1
 chromadb==1.5.9
 click==8.5.0
 colorama==0.4.6
+ctranslate2==4.8.2
 defusedxml==0.7.1
 durationpy==0.11
+faster-whisper==1.2.1
 filelock==3.32.6
 flatbuffers==25.12.19
 frozenlist==1.8.0
@@ -36,6 +39,9 @@ mdurl==0.1.2
 mmh3==5.3.0
 multidict==6.8.0
 numpy==2.5.3
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
+nvidia-cudnn-cu12==9.26.0.51
 oauthlib==3.3.1
 onnxruntime==1.30.0
 opentelemetry-api==1.44.0

@@ -276,7 +276,7 @@ pattern, before this ticket is closed for good.
 
 ### T-018 — Whisper feasibility test: one video, audio download to transcript
 
-**Status:** in-progress
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-018-whisper-feasibility` (stacked on `t/T-017-youtube-backfill`
 — needs its real-run findings and the specific blocked video id)
 
@@ -293,37 +293,56 @@ transcript shape (timestamps, punctuation) is currently unknown and T-012's chun
 depends on that shape.
 
 **Acceptance criteria**
-- [ ] `yt-dlp` downloads audio-only for `YTG0rdHPTDE` (the video T-017 was blocked on) with no
-  `youtube_transcript_api`/caption call anywhere in the script — confirmed by inspection of
-  the script's imports, same pattern as T-015's "no YouTube calls" check
-- [ ] If the audio download itself fails with a blocking-type signal (HTTP 403/429, a
-  bot-check page, or any other indication this is IP-level rather than this-video-specific):
-  the script stops immediately, prints the exact error, and does **not** proceed to
-  transcription — reported as a stop condition per explicit instruction, not routed around
-- [ ] If audio download succeeds: `faster-whisper` transcribes it on the RTX 4090 (GPU, not
-  CPU fallback), and wall-clock transcription time plus peak VRAM during transcription is
-  recorded, alongside a note on whether this was measured with the Ollama chat/embedding
-  models also resident or not (D-005's existing VRAM budget)
-- [ ] The transcript's segment/timestamp shape (whatever `faster-whisper` actually returns) is
-  compared explicitly against `FetchedTranscriptSnippet`'s shape (`text`, `start`, `duration`)
-  that `vg09/document.py`'s `segments` field (D-007) currently expects, stating plainly
-  whether it's compatible as-is or would need conversion
-- [ ] The transcript text is compared against this video's own auto-captions if they're
-  reachable for comparison (they were blocked for this specific video in T-017, so this may
-  only be possible against a different, caption-available video as a stand-in) for
-  punctuation and at least one proper noun likely to be garbled per KB-001 - findings written
-  to `docs/kb/` via `kb-entry` either way
-- [ ] No code in `vg09/youtube.py` or `vg09/youtube_backfill.py` is changed to actually call
-  Whisper - this ticket is a standalone script only, kept deliberately separate from the
-  collector until this is confirmed to work
+- [x] `yt-dlp` downloads audio-only for `YTG0rdHPTDE` (the video T-017 was blocked on) with no
+  `youtube_transcript_api`/caption call anywhere in the script — confirmed by inspection
+  (`scripts/t018_whisper_feasibility.py` imports only `yt_dlp`, never
+  `youtube_transcript_api`) and by the real run: **audio download succeeded**, 26.7MB, no
+  block of any kind on this call
+- [x] If the audio download itself fails with a blocking-type signal ...: the script stops
+  immediately and does not proceed — **not triggered**, download succeeded outright; the
+  stop-condition code path exists (`download_audio()`'s `BLOCK_SIGNALS` check) but was not
+  exercised for real this run
+- [x] If audio download succeeds: `faster-whisper` transcribes it on the RTX 4090 (GPU, not
+  CPU fallback) — confirmed real GPU run after KB-012's fix; **39.7s** transcription for a
+  **1848s (30.8 min)** real video (~46x real-time), model load 1.0s separately, peak VRAM
+  **~4536 MiB** vs ~3390-3400 MiB baseline. Measured with **no Ollama models resident**
+  (`ollama ps` empty beforehand) — full detail and the joint-residency caveat in KB-013
+- [x] The transcript's segment/timestamp shape is compared explicitly against
+  `FetchedTranscriptSnippet`'s shape — **not compatible as-is**: `faster-whisper` returns
+  `{text, start, end}`, not `{text, start, duration}`; trivial `duration = end - start`
+  conversion needed. Also structurally different in grain: Whisper gives full, non-overlapping
+  sentences (2-19s each in this sample); auto-captions give short, overlapping ~4s phrase
+  fragments — see KB-013
+- [x] The transcript text is compared against real auto-captions (this specific video's own
+  captions are blocked, so used already-fetched real captions from `@theAIsearch`/`@mreflow`
+  as the stand-in, per the ticket's own fallback allowance) for punctuation and proper nouns —
+  **real auto-captions turned out to have punctuation and capitalization throughout**,
+  contradicting `vg09/chunking.py`'s "no punctuation" premise (KB-014, flagged per
+  `CLAUDE.md`'s reality-contradicts-docs rule, not silently fixed here); real garbling
+  examples found in the same data ("Palunteer"/Palantir, "Open AAI"/OpenAI, "Sunno V6"/Suno
+  V6). Findings written to `docs/kb/`: KB-012, KB-013, KB-014
+- [x] No code in `vg09/youtube.py` or `vg09/youtube_backfill.py` changed to call Whisper —
+  confirmed, `scripts/t018_whisper_feasibility.py` is fully standalone
 
 **Out of scope:** wiring Whisper into the collector's fallback path (a follow-up ticket once
 this one confirms feasibility); `@ColeMedin` or the rest of `@NateBJones`'s videos (T-017
-resumes those once a path is confirmed); re-running T-017's backfill.
+resumes those once a path is confirmed); re-running T-017's backfill; fixing
+`vg09/chunking.py`'s punctuation-premise comment (KB-014, flagged for the next
+chunking-touching ticket, not fixed here); a joint VRAM measurement with Ollama's models
+actually loaded (KB-013 only has the arithmetic comparison against D-005's headroom).
 
 **Depends on:** T-017 (for the blocked video id and KB-008's evidence), D-009.
-**Notes:** My explicit instruction: stop and report either way, do not build Whisper into
-the collector as part of this ticket regardless of how the feasibility test turns out.
+**Notes:** Real result: **feasible**. Audio download for this channel/video was not blocked,
+transcription is fast and cheap on VRAM, and the only real integration cost is the trivial
+segment-shape conversion plus re-examining `vg09/chunking.py` against Whisper's
+longer/punctuated segments before wiring it in — not a blocker, but not a drop-in either.
+New dependencies added (approved by my explicit instruction to test
+`faster-whisper`): `faster-whisper`, `ctranslate2`, `av`, and the CUDA runtime wheels
+`nvidia-cublas-cu12`/`nvidia-cudnn-cu12`/`nvidia-cuda-nvrtc-cu12` (needed per KB-012 - this
+machine has no system-wide CUDA install). `requirements.txt` regenerated via `pip freeze`,
+diffed to confirm only these packages were added. Per my explicit instruction, Whisper is
+**not** wired into the collector as part of this ticket - that's the next decision point,
+now with real evidence behind it instead of an untested plan.
 
 ---
 

@@ -15,6 +15,7 @@ edited in place — it is superseded by a new one and marked.
 - YouTube ingest — fetching channel video lists and captions
 - HF Daily Papers API — fetching and shape of the papers feed
 - Local model (Ollama) — running models on the RTX 4090
+- Local model (faster-whisper) — GPU audio transcription, CUDA setup on Windows
 - Vector store (ChromaDB) — embedded local store, date-range filtering
 
 ## Entries
@@ -32,6 +33,9 @@ edited in place — it is superseded by a new one and marked.
 | [KB-009](KB-009-ollama-num-predict-zero-is-not-zero.md) | `num_predict:0` does not mean "generate nothing" — produced 485 tokens on a 9-word prompt; use `num_predict:1` for a cheap tokenizer-count call instead | Local model (Ollama) — generation options | verified | 2026-09-16 |
 | [KB-010](KB-010-patch-target-must-match-the-importing-module.md) | Patching `vg09.document.RAW_DIR` doesn't redirect `vg09.hf_papers`'s own imported copy of the name — silently deleted 4 real `_done.json` markers via an under-isolated test before being caught and repaired | Testing — `unittest.mock.patch` target selection | verified | 2026-09-16 |
 | [KB-011](KB-011-ollama-chat-template-system-always-first.md) | Ollama's chat template renders the system message first regardless of its position in `messages` — message order doesn't control prompt order the way raw `/api/generate` string concatenation does | Local model (Ollama) — `/api/chat` message rendering | verified | 2026-09-16 |
+| [KB-012](KB-012-ctranslate2-cuda-dll-needs-path-not-add-dll-directory.md) | ctranslate2's CUDA loading ignores `os.add_dll_directory()` on Windows — only a real `PATH` prepend of the pip-installed nvidia-cublas/cudnn wheels' `bin/` dirs works | Local model (faster-whisper) — CUDA setup on Windows | verified | 2026-09-17 |
+| [KB-013](KB-013-faster-whisper-timing-vram-and-segment-shape.md) | faster-whisper `small`/GPU transcribed a 30.8-min video in 39.7s at ~1.1GB VRAM (isolated, not with Ollama loaded); segment shape is `{text, start, end}`, not `{text, start, duration}` | Local model (faster-whisper) — timing, VRAM, output shape | provisional | 2026-09-17 |
+| [KB-014](KB-014-real-auto-captions-do-have-punctuation.md) | Real fetched auto-captions DO have punctuation/capitalization, contradicting `vg09/chunking.py`'s unverified "no punctuation" premise; real proper-noun garbling examples found ("Palunteer", "Open AAI", "Sunno V6") | YouTube ingest — captions | verified | 2026-09-17 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
