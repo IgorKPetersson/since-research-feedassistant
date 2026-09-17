@@ -179,9 +179,9 @@ from `2026-09-15` to `2026-09-14`.
 
 ---
 
-### T-017 — YouTube backfill (blocked again mid-run — see Blocked/needs me)
+### T-017 — YouTube backfill (completed by T-019 after a mid-run block)
 
-**Status:** blocked
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-017-youtube-backfill`
 
 **Goal:** ingest the chosen channels' YouTube history into `data/raw/`, paced, resumable and
@@ -228,11 +228,12 @@ Whisper (option b) named as the reserve plan if the block recurs mid-run.
   got, per D-006/D-008 — confirmed for real: aborted on the 18th attempt with no fallback
   document written, a `Pending` marker written for the blocked video, and the run stopped
   rather than continuing to the 4th channel
-- [ ] Normalized documents are written to `data/raw/`; the backfill's end point is persisted
+- [x] Normalized documents are written to `data/raw/`; the backfill's end point is persisted
   as YouTube's starting watermark for T-013's catch-up logic, **only if the run completes
-  the full window without being blocked** — **not yet met**, this run was blocked partway
-  through, so per the stated rule the watermark was correctly **not** written (confirmed:
-  `data/watermark_youtube.json` does not exist yet)
+  the full window without being blocked** — met by **T-019**, not this ticket's own run:
+  this run's watermark was correctly withheld when it was blocked partway through; T-019's
+  Whisper path let a later re-run finish the full window and write
+  `data/watermark_youtube.json = 2026-09-17`
 
 **Out of scope:** HF backfill (T-015, done, separate ticket); implementing option (b)
 (Whisper) — stays a reserve plan per D-008 unless the block recurs.
@@ -249,28 +250,23 @@ fallback document written, `data/raw/youtube/2026-09-17/YTG0rdHPTDE.pending.json
 `@ColeMedin` never reached. Full details and the two open readings of *why* it recurred
 (session volume vs. per-channel novelty) are in KB-008's 2026-09-17 update.
 
-**Blocked / needs me:** this is exactly the recurrence D-008's "would change our mind"
-clause named. Per this ticket's own notes and `CLAUDE.md`'s stop-and-ask rule ("about to add
-a dependency"), un-parking option (b) (`yt-dlp` + local Whisper) for `@NateBJones` and
-`@ColeMedin` is a decision for me, not something to proceed on automatically — not
-implemented, no new dependency added. Options as of this stopping point: (i) wait out this
-second block too and retry `@NateBJones`/`@ColeMedin` later, now with direct evidence that
-`@theAIsearch`/`@mreflow` are fully covered for this window; (ii) un-park option (b) for the
-two remaining channels only; (iii) accept title+description for just these two channels this
-pass (option c, scoped down from "the whole backfill" to "the two channels the block keeps
-hitting"). Next session should start by asking I to pick among these before touching
-`@NateBJones` or `@ColeMedin` again.
+**Resolved by T-019:** I chose option (b), un-park Whisper (recorded as **D-009**,
+superseding D-008), after the recurrence above showed waiting it out doesn't scale. T-019
+wired Whisper into `vg09/youtube.py` and re-ran this same backfill: all 24 remaining videos
+across `@NateBJones`/`@ColeMedin` resolved via Whisper (0 captions succeeded for either -
+KB-008's updated evidence says this block is durable and channel-scoped, not a session cap),
+0 title+description fallbacks needed. Full detail in T-019's own ticket entry.
 
 **Notes:** Split out from the original combined T-015 so HF's backfill wasn't held hostage to
-this decision; briefly unblocked by D-008, now blocked again by a real recurrence (see
-above). The window cut from 8 weeks to 4 (halving the number of transcript-fetch requests
-against a path that was blocked two days ago) and the per-video pacing scheme above were
-both my explicit direction for this first pass, prioritizing caution over completeness —
-pacing alone did not prevent the recurrence, so widening the window is not advisable until
-I decision above is made. No unit tests written for the new orchestration
-(`vg09/youtube_backfill.py`) this pass; the real paced run itself is this session's
-verification. Consider a mocked resumability/pacing test as a follow-up, matching T-010's
-pattern, before this ticket is closed for good.
+the transcript-path decision; briefly unblocked by D-008, blocked again by a real recurrence,
+resolved for good by T-019/D-009. The window cut from 8 weeks to 4 (halving the number of
+transcript-fetch requests against a path that was blocked two days ago) and the per-video
+pacing scheme above were both my explicit direction for this first pass, prioritizing
+caution over completeness - pacing alone did not prevent the recurrence, which is exactly
+what motivated D-009. No unit tests written for `vg09/youtube_backfill.py`'s orchestration
+itself (the real paced runs across both this ticket and T-019 are the verification) -
+still worth a mocked resumability/pacing test as a future follow-up, matching T-010's
+pattern for the collector itself.
 
 ---
 
@@ -348,7 +344,7 @@ now with real evidence behind it instead of an untested plan.
 
 ### T-019 — Wire Whisper into the collector as the second transcript path
 
-**Status:** in-progress
+**Status:** done
 **Size:** L  ·  **Branch:** `t/T-019-whisper-integration` (stacked on `t/T-018-whisper-feasibility`)
 
 **Goal:** `vg09/youtube.py` uses captions first, `yt-dlp` audio + local `faster-whisper`
@@ -366,37 +362,37 @@ than real caption text (T-012's own flagged uncertainty, now resolvable — 17 r
 exist on disk).
 
 **Acceptance criteria**
-- [ ] `vg09/chunking.py`'s docstring/comments no longer claim auto-captions lack punctuation
-  (KB-014) - corrected to state what's actually verified. The segment-windowing algorithm
-  itself is confirmed (by reading and, if needed, a test) to already only ever break at a
-  segment boundary, never mid-segment, for both caption-sourced and Whisper-sourced segments
-  (the shared `{text, start, duration}` shape after this ticket's conversion step makes this
-  automatic, not source-specific logic)
-- [ ] `TARGET_CHUNK_CHARS`'s calibration is re-measured against the 17 real caption
-  transcripts now on disk (real qwen3 tokenizer call per T-008/T-012's method), replacing the
-  synthetic lowercased/depunctuated estimate; the constant is updated if the real ratio
-  differs materially, or left unchanged with the real measurement recorded as confirming it
-- [ ] `vg09/youtube.py`: on `RequestBlocked`/`IpBlocked` from the caption fetch, `yt-dlp`
-  audio download + local `faster-whisper` transcription is attempted before falling back to
-  title+description; title+description is only used when **both** captions and Whisper fail.
-  `Document.text_source` gains a new value, `"whisper"`. The "missing captions" path
-  (`TranscriptsDisabled`/`NoTranscriptFound`, D-006) is unchanged — falls back to
-  title+description directly, Whisper is not attempted for a video that simply has no
-  captions
-- [ ] Whisper's `{text, start, end}` segments are converted to the `{text, start, duration}`
-  shape `vg09/document.py`'s `segments` field expects (`duration = end - start`) before being
-  stored, so `chunk_youtube_document()` handles a Whisper-sourced document identically to a
-  captions-sourced one with no source-specific branching
-- [ ] The downloaded audio file is deleted after transcription (disk space, copyright) -
-  whether transcription succeeds or fails, confirmed by checking the audio path no longer
-  exists after a real run
-- [ ] Whisper and the Ollama chat/embedding models (D-005) are checked for simultaneous real
-  VRAM residency, not just KB-013's isolated measurement compared against D-005's headroom on
-  paper. If they don't comfortably fit together, the Whisper model is loaded and released
-  per-video (not held resident across a whole channel/run) rather than assumed to coexist
-- [ ] The backfill is re-run for `@NateBJones` and `@ColeMedin` (the two channels T-017 never
-  reached/could not finish) using the new Whisper path; outcomes (captions/whisper/fallback
-  counts) are reported the same way T-017 reported them
+- [x] `vg09/chunking.py`'s docstring/comments no longer claim auto-captions lack punctuation
+  (KB-014) - corrected. The segment-windowing algorithm was confirmed by reading to already
+  only ever break at a segment boundary (a window closes only *after* a whole segment is
+  appended) - no logic change needed, true for both caption- and Whisper-sourced segments
+  since both share the `{text, start, duration}` shape after this ticket's conversion step
+- [x] `TARGET_CHUNK_CHARS` re-measured against all 17 real caption transcripts on disk
+  (`scripts/t019_caption_token_recalibration.py`) - real ratio (4.16-4.61 chars/token, mean
+  4.38) was **worse** than T-012's synthetic estimate (5.55-6.71), the dangerous direction
+  (KB-005). `TARGET_CHUNK_CHARS` dropped 1942 → 1454. Verified against the largest real
+  transcript on disk: max real chunk size 395/400 qwen3 tokens with the new calibration
+  (`scripts/t019_verify_chunk_token_cap.py`)
+- [x] `vg09/youtube.py`: three-tier fallback implemented and real-run-verified - captions,
+  then Whisper on `RequestBlocked`/`IpBlocked`, then title+description only if both fail.
+  `text_source="whisper"` added. Missing-captions path unchanged (D-006). Real backfill
+  re-run: 24/24 `RequestBlocked` videos resolved via Whisper, 0 needed the third resort
+- [x] Whisper's `{start, end}` converted to `{start, duration}` (`fetch_whisper_transcript()`)
+  - confirmed on real data: sample document has 536 real segments in the correct shape;
+  `chunk_youtube_document()` ran unmodified against a real Whisper document (15 chunks,
+  correct `&t=SECONDS` citations, full text reconstructed exactly from rejoined chunks)
+- [x] Downloaded audio deleted after transcription, success or failure - confirmed by both a
+  unit test (mocked) and the real run: `data/whisper_audio/` is empty after all 24 real
+  transcriptions
+- [x] Real joint VRAM residency confirmed (KB-015): `qwen3:30b-a3b` + `bge-m3` loaded via
+  Ollama (D-005, both 100% GPU), then real Whisper transcription alongside them - peak 23646
+  of 24564 MiB, ~0.9GB headroom, neither Ollama model evicted. Per-video load/unload was **not
+  needed** - the model stays resident across the whole run (module-level lazy singleton)
+- [x] Backfill re-run for `@NateBJones` and `@ColeMedin` - **complete**: 24 new videos, all
+  24 via Whisper (0 captions succeeded - both channels are 100% `IpBlocked`, durably, per
+  KB-008's updated evidence), 0 fallbacks needed, 18 already-done videos correctly skipped
+  (`@theAIsearch`/`@mreflow`). Watermark advanced to 2026-09-17. `data/raw/youtube/` now has
+  41 final documents, 0 pending markers
 
 **Out of scope:** re-running the full 4-week backfill for `@theAIsearch`/`@mreflow` (already
 complete, T-017); extending the backfill window beyond 4 weeks; a general Whisper model-size
@@ -407,13 +403,31 @@ building a scheduler or automatic retry for `Pending` markers beyond what alread
 **Notes:** Bundled as one ticket per my explicit instruction - the six pieces are a real
 sequential chain (chunking must accept Whisper's shape before the collector produces any;
 the VRAM check must happen before the real backfill re-run commits to a loading strategy),
-not independent work that benefits from separate tickets. Behavior change flagged for
-`docs/DECISIONS.md`: D-006's "blocked → write a Pending marker, raise `IngestBlocked`, caller
-stops the run" consequence is being retired for the caption-`RequestBlocked` case
-specifically - every video now resolves to a final document (captions → whisper →
-title+description) with no run-wide abort on a single video's block. Recorded as a new
-decision rather than silently changed, since it removes a safety behavior D-006 was
-explicitly designed around.
+not independent work that benefits from separate tickets. Behavior change recorded as
+**D-010**: D-006's "blocked → write a Pending marker, raise `IngestBlocked`, caller stops the
+run" consequence is retired for the caption-`RequestBlocked` case specifically - every video
+now resolves to a final document (captions → whisper → title+description) with no run-wide
+abort on a single video's block. `IngestBlocked` had no remaining caller after this change
+and was removed, along with `youtube_backfill.py`'s abort branch, rather than left as dead
+code.
+
+**Real backfill re-run, not simulated:** 24 new videos across `@NateBJones` (16) and
+`@ColeMedin` (8), all in the 2026-08-21..2026-09-17 window. **Every single one** hit
+`IpBlocked` on captions - 24/24, paced with the same 3-8s/longer-pause schedule T-017 used -
+and **every single one** resolved via Whisper with zero errors and zero further fallback.
+This is much stronger evidence than T-017's single data point that the block is durably
+scoped to these two channels specifically, not a session-volume cap a retry could out-wait -
+recorded in KB-008's update. YouTube's watermark is now set (2026-09-17), completing
+`docs/PLAN.md` Phase 1's YouTube backfill checklist item. `docs/GOAL.md`'s Whisper
+non-goal condition ("captions can't be fetched and time allows") is now demonstrated in
+production, not just tested in isolation (T-018).
+
+`/deep-review`-equivalent self-check before closing: read `vg09/youtube.py`,
+`vg09/youtube_backfill.py`, and both test files end to end after all edits: no dead
+imports, `IngestBlocked`'s only remaining textual references are historical (KB-008/D-006's
+own docs, correctly describing what *used* to happen), 19/19 unit tests pass, and the real
+run's disk state (0 pending markers, 41 final documents, empty `data/whisper_audio/`)
+matches what the code claims it should produce.
 
 ---
 

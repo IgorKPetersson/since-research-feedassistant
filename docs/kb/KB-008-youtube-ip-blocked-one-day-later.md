@@ -1,12 +1,13 @@
-# KB-008 — IpBlocked clears and recurs: 17 paced requests succeeded, the 18th blocked again
+# KB-008 — IpBlocked is channel-scoped and durable for @NateBJones/@ColeMedin, not a session volume cap
 
 **Area:** YouTube ingest — captions
-**Status:** provisional (the clear-then-recur pattern is now two data points on the "recurs"
-side of it, still not enough to characterize what actually triggers it)
+**Status:** provisional (channel-scoped reading is now well-supported by 24 consecutive
+paced requests, but *why* these two channels specifically remains unexplained)
 **Date:** 2026-09-16 (T-009 occurrence); 2026-09-16, later same day (manual re-check by me,
-still blocked); 2026-09-17 (manual re-check by me, block cleared); 2026-09-17, later same day
-(T-017's real paced backfill run, block recurred after 17 successful requests)  ·  **From:**
-T-009, me, T-017
+still blocked); 2026-09-17 (manual re-check by me, block cleared for one video); 2026-09-17,
+later same day (T-017's real paced backfill run, block recurred on the first `@NateBJones`
+video); 2026-09-17, still later (T-019's 24-request re-run, `@NateBJones`/`@ColeMedin` 100%
+blocked throughout)  ·  **From:** T-009, me, T-017, T-019
 
 ## Claim
 On 2026-09-16, `youtube_transcript_api.fetch()` raised `IpBlocked` (a subclass of
@@ -95,16 +96,33 @@ against it this project, unlike `@theAIsearch` and `@mreflow`) triggering on its
 request is itself the signal, not the running total. Nothing here distinguishes the two -
 both are consistent with one data point.
 
+**Update, 2026-09-17, still later the same day — T-019's re-run with Whisper wired in
+(D-009/D-010):** re-ran the same backfill immediately after T-019's collector changes
+landed. Every single caption attempt against `@NateBJones` (16 videos) and `@ColeMedin`
+(8 videos) - **24 requests total, paced with the same 3-8s/longer-pause schedule** - raised
+`IpBlocked`. Zero successes, zero exceptions to the pattern. Meanwhile `@theAIsearch` and
+`@mreflow` needed no new caption calls at all this run (already fully fetched by the earlier
+run) - so this doesn't newly confirm they're still clear, but nothing contradicts it either.
+This is much stronger evidence than the single first-video data point above: the block, at
+least as of this run, looks **durable and channel/scope-specific** to `@NateBJones` and
+`@ColeMedin` rather than a volume-sensitive session cap that a paced retry could out-wait -
+24 consecutive paced requests over several minutes never once cleared. All 24 resolved via
+the Whisper fallback (D-009) with zero errors and zero title+description fallbacks needed -
+see T-019's ticket notes for the full run.
+
 ## Confidence and limits
-Three blocked occurrences (T-009's run, the 2026-09-16 same-day manual re-check, and T-017's
-2026-09-17 real run) and one cleared occurrence (the 2026-09-17 manual re-check, ~1 hour
-before T-017 ran and hit the block again). Two channels now have real caption successes
-(`@theAIsearch`: 7/7 in-window videos across this project's history; `@mreflow`: 9/9), one
-channel (`@NateBJones`) blocked on its very first-ever request from this project, and
-`@ColeMedin` remains completely untested. Not confirmed: a volume threshold within a
-session, whether it's per-channel/per-video-novelty rather than cumulative, how long *this*
-second block will take to clear, or whether repeating T-017's run tomorrow would reproduce
-the same ~17-request ceiling, a different one, or none at all. This directly triggers
-D-008's "would change our mind" clause - a real recurrence during T-017's run - and is now a
-decision point for me on whether to un-park option (b) (`yt-dlp` + local Whisper) for
-whatever channels/videos remain, rather than waiting out a second block on faith alone.
+Four blocked occurrences (T-009's run, the 2026-09-16 same-day manual re-check, T-017's
+2026-09-17 real run, and T-019's 24-request re-run) and one cleared occurrence (the
+2026-09-17 manual re-check against one specific video, `nZYJdwM-_nI` - which itself then
+belonged to `@theAIsearch`, a channel that turned out fine anyway). Two channels have real
+caption successes across their full in-window history (`@theAIsearch`: 7/7; `@mreflow`:
+9/9), two channels are 100% blocked across every video attempted so far (`@NateBJones`:
+0/16; `@ColeMedin`: 0/8). The channel-scoped reading is now much better supported than the
+volume-threshold reading - 24 paced requests against the blocked channels never cleared,
+where 17 requests against the clean channels never blocked. Still not confirmed: *why*
+these two channels specifically are blocked (nothing else distinguishes them from
+`@theAIsearch`/`@mreflow` in this project's code), whether the block will ever clear for
+them, or whether a *new* channel added later would be blocked on its first request the way
+`@NateBJones` was. T-019's Whisper path (D-009) makes this largely moot for data collection
+going forward - captions are attempted first every time, so if the block ever clears for
+these channels, real captions resume automatically with no code change needed.
