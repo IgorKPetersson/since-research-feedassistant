@@ -17,6 +17,30 @@ these questions' expected answers/sources were evaluated against. If the dataset
 rebuilt, re-verify expected sources against a snapshot taken at this cutoff, not against
 whatever `data/raw/` contains at the time.
 
+### Proving the freeze held (T-020)
+
+`data/raw/` is gitignored (D-004/local-first design), so the cutoff dates above describe the
+dataset but don't by themselves prove nothing in it has changed since. Two things do:
+
+- **Archive:** a zip of `data/raw/` exactly as it stood at this cutoff is kept outside the
+  repo, at `C:\AIProjects\VG-09-frozen\data-raw-frozen-hf20260916-yt20260917.zip` — the
+  recovery copy if `data/raw/` is ever lost or found to have drifted.
+- **Manifest:** `docs/eval-dataset-manifest.txt` (committed — small, text, safe to diff)
+  lists the SHA-256 of every file in that snapshot: 1279 files total (1225 real documents —
+  1184 HF, 41 YouTube — plus 54 HF day-completion markers, 0 pending markers).
+
+To check `data/raw/` still matches this snapshot, run:
+
+```
+.venv/Scripts/python.exe scripts/t020_verify_eval_dataset.py
+```
+
+Exit code 0 and "OK - data/raw/ matches the frozen manifest exactly." means the freeze has
+held. Anything else — a mismatch, a missing file, or an extra file — means something in
+`data/raw/` has changed since 2026-09-19 (when this manifest was generated), and T-014's
+expected answers/sources should be re-verified before being trusted again. If that happens,
+the archive above is the last known-good copy to compare against or restore from.
+
 ## Time-window conventions used below
 
 The questions use relative time phrases ("senaste veckan", "senaste månaden", …) without

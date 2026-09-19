@@ -631,6 +631,87 @@ rather than an omission.
 
 ---
 
+### T-020 — Freeze the eval dataset for real, and add a timeout to the YouTube backfill's yt-dlp calls
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-020-freeze-and-timeout`
+
+**Goal:** the "frozen dataset" T-014's evaluation questions are written against is actually
+frozen — provably unchanged, not just described by a cutoff date — and the YouTube backfill's
+yt-dlp calls can't hang forever on a stalled connection.
+
+**Why:** the Phase 1 `grill-me` review (this session) found that `data/raw/` is gitignored,
+so nothing durable backs T-014's frozen-cutoff claim — only the cutoff *dates* are written
+down, not the content. If `data/raw/` is ever lost, changed, or the sources quietly edit
+their own past content, a later re-ingestion honoring the same dates could silently produce
+different documents than the ones T-014's expected answers were verified against, and nothing
+would detect it. The same review found `youtube_backfill.py`'s yt-dlp calls have no explicit
+timeout, unlike every other network call in the codebase — a stalled connection mid-run can
+hang indefinitely. Both are cheap to fix now and expensive to discover later (the first, only
+once Phase 3 already depends on the freeze holding; the second, only during a real multi-hour
+backfill run).
+
+**Acceptance criteria**
+- [x] A zip archive of `data/raw/` as it stands at the frozen cutoff (HF 2026-09-16, YouTube
+  2026-09-17) exists outside the repo (`C:\AIProjects\VG-09-frozen\`) — `data/raw/` itself
+  stays gitignored, only the archive's existence and location change →
+  `data-raw-frozen-hf20260916-yt20260917.zip`, 1279 entries, `testzip()` confirms no
+  corruption; `.gitignore` unchanged, confirmed `git ls-files data/` still returns nothing
+- [x] A manifest (`docs/eval-dataset-manifest.txt`, committed) lists the relative path and
+  SHA-256 of every file in `data/raw/` at freeze time, plus the total document count, so a
+  later diff can prove byte-for-byte whether anything changed → 1279 entries; header records
+  1225 real documents (1184 HF + 41 YouTube), 54 HF day-completion markers, 0 pending markers
+- [x] A script (`scripts/t020_verify_eval_dataset.py`) recomputes SHA-256 for every file
+  currently in `data/raw/` and reports any mismatch, missing file, or extra file against the
+  manifest → implemented, exits 1 on any missing/extra/mismatched file
+- [x] Running that script right now, before anything else changes, reports zero mismatches —
+  proof the manifest actually matches `data/raw/`'s real content at commit time, not just a
+  plausible-looking file → real run: "manifest entries: 1279 / files on disk: 1279 / OK -
+  data/raw/ matches the frozen manifest exactly.", exit code 0
+- [x] `docs/eval-questions.md` documents where the archive lives and how to run the verify
+  script → new "Proving the freeze held (T-020)" subsection under "Frozen dataset"
+- [x] `vg09/youtube_backfill.py`'s yt-dlp calls have an explicit `socket_timeout`, consistent
+  with the `timeout=30/300` pattern already used for HF/Ollama's `requests` calls elsewhere in
+  the codebase — including `vg09/youtube.py`'s `list_videos()` and
+  `fetch_whisper_transcript()`, since both run inside `youtube_backfill.py`'s call path and
+  share the same stalled-connection risk, even though they live in a different file → all
+  three real `yt_dlp.YoutubeDL` call sites now pass `socket_timeout=30`
+  (`YT_DLP_SOCKET_TIMEOUT`, defined once in `vg09/youtube.py`, imported by
+  `youtube_backfill.py`); 20/20 existing tests still pass unchanged (they mock at the
+  `YoutubeDL` boundary, so option-dict contents aren't asserted, but nothing broke)
+- [x] `docs/PLAN.md` gets a risk register noting the four `grill-me` findings deferred to
+  Phase 3 (no tests for `vg09/store.py`, no tests for `vg09/youtube_backfill.py`, no alert
+  threshold on the bare `except Exception` around the Whisper fallback, and the softer of
+  F14's two YouTube citations) so they aren't silently dropped → 4 new rows added to the
+  existing risk register table
+
+**Out of scope:** the four deferred findings themselves (tests for `store.py`/
+`youtube_backfill.py`, the Whisper alert threshold) — noted in the risk register, not built.
+Re-running or re-verifying the frozen dataset's *content* against HF/YouTube's live APIs —
+this ticket proves the local snapshot hasn't silently changed, not that it's still what those
+APIs would return today.
+
+**Depends on:** T-014 (produced the frozen-cutoff claim this hardens), the Phase 1 `grill-me`
+review (produced both findings).
+**Notes:** Two of six `grill-me` findings, per my explicit triage; the other four are
+deferred to Phase 3 rather than fixed now — see `docs/PLAN.md`'s risk register for each,
+recorded there rather than fixed here so they can't be silently dropped before Phase 3.
+
+The timeout fix ended up touching `vg09/youtube.py` as well as `vg09/youtube_backfill.py` —
+the original finding's own two named call sites (`list_videos()`, `fetch_whisper_transcript()`)
+both live in `youtube.py`, not the file I named; fixed there too rather than leaving a
+partial fix that only covered `youtube_backfill.py`'s own `_fetch_single_video_metadata()`,
+since all three share the exact same stalled-connection risk inside the same backfill run.
+Flagged here rather than silently expanding scope without a trace.
+
+Real, not simulated: `scripts/t020_freeze_dataset.py` was run once against the real
+`data/raw/` (1279 files, 6.24 MB), producing the real zip and the real manifest committed
+here; `scripts/t020_verify_eval_dataset.py` was then run against that same real `data/raw/`
+and reported a clean match (exit 0) before this commit — the manifest is proven to match its
+own subject at commit time, not just plausible-looking.
+
+---
+
 ### T-011 — Separate Qwen3's reasoning from its answer before display
 
 **Status:** todo

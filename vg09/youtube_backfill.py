@@ -35,7 +35,7 @@ from vg09 import document
 from vg09.channels import CHANNELS
 from vg09.document import RAW_DIR, Document
 from vg09.watermark import write_watermark
-from vg09.youtube import list_videos, normalize
+from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_videos, normalize
 
 BACKFILL_WEEKS = 4  # halved from T-017's original 8-week plan to roughly halve
 # the number of transcript-fetch requests against a path that was IpBlocked
@@ -77,7 +77,12 @@ def _fetch_single_video_metadata(video_id: str) -> dict:
     """Re-fetch one video's full yt-dlp info dict by id - used for retrying a
     pending video, whose marker only recorded id/title/feed_date/reason, not
     the description normalize() needs for a possible fallback."""
-    opts = {"skip_download": True, "quiet": True, "no_warnings": True}
+    opts = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "socket_timeout": YT_DLP_SOCKET_TIMEOUT,
+    }
     with yt_dlp.YoutubeDL(opts) as ydl:
         return ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
 

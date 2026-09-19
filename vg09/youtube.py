@@ -61,6 +61,12 @@ def _get_whisper_model():
     return _whisper_model
 
 
+YT_DLP_SOCKET_TIMEOUT = 30  # seconds - matches the requests.get/post timeout pattern
+# used elsewhere in the codebase (hf_papers.py, store.py); yt-dlp has no default, so a
+# stalled connection would otherwise hang indefinitely (found in Phase 1's grill-me
+# review, T-020).
+
+
 def list_videos(channel_url: str, count: int) -> list[dict]:
     opts = {
         "skip_download": True,
@@ -68,6 +74,7 @@ def list_videos(channel_url: str, count: int) -> list[dict]:
         "playlistend": count,
         "quiet": True,
         "no_warnings": True,
+        "socket_timeout": YT_DLP_SOCKET_TIMEOUT,
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(channel_url, download=False)
@@ -113,6 +120,7 @@ def fetch_whisper_transcript(video_id: str) -> tuple[str, list[dict]]:
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "socket_timeout": YT_DLP_SOCKET_TIMEOUT,
     }
     audio_path: Path | None = None
     try:
