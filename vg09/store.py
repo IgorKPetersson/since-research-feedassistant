@@ -113,6 +113,13 @@ def build_store(sources: tuple[str, ...] = ("hf", "youtube")) -> dict:
     return {"documents": len(documents), "chunks": total, "collection_count": collection.count()}
 
 
+def is_empty() -> bool:
+    """T-025: the chat UI's empty-state check ("ingen data ännu, kör ingest") - a
+    thin, testable wrapper rather than the UI reaching into `get_collection().count()`
+    directly."""
+    return get_collection().count() == 0
+
+
 def latest_feed_date() -> date | None:
     """The most recent `feed_date` actually present across the whole store, both
     sources combined - not a per-source watermark (T-013's watermarks are

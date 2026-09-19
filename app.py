@@ -1,0 +1,82 @@
+"""T-025: the chat UI. One question, one answer, its sources - no conversation
+history (`docs/GOAL.md`'s explicit non-goal), no accounts.
+
+A thin rendering layer: every real decision (date-range extraction, retrieval,
+answer generation, citation resolution) already lives in `vg09/` and is unit- and
+real-data-tested there (T-021-T-024). Run with `streamlit run app.py`.
+"""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+
+import streamlit as st
+
+from vg09.answer import generate_answer
+from vg09.citations import build_citations
+from vg09.date_range import detect_recency_ranking, resolve_date_range
+from vg09.retrieval import retrieve
+from vg09.store import is_empty, latest_feed_date
+from vg09.ui_helpers import describe_retrieval_mode
+
+st.set_page_config(page_title="VG-09", page_icon=":material/search:")
+st.title("VG-09 — forskningsflödesassistent")
+
+if is_empty():
+    st.info("Ingen data ännu, kör ingest.")
+    st.stop()
+
+with st.sidebar:
+    st.header("Datumfilter")
+    st.caption(
+        "Frågan tolkas automatiskt (t.ex. \"senaste veckan\"). Ange ett eget "
+        "intervall nedan för att alltid override:a tolkningen."
+    )
+    use_manual_range = st.checkbox("Ange eget datumintervall")
+    manual_range: tuple[date, date] | None = None
+    if use_manual_range:
+        today = latest_feed_date() or date.today()
+        start = st.date_input("Från", value=today - timedelta(days=7))
+        end = st.date_input("Till", value=today)
+        if start and end:
+            manual_range = (start, end)
+
+question = st.text_input("Fråga:", placeholder="Vad har hänt med AI-agenter den senaste veckan?")
+ask = st.button("Fråga", type="primary")
+
+if ask and question.strip():
+    today = latest_feed_date()
+    interpreted_range = resolve_date_range(question, today, manual_override=None)
+    date_range = manual_range if manual_range is not None else interpreted_range
+    ranking = detect_recency_ranking(question)
+
+    st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range))
+
+    with st.spinner("Söker och genererar svar..."):
+        retrieval = retrieve(question, date_range=date_range, ranking=ranking)
+        result = generate_answer(question, retrieval.chunks)
+        citations = build_citations(result.answer, result.source_map)
+
+    if result.incomplete:
+        st.warning("Svaret är ofullständigt — avbröts av längdgränsen innan det var klart.")
+
+    st.markdown(result.answer)
+
+    with st.expander("Visa modellens resonemang"):
+        st.text(result.reasoning)
+
+    st.subheader("Källor")
+    if not citations.citations:
+        st.caption("Inga källor kunde kopplas till svaret.")
+    for c in citations.citations:
+        note = " _(endast titel/beskrivning — ingen transkription/abstract)_" if c.is_fallback else ""
+        arxiv_note = f", arXiv {c.arxiv_published_at[:10]}" if c.arxiv_published_at else ""
+        st.markdown(f"- [{c.title}]({c.url}) — {c.feed_date}{arxiv_note}{note}")
+
+    if citations.unlinked_references:
+        st.caption(
+            "Hänvisningar i svaret som inte gick att koppla till en källa: "
+            + ", ".join(citations.unlinked_references)
+        )
+elif ask:
+    st.warning("Skriv en fråga först.")

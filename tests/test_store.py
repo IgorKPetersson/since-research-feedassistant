@@ -12,7 +12,7 @@ import unittest
 from datetime import date
 from unittest.mock import MagicMock, patch
 
-from vg09.store import latest_feed_date
+from vg09.store import is_empty, latest_feed_date
 
 
 class LatestFeedDateTests(unittest.TestCase):
@@ -39,6 +39,20 @@ class LatestFeedDateTests(unittest.TestCase):
 
         self.assertIsNone(result)
         collection.get.assert_not_called()
+
+
+class IsEmptyTests(unittest.TestCase):
+    def test_empty_collection_is_empty(self):
+        collection = MagicMock()
+        collection.count.return_value = 0
+        with patch("vg09.store.get_collection", return_value=collection):
+            self.assertTrue(is_empty())
+
+    def test_non_empty_collection_is_not_empty(self):
+        collection = MagicMock()
+        collection.count.return_value = 1971
+        with patch("vg09.store.get_collection", return_value=collection):
+            self.assertFalse(is_empty())
 
 
 if __name__ == "__main__":

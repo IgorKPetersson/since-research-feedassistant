@@ -1019,7 +1019,7 @@ shape the model still produces - is collected into `CitationResult.unlinked_refe
 
 ### T-025 — Chat UI: ask a question, see the answer with sources, or the empty state
 
-**Status:** todo
+**Status:** done
 **Size:** L (the one ticket the Phase 2 checkpoint is judged against; kept as one ticket —
 see Notes)  ·  **Branch:** `t/T-025-chat-ui`  ·  **Phase:** 2
 
@@ -1031,21 +1031,52 @@ confusing blank or broken screen.
 including an empty state when no data exists") and success criterion ("the three question
 types work end to end"). This is the one Phase 2 ticket a human actually looks at directly.
 
+**Framework: Streamlit** (my choice of two, this session picked and justified): the
+screen is a form-and-display app - a question field, a sidebar date picker, an answer, a
+collapsible reasoning section, and a citation list - exactly Streamlit's native widget set
+(`st.text_input`, `st.date_input`, `st.expander`, `st.markdown`), with no client-side state
+machine to hand-build. Gradio leans toward a single input→output demo shape (or its
+chat-message widget, which assumes a running conversation - an explicit non-goal,
+`docs/GOAL.md`); fitting a sidebar override control and a mode-explanation caption alongside
+one Q&A turn is more natural in Streamlit's script-per-rerun model.
+
 **Acceptance criteria**
-- [ ] A question can be typed and submitted, and the resulting answer (T-023) is displayed
-- [ ] The manual date-range picker from T-021 is present, and its value, when set, is what's
-  sent to retrieval — verified by checking a request/response, not just that the control
-  renders
-- [ ] Citations (T-024) are displayed alongside the answer as clickable links, showing title
-  and feed date; a YouTube citation's link opens at the `&t=` timestamp
-- [ ] An answer flagged incomplete (`done_reason=="length"`, T-023) is visibly marked as
-  incomplete in the UI — never rendered identically to a complete answer
-- [ ] When `data/raw/`/the Chroma store has no documents at all, the UI shows an explicit
-  empty state ("no data yet — run ingest") instead of an empty result, an endless spinner, or
-  an error
-- [ ] All three question types from `docs/GOAL.md` ("what's new", "did X come up", "has Q
+- [x] A question can be typed and submitted, and the resulting answer (T-023) is displayed →
+  real browser run below
+- [x] The manual date-range picker from T-021 is present, and its value, when set, always
+  overrides the interpreted window — verified by checking what's actually sent to retrieval
+  (`resolve_date_range(..., manual_override=...)`), not just that the control renders → real
+  browser run: interpreted window for F05 was `2026-09-04..2026-09-17`; with the sidebar's
+  "Från" set to `2026-09-01`, the caption switched to "Datumfilter (manuellt angivet):
+  2026-09-01 – 2026-09-17" — the override, not the interpretation, reached retrieval
+- [x] The UI states which date window was actually used for the answer (manual override,
+  interpreted from the question, or none), or that ranking mode was used instead — I
+  can always see which of T-022's mechanisms fired, not just the answer →
+  `vg09.ui_helpers.describe_retrieval_mode()`; all three real forms observed live (manual,
+  interpreted, ranking)
+- [x] Citations (T-024) are displayed alongside the answer as clickable links, showing title
+  and feed date; a YouTube citation's link opens at the `&t=` timestamp; unlinked references
+  (T-024) are shown too, not silently dropped → real citation links rendered with correct
+  `href`s in every real run below; `&t=` confirmed via T-024's own real run
+  (`&t=1268`/`&t=0`), not re-tested here since the rendering is a direct, untransformed
+  `c.url`
+- [x] An answer flagged incomplete (`done_reason=="length"`, T-023) is visibly marked as
+  incomplete in the UI — never rendered identically to a complete answer → **hit for real,
+  unplanned**, during the F02 smoke test below: a genuine `st.warning` banner ("Svaret är
+  ofullständigt — avbröts av längdgränsen innan det var klart.") appeared before the
+  (truncated) answer
+- [x] The model's reasoning (T-011's `split_reasoning_and_answer`) is never shown inline with
+  the answer, but is reachable for the curious via a collapsed-by-default control → an
+  `st.expander("Visa modellens resonemang")`, collapsed by default every time, confirmed
+  openable (real F05 run: 1900+ character real chain-of-thought, in English, while the answer
+  itself was in Swedish)
+- [x] When the Chroma store has no documents at all, the UI shows an explicit empty state
+  ("ingen data ännu, kör ingest") instead of an empty result, an endless spinner, or an error
+  → real browser run against a genuinely empty temp Chroma store (never the real production
+  data - see Notes): exactly "Ingen data ännu, kör ingest.", no sidebar, no form
+- [x] All three question types from `docs/GOAL.md` ("what's new", "did X come up", "has Q
   progressed") are each exercised once against the real Phase 1 dataset as a manual smoke
-  test, not only unit-tested in isolation
+  test in a real browser, not only unit-tested in isolation → all three below
 
 **Out of scope:** authentication, multi-user, conversation history (all explicit non-goals,
 `docs/GOAL.md`); styling/visual polish beyond "simple" (`docs/GOAL.md`'s own word).
@@ -1054,6 +1085,36 @@ types work end to end"). This is the one Phase 2 ticket a human actually looks a
 **Notes:** This ticket's own acceptance criteria are what `docs/PLAN.md`'s Phase 2 checkpoint
 ("the three question types... work end to end with sources") will actually be checked
 against.
+
+New dependency, per my explicit two-way choice: `streamlit==1.64.0` (+ its own
+dependencies - `pandas`, `altair`, `pyarrow`, etc., all pulled in transitively, not chosen
+individually). `pip check` reports no conflicts; `websockets` was downgraded 17.1→16.1.1 by
+Streamlit's own pin, harmless (nothing else in this project pins it).
+
+**Real browser smoke test** (`streamlit run app.py`, Playwright, real store + real Ollama —
+not simulated), all three question types:
+- **"did X come up"** (F05, "Har NeoHorse nämnts de senaste två veckorna?"): interpreted
+  window `2026-09-04..2026-09-17`; correct answer citing NeoHorse-1
+  (`https://huggingface.co/papers/2609.08183`, 2026-09-09, arXiv 2026-09-08); complete
+  (`done_reason="stop"`). Re-run with a manual override (`2026-09-01..2026-09-17`) confirmed
+  the override reaching retrieval, per above.
+- **"what's new"/ranking** (F06, "Vad är det senaste inom benchmarking av coding agents?"):
+  mode caption correctly read "Läge: sortering efter senaste (rankning, inget datumfilter)";
+  real answer correctly named SWE-Bench Pro Verified with a properly rendered Markdown list;
+  complete.
+- **"has Q progressed"** (F02, "Vad har hänt med GUI agents den senaste månaden?"):
+  interpreted window `2026-08-17..2026-09-17`; **real `done_reason="length"`** - the
+  incomplete-answer banner fired for real, unplanned, on a genuinely large candidate pool
+  (broad topic, month-wide window). The answer itself was correctly cited
+  (LLaDA-UI, `2609.13287`) despite being cut off mid-list - confirms the incomplete flag and
+  a genuinely truncated real answer aren't mutually exclusive somehow rendering wrong.
+
+**Empty-state check, without touching real production data:** a throwaway, session-only
+script (not committed) monkeypatched `vg09.store.STORE_PATH` to a fresh, empty temp
+directory *before* importing anything else, then ran only the empty-state branch in a real
+Streamlit session on a separate port. Confirmed the exact expected text and that nothing
+else in the app renders when the store is empty - the real 1971-chunk production store was
+never at risk.
 
 ---
 
