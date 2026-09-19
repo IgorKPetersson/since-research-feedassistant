@@ -547,7 +547,7 @@ has the identical exposure for any future test of `load_documents()`.
 
 ### T-014 — Write the 15–20 evaluation questions with expected sources
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-014-eval-questions`
 
 **Goal:** I write 15–20 evaluation questions against a frozen dataset (fixed
@@ -565,33 +565,69 @@ means this ticket can start drafting HF-side questions immediately, but "frozen 
 only means something once both sources have stopped moving.
 
 **Acceptance criteria**
-- [ ] HF-side question drafting and source-verification can start against T-015's backfilled
-  `data/raw/hf/` as soon as it exists — not blocked on T-017
-- [ ] The dataset used for the **final, frozen** question set is `data/raw/` as it stood
+- [x] HF-side question drafting and source-verification can start against T-015's backfilled
+  `data/raw/hf/` as soon as it exists — not blocked on T-017 → started against the real
+  1184-document HF store, before T-017's YouTube data was even in scope
+- [x] The dataset used for the **final, frozen** question set is `data/raw/` as it stood
   after **both** T-015 (HF) and T-017 (YouTube) have completed; that combined cutoff (both
   sources' end dates) is written down alongside the question set so a later re-ingestion
-  doesn't silently change what "current" meant when the questions were written. This ticket
-  is not closed until that freeze happens — HF-only work here is preparation, not completion
-- [ ] I write 15–20 questions spanning all three question types from
-  `docs/GOAL.md`: "what's new", "did X come up", "has Q progressed in the last n weeks"
-- [ ] For each question, the expected source document(s) (title + url + feed date) are
-  looked up and confirmed present in `data/raw/` — not asserted from memory
-- [ ] At least two questions are built around a proper noun likely to be garbled by
+  doesn't silently change what "current" meant when the questions were written →
+  `docs/eval-questions.md` "Frozen dataset" section: HF through 2026-09-16, YouTube through
+  2026-09-17 — confirmed these match the real `data/raw/hf`/`data/raw/youtube` min/max
+  `feed_date` at freeze time
+- [x] I write 15–20 questions spanning all three question types from
+  `docs/GOAL.md`: "what's new", "did X come up", "has Q progressed in the last n weeks" →
+  **15** questions (F01–F15), all three types represented (e.g. F01/F03/F10 "what's new",
+  F05/F08/F09/F12 "did X come up", F02/F04/F07/F13/F15 "has X progressed")
+- [x] For each question, the expected source document(s) (title + url + feed date) are
+  looked up and confirmed present in `data/raw/` — not asserted from memory → every source in
+  `docs/eval-questions.md` verified by direct search over the real JSON documents (never
+  asserted from memory); two cases where a prior assumption was wrong were caught and
+  corrected rather than adopted silently (see Notes)
+- [x] At least two questions are built around a proper noun likely to be garbled by
   YouTube's auto-generated captions, per T-002's notes and KB-001 — these specifically
-  depend on T-017's real YouTube data, not HF's
-- [ ] Questions span both sources, and at least one requires combining evidence from both
-- [ ] The set is committed to the repo with the frozen cutoff date(s) recorded, dated before
+  depend on T-017's real YouTube data, not HF's → F12 (Palantir → real auto-caption
+  garbling "Palunteer", confirmed in `data/raw/youtube/2026-09-16/S2VJU5DQqlU.json`'s real
+  segments) and F13 (OpenAI → real garbling "Open AAI" in
+  `data/raw/youtube/2026-09-13/nZYJdwM-_nI.json`)
+- [x] Questions span both sources, and at least one requires combining evidence from both →
+  F14 and F15 each require at least one real HF source and one real YouTube source for a
+  passing answer (facit says so explicitly); every other question is single-source
+- [x] The set is committed to the repo with the frozen cutoff date(s) recorded, dated before
   any retrieval code exists, so the "written before retrieval" ordering is verifiable from
-  git history
+  git history → `docs/eval-questions.md` committed on `t/T-014-eval-questions` (3 commits);
+  confirmed no retrieval code exists anywhere in the repo (`vg09/` has only ingest/store
+  modules) at commit time
 
 **Out of scope:** running the evaluation itself (Phase 3); building retrieval (Phase 2).
 
 **Depends on:** T-001, T-015 (to start); **T-017 to close** — the frozen dataset and the
 auto-caption-garbling questions both need real YouTube data.
-**Notes:** I write the questions; the agent's job is finding and verifying expected
-sources against the real data, not authoring the questions. Do not report this ticket done
-on HF-only progress — the acceptance criteria above are explicit that the freeze needs both
-sources.
+**Notes:** I wrote all 15 questions; the agent's job was finding and verifying
+expected sources against the real data, which surfaced three real discrepancies between
+prior assumptions and what `data/raw/` actually contains, all flagged rather than silently
+resolved:
+1. F01 assumed only two RSI papers shared the 2026-09-16 feed date; there are actually
+   **three** (`2609.11873`, `2609.17523`, `2609.14857`). Resolved by me: any two of the
+   three count as correct.
+2. F04 assumed RealSWE (`2608.27831`, 2026-09-04) was the most recent pre-window coding-agent
+   source; τ^τ-Bench (`2609.04611`, 2026-09-07) is more recent and also on-topic. Resolved by
+   I: both count.
+3. F07 assumed "nothing about text-to-video in the last month"; once "last month" used the
+   same 30-day window as F02, FIRM-Video (`2608.21839`, 2026-08-27) fell inside it and
+   contradicted that assumption. Corrected in the facit (not silently kept), per `CLAUDE.md`'s
+   reality-contradicts-documentation rule.
+
+Time-window phrases in the questions ("senaste veckan", "senaste månaden", …) aren't pinned
+to a date by the questions themselves — `docs/eval-questions.md` fixes one consistent
+definition per phrase up front so every question's facit grades against the same window
+instead of nine different ad-hoc interpretations.
+
+F11 and F15 (research/agents "last week") and F14 (open-source alternatives) all have source
+sets too large or too open-ended for a single fixed list (F11's real window has 137 HF
+papers) — their facit uses a count/window criterion (e.g. "≥3 papers, all within the window")
+rather than an exhaustive enumeration, which is itself a documented, reviewable decision
+rather than an omission.
 
 ---
 

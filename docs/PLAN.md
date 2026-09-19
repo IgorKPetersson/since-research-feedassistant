@@ -3,7 +3,9 @@
 Phases are gated. **Each phase ends at a checkpoint where the agent stops and I
 reviews.** Do not start phase N+1 without explicit go-ahead.
 
-Current phase: **Phase 1**
+Current phase: **Phase 1 — complete, at its checkpoint.** All Phase 1 checkboxes are ticked
+(T-014 closed 2026-09-19). Phase 2 has not started — waits for my explicit
+go-ahead per this file's gating rule above.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
@@ -62,9 +64,11 @@ revision. Phase 1 has not started — waits for this review.
   YouTube (completed after T-019 gave it a real transcript path): simulated a 1-day gap
   mixing both transcript paths, closed it end to end into Chroma, no duplicates - and caught
   a real chunking bug (`fallback_reason` dropped) along the way, fixed and verified
-- [ ] Write the 15–20 evaluation questions with expected sources, against a frozen dataset
+- [x] Write the 15–20 evaluation questions with expected sources, against a frozen dataset
   (fixed cutoff date) — **before** retrieval is built, so the system isn't tuned to them.
-  HF-side drafting can start once T-015 lands; the freeze itself waits on T-017
+  HF-side drafting can start once T-015 lands; the freeze itself waits on T-017 — T-014,
+  `docs/eval-questions.md`, 15 questions, frozen cutoff HF 2026-09-16/YouTube 2026-09-17,
+  every source verified against real `data/raw/`, committed before any retrieval code exists
 
 **Run order:** T-009 → T-010, then T-015 (HF backfill, run in its own terminal) with T-008
 done in parallel while it runs → T-012 → T-013 (HF side) → T-014 (HF-side drafting). T-017
