@@ -1125,9 +1125,14 @@ right outcome, not a miss). Two real, honest results, not both wins:
   `6XgSpFdD3EU`, `JwTCjarfJYw`, `YTG0rdHPTDE`) each independently rank well for this broad
   query and each get to keep 2 chunks under the cap - capping at 2 reduces crowding from one
   dominant document, but doesn't fix crowding from *several* moderately-relevant ones at
-  once. Not addressed here - `MAX_CHUNKS_PER_DOC=2` was my explicit number, not
-  re-tuned unilaterally; flagged for a decision if it matters (a stricter cap, a
-  per-source-type cap, or accepting this as a real limit of a single flat cap).
+  once. **Left as-is, by my explicit decision, not tuned further:** narrowing the cap or
+  the pool's top-k specifically to make F02 pass would be tuning the retrieval against one
+  eval question's known answer - exactly what T-014's frozen-before-retrieval-exists
+  ordering was designed to prevent. The context budget (13789 tokens, `docs/DESIGN.md`) has
+  room for well more than 5 chunks - top-5 is only what this measurement *displays*, not a
+  hard ceiling retrieval enforces - so whether 5 vs. more chunks reaching the real model
+  actually helps is a real question for Phase 3's evaluation against real generated answers,
+  not something to decide by eye against one question's top-5 printout now.
 - **F06 unchanged (MISS)** - not a crowding problem: its ranking-sort mode reorders whatever
   the initial 60-candidate similarity pool already contains by date, and the expected source
   (SWE-Bench Pro Verified) was never in that pool to begin with (a pool-composition gap

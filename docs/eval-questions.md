@@ -57,6 +57,14 @@ All source counts/lists below were verified directly against the JSON documents 
 read from each document), not asserted from memory. Chroma was not needed — presence/absence
 in the frozen `data/raw/` files is what these questions test.
 
+**D-011:** any evaluation code that resolves these questions' relative phrases (Phase 3, or a
+re-run of T-022/T-027's retrieval against this set) must pin `today` **explicitly to
+2026-09-16** — the anchor these windows were already computed against — rather than calling
+`vg09.store.latest_feed_date()` (which returns 2026-09-17, YouTube's real latest content,
+correct for live retrieval but one day off from what's written here). Pinning explicitly
+keeps every window above correct without rewriting it; production retrieval uses the other
+anchor for a different, equally deliberate reason (D-011).
+
 ## Questions
 
 ### Fråga 01

@@ -425,7 +425,16 @@ per-video logging alone.
 `vg09.date_range.resolve_date_range()`), the `today` passed in is
 `vg09.store.latest_feed_date()` - the maximum `feed_date` actually present across the whole
 Chroma store, both sources combined - not `date.today()`, not either source's own watermark,
-and not one source's ingest cutoff used as a stand-in for "now".
+and not one source's ingest cutoff used as a stand-in for "now". **This applies to live/
+production retrieval only.** Evaluation runs (Phase 3, or any re-run of T-014's 15 real
+questions against the frozen dataset) pin `today` **explicitly to 2026-09-16** instead - the
+same anchor `docs/eval-questions.md`'s facit was already written and reviewed against -
+rather than calling `latest_feed_date()` themselves. The evaluation script sets this anchor
+explicitly in its own code, not by relying on whatever `latest_feed_date()` happens to return
+against a given snapshot of `data/raw/`. This keeps the already-written facit correct without
+rewriting it, and keeps production behavior correct without weakening it for evaluation's
+sake - the two callers legitimately want different anchors for different reasons, not one
+"right" anchor with an exception.
 
 **Why:** Real, measured finding (Phase 2, T-022's real-question re-run): `YTG0rdHPTDE`
 (YouTube, `feed_date` 2026-09-17), the single most relevant real candidate by similarity for
@@ -452,11 +461,14 @@ than "what's the newest real content we have".
 **Cost:** `vg09.store.latest_feed_date()` does a full metadata scan
 (`collection.get(include=["metadatas"])`), not an indexed aggregate - Chroma has no native
 max() over metadata. Cheap at this project's real scale (~2000 chunks); would need
-revisiting only if the corpus grew by orders of magnitude. `docs/eval-questions.md`'s
-already-written facit windows (F02/F04/F05/F07/F11/F13/F15) were computed against a
-2026-09-16 anchor and are now one day off from what this decision's anchor (2026-09-17)
-would produce - flagged to me rather than silently rewritten, since that document is
-T-014's closed, reviewed output, not something this ticket's scope covers.
+revisiting only if the corpus grew by orders of magnitude. The eval/production split above
+means two code paths compute `today` differently depending on caller, which is one more
+thing a future reader has to know rather than a single rule everywhere - documented here and
+in `docs/eval-questions.md` specifically so it isn't rediscovered by surprise. Resolved,
+not just flagged: `docs/eval-questions.md`'s facit windows (F02/F04/F05/F07/F11/F13/F15,
+computed against 2026-09-16) stay correct as written, because evaluation now pins that same
+anchor explicitly rather than adopting `latest_feed_date()`'s 2026-09-17 - no facit rewrite
+needed.
 
 **Would change our mind:** If ingest cadence ever became fast enough (multiple runs per
 session) that "latest feed_date in the store" started drifting meaningfully within a single
