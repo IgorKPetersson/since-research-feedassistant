@@ -1259,6 +1259,86 @@ right outcome, not a miss). Two real, honest results, not both wins:
 
 ---
 
+### T-028 — Reasoning can eat the whole generation cap; citations with more than one number in a bracket aren't resolved
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-028-truncation-and-multi-citations`  ·  **Phase:** 2
+
+**Goal:** three real findings from my own manual use of the chat UI (T-025),
+against the real question "Vad har hänt med AI-agenter senaste veckan?": (1) measure why a
+real answer got cut off (`done_reason=="length"`) rather than guess, and propose - not
+build - a fix; (2) `vg09.citations.build_citations()` doesn't resolve a bracket with more
+than one number ("[17, 18]"); (3) as a direct consequence of (2), a real answer that cited
+three sources in one such bracket only produced one citation.
+
+**Why:** real defects I found in already-shipped Phase 2 code (T-023/T-024), not
+hypothetical. (2)/(3) are silent data loss exactly of the kind `CLAUDE.md` and T-024's own
+design (`unlinked_references`, never silently dropped) were meant to prevent - a multi-number
+bracket doesn't even reach `unlinked_references`, it's dropped from consideration entirely
+per number after the first.
+
+**Acceptance criteria**
+- [x] The real question is re-run against the real store/Ollama at least twice (sampling is
+  stochastic, T-008's own established practice), measuring the real qwen3 token count of the
+  reasoning and of the answer separately, and reporting both against the 2000-token
+  `NUM_PREDICT` cap - reported in this ticket's Notes, not silently assumed
+- [ ] Two candidate fixes are written up with their real tradeoff (a higher `NUM_PREDICT`
+  against `docs/DESIGN.md`'s chunk budget, vs. a system-prompt instruction asking for shorter
+  reasoning) - **neither is implemented**; I pick
+- [x] `vg09.citations.build_citations()` resolves every number in a bracket containing more
+  than one, comma-separated (`"[17, 18]"`, `"[17,18]"`, `"[17, 18, 19]"`) - each number
+  resolved independently against `source_map`, exactly as if it were its own single-number
+  bracket
+- [x] A bracket where some numbers resolve and others don't (out of range) reports only the
+  failing numbers as unlinked (e.g. `"[99]"`), not the whole original bracket text - the
+  numbers that did resolve still become real citations
+- [x] A non-numeric bracket that happens to contain a comma (the original `[Title,
+  YYYY-MM-DD]` shape, if the model ever still produces it) is still reported as one whole
+  unlinked reference, unchanged from T-024's existing behavior - the comma-splitting logic
+  only applies once every comma-separated piece is confirmed to be a bare number
+- [x] Deduplication by `doc_id` (T-024) still applies across numbers within the same bracket,
+  not just across separate brackets
+- [x] A unit test covers the exact real shape found - a bracket citing three sources, one
+  citation missing before the fix - and confirms the fix produces three, not one
+
+**Out of scope:** raising `NUM_PREDICT` or rewriting the system prompt (finding 1) - proposed
+only, pending my choice; any other citation format the model might invent beyond
+comma-separated numbers in one bracket.
+
+**Depends on:** T-023 (generation cap), T-024 (citation resolution).
+**Notes:** Real measurement, three runs against the real store/Ollama, same question
+("Vad har hänt med AI-agenter senaste veckan?", live anchor `today=2026-09-17`, 20 chunks
+packed, 6082 chunk tokens, `prompt_eval_count=7192` all three runs - only the generated
+reasoning/answer varied):
+
+| Run | `done_reason` | reasoning tokens | reasoning % of 2000 cap | answer tokens |
+|---|---|---|---|---|
+| 1 | `stop` | 1230 | 61.5% | 272 |
+| 2 | `length` | **1842** | **92.1%** | 176 (visibly cut off mid-word) |
+| 3 | `stop` | 1349 | 67.5% | 322 |
+
+Reasoning alone ranged 61.5-92.1% of the entire 2000-token cap across three real runs on the
+*same* question and the *same* retrieved context - only sampling varied. Run 2 reproduces my
+real finding directly: reasoning left only 158 tokens of headroom before the answer
+even started, and the answer was cut off mid-word. This is a real, repeatable risk, not a one-off
+
+**Candidate fixes, neither built:**
+1. **Raise `NUM_PREDICT`.** Costs directly against `docs/DESIGN.md`'s chunk budget
+   (currently 13803 = 16000-157-40-2000) - e.g. raising to 3000 (≈1000 tokens of headroom
+   over run 2's real 2018-token total) would drop the chunk budget to 12803, a ~7% cut. Given
+   T-027's real finding that packed chunk counts (20-45 observed) sit well under the
+   worst-case 34-chunk ceiling anyway, this is likely affordable, but not measured here.
+2. **Ask for shorter reasoning in the system prompt.** Preserves the full chunk budget, but
+   asking a model to constrain its own chain-of-thought is a materially less reliable lever
+   than instructing final-answer content (reasoning is a separate generation channel the
+   model doesn't visibly self-moderate the same way, per every real reasoning trace seen this
+   session running to 1000-1900+ characters regardless of question breadth).
+
+Neither was picked or measured further - that's explicitly my decision, not this
+ticket's.
+
+---
+
 ### T-011 — Separate Qwen3's reasoning from its answer before display
 
 **Status:** done

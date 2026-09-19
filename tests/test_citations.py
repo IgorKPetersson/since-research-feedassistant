@@ -114,6 +114,47 @@ class BuildCitationsTests(unittest.TestCase):
         self.assertEqual(result.citations, [])
         self.assertEqual(result.unlinked_references, ["[1]", "[2]"])
 
+    def test_real_shape_three_sources_in_one_bracket_all_resolve(self):
+        """T-028's real find: a real answer cited three sources in one bracket
+        ("[17, 18, 19]") and only produced one citation before this fix - all three
+        must resolve now."""
+        source_map = {
+            17: make_chunk("doc17", "Agent as Policy"),
+            18: make_chunk("doc18", "RSIAgent"),
+            19: make_chunk("doc19", "Atria Dawn Preview"),
+        }
+        result = build_citations("Several advances happened [17, 18, 19] this week.", source_map)
+        self.assertEqual({c.doc_id for c in result.citations}, {"doc17", "doc18", "doc19"})
+        self.assertEqual(len(result.citations), 3)
+        self.assertEqual(result.unlinked_references, [])
+
+    def test_multiple_numbers_no_space_between_them(self):
+        source_map = {17: make_chunk("doc17", "A"), 18: make_chunk("doc18", "B")}
+        result = build_citations("[17,18]", source_map)
+        self.assertEqual({c.doc_id for c in result.citations}, {"doc17", "doc18"})
+
+    def test_multiple_numbers_one_resolves_one_out_of_range(self):
+        source_map = {17: make_chunk("doc17", "A")}
+        result = build_citations("Claim [17, 99].", source_map)
+        self.assertEqual(len(result.citations), 1)
+        self.assertEqual(result.citations[0].doc_id, "doc17")
+        self.assertEqual(result.unlinked_references, ["[99]"])
+
+    def test_multiple_numbers_same_doc_deduplicated_within_one_bracket(self):
+        chunk_a = make_chunk("doc1", "Title")
+        chunk_b = make_chunk("doc1", "Title")  # a second chunk of the same document
+        source_map = {1: chunk_a, 2: chunk_b}
+        result = build_citations("[1, 2]", source_map)
+        self.assertEqual(len(result.citations), 1)
+
+    def test_non_numeric_comma_bracket_is_still_one_whole_unlinked_reference(self):
+        """A bracket that isn't a list of bare numbers (T-024's original case) is not
+        torn apart just because it contains a comma - unchanged from before this fix."""
+        source_map = {1: make_chunk("doc1", "Title 1")}
+        result = build_citations("As shown in [Title 1, 2026-09-09].", source_map)
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, ["[Title 1, 2026-09-09]"])
+
 
 if __name__ == "__main__":
     unittest.main()
