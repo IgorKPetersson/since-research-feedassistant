@@ -111,3 +111,24 @@ def build_store(sources: tuple[str, ...] = ("hf", "youtube")) -> dict:
         print(f"  embedded+stored {min(start + len(batch), total)}/{total} chunks")
 
     return {"documents": len(documents), "chunks": total, "collection_count": collection.count()}
+
+
+def latest_feed_date() -> date | None:
+    """The most recent `feed_date` actually present across the whole store, both
+    sources combined - not a per-source watermark (T-013's watermarks are
+    deliberately a few days conservative, T-015's `REOPEN_DAYS`) and not any single
+    source's own cutoff (T-027: anchoring a shared relative window, e.g. "senaste
+    veckan", to the slowest-moving source silently excludes genuinely newer content
+    from a faster one - found for real via `YTG0rdHPTDE`, a video one day newer than
+    HF's cutoff that a HF-anchored window excluded outright). `None` if the store is
+    empty - callers decide what "no data yet" means for a relative window themselves.
+
+    A full metadata scan (`collection.get()`), not an indexed aggregate - Chroma has
+    no native max() - fine at this project's real scale (~2000 chunks); would need
+    revisiting only if the corpus grew by orders of magnitude."""
+    collection = get_collection()
+    if collection.count() == 0:
+        return None
+    result = collection.get(include=["metadatas"])
+    max_ordinal = max(m["feed_date_ordinal"] for m in result["metadatas"])
+    return date.fromordinal(max_ordinal)

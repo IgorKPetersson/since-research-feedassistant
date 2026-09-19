@@ -418,6 +418,52 @@ per-video logging alone.
 
 ---
 
+## D-011 — Relative retrieval windows anchor to the whole dataset's real latest content, not a per-source watermark or a single source's cutoff
+**Status:** accepted
+
+**Decision:** When retrieval (T-022/T-027) resolves a relative window ("senaste veckan", via
+`vg09.date_range.resolve_date_range()`), the `today` passed in is
+`vg09.store.latest_feed_date()` - the maximum `feed_date` actually present across the whole
+Chroma store, both sources combined - not `date.today()`, not either source's own watermark,
+and not one source's ingest cutoff used as a stand-in for "now".
+
+**Why:** Real, measured finding (Phase 2, T-022's real-question re-run): `YTG0rdHPTDE`
+(YouTube, `feed_date` 2026-09-17), the single most relevant real candidate by similarity for
+F15 (rank 6 of 1971), was excluded from its filtered candidate pool entirely, because the
+window (2026-09-10..2026-09-16) was anchored to HF's cutoff (2026-09-16) - one day before
+YouTube's own latest real content. Each source ingests and settles at its own pace (T-013's
+per-source watermarks already model this structurally); anchoring a *shared* window to
+whichever source happens to be slowest silently excludes genuinely newer content from any
+faster one. This isn't specific to this one eval question - it's a property of any two-source
+system where ingest cadence differs.
+
+**Rejected:** `date.today()` (the real wall-clock date) - rejected because it would make a
+relative window's meaning depend on how long it's been since the last ingest, extending
+"senaste veckan" into a tail with no real data at all rather than anchoring to what's actually
+available, and would break reproducibility for a re-run against a frozen dataset (T-020) run
+on a different real-world day. Either source's own watermark
+(`vg09.watermark.read_watermark()`) - rejected because a watermark is deliberately a few days
+conservative (T-015's `REOPEN_DAYS=2`, to handle the local-timezone-ahead-of-UTC risk it was
+built for) and can lag several days behind that source's own real latest content (confirmed
+for real: HF's watermark reads `2026-09-14` while HF's real latest ingested content is
+`2026-09-16`) - a watermark answers "how far have we confirmed settled", a different question
+than "what's the newest real content we have".
+
+**Cost:** `vg09.store.latest_feed_date()` does a full metadata scan
+(`collection.get(include=["metadatas"])`), not an indexed aggregate - Chroma has no native
+max() over metadata. Cheap at this project's real scale (~2000 chunks); would need
+revisiting only if the corpus grew by orders of magnitude. `docs/eval-questions.md`'s
+already-written facit windows (F02/F04/F05/F07/F11/F13/F15) were computed against a
+2026-09-16 anchor and are now one day off from what this decision's anchor (2026-09-17)
+would produce - flagged to me rather than silently rewritten, since that document is
+T-014's closed, reviewed output, not something this ticket's scope covers.
+
+**Would change our mind:** If ingest cadence ever became fast enough (multiple runs per
+session) that "latest feed_date in the store" started drifting meaningfully within a single
+retrieval session - not a concern at this project's real daily/weekly ingest cadence.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

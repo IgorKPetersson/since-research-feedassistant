@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from vg09.retrieval import (
     Candidate,
+    dedup_by_doc,
     order_candidates,
     pack_to_budget,
     query_candidates,
@@ -23,6 +24,10 @@ from vg09.retrieval import (
 
 def make_candidate(id_: str, text: str, feed_date_ordinal: int) -> Candidate:
     return Candidate(id=id_, text=text, metadata={"feed_date_ordinal": feed_date_ordinal})
+
+
+def make_doc_candidate(chunk_id: str, doc_id: str) -> Candidate:
+    return Candidate(id=chunk_id, text=chunk_id, metadata={"doc_id": doc_id, "feed_date_ordinal": 0})
 
 
 class OrderCandidatesTests(unittest.TestCase):
@@ -42,6 +47,43 @@ class OrderCandidatesTests(unittest.TestCase):
         c = make_candidate("c", "z", 200)
         result = order_candidates([a, b, c], ranking=True)
         self.assertEqual([x.id for x in result], ["c", "a", "b"])  # a before b preserved
+
+
+class DedupByDocTests(unittest.TestCase):
+    def test_caps_chunks_per_doc_keeping_the_highest_ranked_ones(self):
+        candidates = [
+            make_doc_candidate("v:0", "video"),
+            make_doc_candidate("v:1", "video"),
+            make_doc_candidate("v:2", "video"),  # 3rd chunk of the same doc - dropped
+            make_doc_candidate("paper:0", "paper"),
+        ]
+        result = dedup_by_doc(candidates, max_per_doc=2)
+        self.assertEqual([c.id for c in result], ["v:0", "v:1", "paper:0"])
+
+    def test_real_shape_one_video_would_otherwise_fill_the_whole_top(self):
+        """The real pattern this fixes: one video with many chunks ranked 1st, 3rd,
+        5th, 10th for a real question, crowding out on-topic papers ranked 7th-36th."""
+        candidates = (
+            [make_doc_candidate(f"video:{i}", "video") for i in range(4)]
+            + [make_doc_candidate("paper_a:0", "paper_a")]
+            + [make_doc_candidate("paper_b:0", "paper_b")]
+        )
+        result = dedup_by_doc(candidates, max_per_doc=2)
+        self.assertEqual(
+            [c.id for c in result], ["video:0", "video:1", "paper_a:0", "paper_b:0"]
+        )
+
+    def test_default_cap_is_two(self):
+        candidates = [make_doc_candidate(f"v:{i}", "video") for i in range(5)]
+        result = dedup_by_doc(candidates)
+        self.assertEqual(len(result), 2)
+
+    def test_no_duplicates_leaves_everything_untouched(self):
+        candidates = [make_doc_candidate("a:0", "a"), make_doc_candidate("b:0", "b")]
+        self.assertEqual(dedup_by_doc(candidates), candidates)
+
+    def test_empty_input(self):
+        self.assertEqual(dedup_by_doc([]), [])
 
 
 class PackToBudgetTests(unittest.TestCase):
@@ -127,13 +169,16 @@ class QueryCandidatesTests(unittest.TestCase):
 
 
 class RetrieveIntegrationTests(unittest.TestCase):
-    def test_full_pipeline_wires_query_order_and_pack_together(self):
+    def test_full_pipeline_wires_query_order_dedup_and_pack_together(self):
         collection = MagicMock()
         collection.query.return_value = {
             "ids": [["newer", "older"]],
             "documents": [["new text", "old text"]],
             "metadatas": [
-                [{"feed_date_ordinal": 200}, {"feed_date_ordinal": 100}],
+                [
+                    {"feed_date_ordinal": 200, "doc_id": "doc_newer"},
+                    {"feed_date_ordinal": 100, "doc_id": "doc_older"},
+                ],
             ],
         }
         with (
@@ -148,6 +193,30 @@ class RetrieveIntegrationTests(unittest.TestCase):
         self.assertTrue(result.ranking_used)
         self.assertIsNone(result.date_range_used)
         self.assertEqual(result.candidates_considered, 2)
+
+    def test_full_pipeline_dedup_prevents_one_doc_from_filling_the_pack(self):
+        """T-027's real scenario: one video (many chunks) plus one paper (one chunk).
+        Without dedup, all 3 "video" chunks would out-rank and could crowd out the
+        paper; with it, the paper survives into the packed result."""
+        collection = MagicMock()
+        collection.query.return_value = {
+            "ids": [["video:0", "video:1", "video:2", "paper:0"]],
+            "documents": [["v0", "v1", "v2", "p0"]],
+            "metadatas": [[
+                {"feed_date_ordinal": 100, "doc_id": "video"},
+                {"feed_date_ordinal": 100, "doc_id": "video"},
+                {"feed_date_ordinal": 100, "doc_id": "video"},
+                {"feed_date_ordinal": 100, "doc_id": "paper"},
+            ]],
+        }
+        with (
+            patch("vg09.retrieval.get_collection", return_value=collection),
+            patch("vg09.retrieval.embed_batch", return_value=[[0.1, 0.2]]),
+            patch("vg09.retrieval.count_qwen_tokens", side_effect=[10, 10, 10]),
+        ):
+            result = retrieve("fråga", date_range=None, ranking=False)
+
+        self.assertEqual([c.id for c in result.chunks], ["video:0", "video:1", "paper:0"])
 
 
 if __name__ == "__main__":

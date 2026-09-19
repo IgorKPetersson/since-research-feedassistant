@@ -1039,6 +1039,102 @@ from — nothing here is a new decision, only turning existing ones into checkab
 
 ---
 
+### T-027 — Deduplicate retrieval candidates per document; anchor relative windows to the whole dataset, not one source
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-027-dedup-and-window-anchor`  ·  **Phase:** 2
+
+**Goal:** two real, measured retrieval defects fixed, both found by re-running T-014's 15
+real questions through T-022's retrieval and comparing the top 5 against the facit's expected
+sources: (1) a document with many chunks (a long YouTube transcript) can crowd every other
+document out of the top of the ranking purely by chunk volume; (2) a relative window
+("senaste veckan") anchors to one source's cutoff, silently excluding genuinely newer content
+from a faster-moving source.
+
+**Why:** Real measurement this session found both, concretely. (1) F02/F14/F15's real top-5
+results were dominated by 2-4 duplicate chunks from a single video each, while the correctly
+on-topic expected documents ranked respectably (7th-36th of 60 real candidates) but never
+appeared in the top 5 shown to a human or passed on to answer generation. (2) F15's single
+most relevant real candidate by similarity (`YTG0rdHPTDE`, rank 6 of 1971) was excluded from
+its filtered candidate pool entirely, because the window (2026-09-10..2026-09-16) was anchored
+to HF's cutoff (2026-09-16) while that video's real `feed_date` is 2026-09-17 - one day past
+HF's cutoff, but not past YouTube's own. Sources ingest at their own pace (T-013's per-source
+watermarks already model this); anchoring a shared window to the slowest source is wrong in
+general, not just for this one eval question.
+
+**Acceptance criteria**
+- [x] `vg09/retrieval.py` deduplicates candidates by `doc_id` after ordering (similarity or
+  recency) and before packing - at most 2 chunks survive per document, the highest-ranked
+  (earliest in the given order) kept, in both filter and ranking mode → `dedup_by_doc()`,
+  `MAX_CHUNKS_PER_DOC=2`; doesn't inspect `ranking` at all, just operates on whatever order
+  it's given, so it's identical code for both modes by construction
+- [x] The dedup step is real, not just a display-time trick: `pack_to_budget()` never sees
+  more than 2 chunks from the same document, so answer generation (T-023) can't be handed 4-5
+  chunks from one video while a more relevant document is dropped entirely → wired into
+  `retrieve()`: `query_candidates → order_candidates → dedup_by_doc → pack_to_budget`
+- [x] A function exists that returns the latest `feed_date` actually present across the whole
+  ingested dataset (both sources combined) - not a per-source watermark (deliberately a few
+  days conservative, T-015's `REOPEN_DAYS`) and not any single source's cutoff →
+  `vg09.store.latest_feed_date()`, a full metadata scan for the max `feed_date_ordinal`; real
+  result against the production store: **2026-09-17** (confirmed against
+  `data/watermark_youtube.json`'s own `2026-09-17`, and one day past
+  `data/watermark_hf.json`'s conservative `2026-09-14`, which is itself two days behind HF's
+  real latest content of 2026-09-16 - exactly the gap this ticket's Why section predicted)
+- [x] That function, not a hardcoded or single-source date, is what test/measurement code
+  passes as `today` when resolving a relative window - real re-run against the frozen dataset
+  now anchors at 2026-09-17 (YouTube's real latest content), not 2026-09-16 (HF's cutoff) →
+  confirmed in the real re-run below
+- [x] The design decision (anchor to the whole dataset's real latest content, not a
+  per-source watermark or a single source's cutoff) is recorded in `docs/DECISIONS.md` → D-011
+- [x] Re-running T-014's 15 real questions through the fixed pipeline is reported: the new
+  headline hit count, and confirmation `YTG0rdHPTDE` is no longer excluded from F15 → **11/14**
+  (up from 9/14 strict, or 10/14 with F04 counted correct-by-design, before this ticket).
+  F15 flipped MISS → HIT: `YTG0rdHPTDE` now ranks 2nd in its own filtered pool (was excluded
+  entirely before). F10's top 5 went from 1 distinct document (the same video 5 times) to 4
+  distinct documents. Full per-question breakdown in this ticket's Notes
+- [x] Existing `tests/test_retrieval.py` still passes; new tests cover the dedup cap directly
+  (not just observed indirectly via a real query) → 62/62 tests pass (8 new: 5 for
+  `dedup_by_doc()` directly, 1 updated + 1 new full-pipeline integration test, 2 for
+  `vg09.store.latest_feed_date()` in a new `tests/test_store.py`)
+
+**Out of scope:** fixing the real semantic/register gap found in the same investigation
+(dense HF abstracts ranking far from broad conversational questions, regardless of language) -
+that is a measurement result for Phase 3's evaluation, not a bug; recorded in
+`docs/PLAN.md`'s risk register as a known limitation instead. Reconciling `docs/eval-
+questions.md`'s already-written facit window dates (F02/F04/F05/F07/F11/F13/F15's windows
+were computed against the 2026-09-16 anchor) with the new 2026-09-17 anchor - flagged for me
+to decide, not silently rewritten, since that document is T-014's closed, reviewed
+output.
+
+**Depends on:** T-022 (the retrieval module this fixes), T-013 (per-source watermarks, the
+rejected alternative anchor).
+**Notes:** Real re-run against T-014's 15 real questions, both fixes applied together
+(`today=2026-09-17`, dedup capped at 2/doc): **11/14** correct (F09 excluded - correct
+answer is "no source"; F04 counted correct-by-design per explicit instruction - its real
+expected sources predate any "last week"-style window, so finding nothing in-window is the
+right outcome, not a miss). Two real, honest results, not both wins:
+
+- **F15 fully fixed** by the window-anchor change: `YTG0rdHPTDE` (rank 6 of 1971 by pure
+  similarity) was excluded outright before this ticket (window ended 2026-09-16, video's
+  `feed_date` is 2026-09-17); now included and ranks 2nd in its own filtered, deduped pool.
+- **F02 still misses**, for a *third*, different reason than F14/F15's semantic gap or the
+  crowding this ticket fixes for F10/F15: checked directly (not inferred) - after dedup, the
+  5 expected GUI-agent papers rank 7th/11th/18th/19th of 38 deduped candidates, an
+  *improvement* over before (were 7th/12th/23rd/24th of 60 undeduped), but still outside the
+  top 5, because **five separate YouTube videos** (`1qGH6NwTj3o`, `qYe1GsMRElw`,
+  `6XgSpFdD3EU`, `JwTCjarfJYw`, `YTG0rdHPTDE`) each independently rank well for this broad
+  query and each get to keep 2 chunks under the cap - capping at 2 reduces crowding from one
+  dominant document, but doesn't fix crowding from *several* moderately-relevant ones at
+  once. Not addressed here - `MAX_CHUNKS_PER_DOC=2` was my explicit number, not
+  re-tuned unilaterally; flagged for a decision if it matters (a stricter cap, a
+  per-source-type cap, or accepting this as a real limit of a single flat cap).
+- **F06 unchanged (MISS)** - not a crowding problem: its ranking-sort mode reorders whatever
+  the initial 60-candidate similarity pool already contains by date, and the expected source
+  (SWE-Bench Pro Verified) was never in that pool to begin with (a pool-composition gap
+  dedup can't touch).
+
+---
+
 ### T-011 — Separate Qwen3's reasoning from its answer before display
 
 **Status:** todo

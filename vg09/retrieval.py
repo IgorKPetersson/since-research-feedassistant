@@ -30,6 +30,11 @@ NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUD
 # docs/DESIGN.md § "Remaining budget for retrieved chunks":
 # 16000 (num_ctx) - 171 (system prompt) - 40 (question) - 2000 (reasoning+answer) = 13789
 CHUNK_BUDGET_TOKENS = 13789
+MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
+# transcript) can otherwise fill most/all of the top of the ranking by volume alone,
+# crowding out other, equally- or more-relevant documents represented by only one
+# chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
+
 # docs/DESIGN.md's "34 = 13789 // 400" is a worst-case ceiling (every chunk at the
 # 400-token cap), not a target - packing here is purely token-budget-driven, not
 # chunk-count-driven, so a real candidate pool of smaller-than-cap chunks can (and in
@@ -135,6 +140,29 @@ def order_candidates(candidates: list[Candidate], ranking: bool) -> list[Candida
     return sorted(candidates, key=lambda c: c.metadata["feed_date_ordinal"], reverse=True)
 
 
+def dedup_by_doc(
+    candidates: list[Candidate], max_per_doc: int = MAX_CHUNKS_PER_DOC
+) -> list[Candidate]:
+    """T-027: at most `max_per_doc` chunks from the same document survive, in the
+    order given - i.e. the highest-ranked ones, since this runs after
+    `order_candidates()` and before `pack_to_budget()`. Real finding that motivated
+    this: for several of T-014's real questions, a single video's chunks filled 3-4
+    of the top 5 candidate slots (e.g. one video occupied ranks 1, 3, 5, 10 for a real
+    "GUI agents" query), while genuinely on-topic documents ranked respectably
+    (7th-36th of 60 real candidates) but never surfaced. Applies identically in
+    filter and ranking mode - it runs on whatever order those produced, without
+    knowing or caring which one was used."""
+    counts: dict[str, int] = {}
+    deduped: list[Candidate] = []
+    for c in candidates:
+        doc_id = c.metadata["doc_id"]
+        if counts.get(doc_id, 0) >= max_per_doc:
+            continue
+        counts[doc_id] = counts.get(doc_id, 0) + 1
+        deduped.append(c)
+    return deduped
+
+
 def pack_to_budget(
     candidates: list[Candidate], budget_tokens: int = CHUNK_BUDGET_TOKENS
 ) -> tuple[list[Candidate], int, list[str]]:
@@ -172,14 +200,16 @@ def retrieve(
     n_results: int = CANDIDATE_POOL_SIZE,
 ) -> RetrievalResult:
     """The full pipeline: similarity search (optionally date-filtered) -> order
-    (similarity or recency) -> pack to T-008's measured budget. `date_range` and
-    `ranking` are both explicit parameters here, not derived from the question inside
-    this function - callers (T-023, or Phase 3's evaluation script) decide those via
-    `vg09.date_range.resolve_date_range()`/`detect_recency_ranking()`, or override them
-    directly for a "plain retrieval" comparison run."""
+    (similarity or recency) -> dedup by document (T-027) -> pack to T-008's measured
+    budget. `date_range` and `ranking` are both explicit parameters here, not derived
+    from the question inside this function - callers (T-023, or Phase 3's evaluation
+    script) decide those via `vg09.date_range.resolve_date_range()`/
+    `detect_recency_ranking()`, or override them directly for a "plain retrieval"
+    comparison run."""
     candidates = query_candidates(question, date_range, n_results)
     ordered = order_candidates(candidates, ranking)
-    packed, total_tokens, dropped = pack_to_budget(ordered)
+    deduped = dedup_by_doc(ordered)
+    packed, total_tokens, dropped = pack_to_budget(deduped)
     return RetrievalResult(
         chunks=packed,
         total_tokens=total_tokens,
