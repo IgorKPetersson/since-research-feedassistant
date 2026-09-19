@@ -871,7 +871,7 @@ tests pass (17 new — 7 for `detect_recency_ranking()`, 10 for `vg09/retrieval.
 
 ### T-023 — The answer-generation call: message structure, generation cap, and detecting a cut-off answer
 
-**Status:** todo
+**Status:** done
 **Size:** L (touches the shape of "an answer" as a contract; kept as one ticket — see Notes)
 ·  **Branch:** `t/T-023-answer-generation`  ·  **Phase:** 2
 
@@ -889,24 +889,37 @@ against `num_ctx`) applies to every real call this ticket makes, not just T-012'
 calls.
 
 **Acceptance criteria**
-- [ ] The system prompt is sent as its own `{"role": "system", ...}` message; the packed
+- [x] The system prompt is sent as its own `{"role": "system", ...}` message; the packed
   chunks and the question go together in one `{"role": "user", ...}` message — per
   `docs/DESIGN.md`, not the system-last string-concatenation shape T-008's raw `/api/generate`
-  experiment used
-- [ ] `num_predict` is set to exactly 2000 on every real call, per T-008's measured
-  reservation — not left to Ollama's default or a different guess
-- [ ] The response's `done_reason` is checked on every call; `"length"` is surfaced to the
+  experiment used → `vg09/answer.py::generate_answer()`; asserted directly
+  (`tests/test_answer.py::test_system_prompt_sent_as_its_own_message`, exactly 2 messages)
+- [x] `num_predict` is set to exactly 2000 on every real call, per T-008's measured
+  reservation — not left to Ollama's default or a different guess → `NUM_PREDICT=2000`,
+  asserted directly (`test_num_predict_is_exactly_2000`)
+- [x] The response's `done_reason` is checked on every call; `"length"` is surfaced to the
   caller as an explicit incomplete-answer signal (not merged into the answer text, not
-  silently dropped) — `"stop"` is passed through as a complete answer
-- [ ] The response's real `prompt_eval_count` is compared against the `num_ctx` sent (16000,
+  silently dropped) — `"stop"` is passed through as a complete answer →
+  `AnswerResult.incomplete = (done_reason == "length")`, both branches tested
+  (`test_stop_is_a_complete_answer`, `test_length_is_flagged_incomplete`)
+- [x] The response's real `prompt_eval_count` is compared against the `num_ctx` sent (16000,
   D-005) and a warning is raised on truncation risk, per `CLAUDE.md`'s hard rule — the same
-  pattern `vg09/store.py` already uses for embedding calls
-- [ ] The call goes through T-011's reasoning/answer-split utility — this ticket never reads
+  pattern `vg09/store.py` already uses for embedding calls → same `>=`/`>=0.9×` check as
+  `vg09/store.py::embed_batch()`; real run's `prompt_eval_count=11080` stayed well clear of
+  `num_ctx=16000`, no warning fired (correctly - nothing to warn about)
+- [x] The call goes through T-011's reasoning/answer-split utility — this ticket never reads
   `response.message.content` directly and calls it "the answer" without going through that
-  split first
-- [ ] A real end-to-end call against the real Ollama/`qwen3:30b-a3b`, using a real packed
+  split first → `split_reasoning_and_answer(resp)`; a think:false-shaped mock response
+  (`thinking=""`) is confirmed to raise through `generate_answer()` itself, not just the
+  utility in isolation (`test_a_think_false_shaped_response_raises_via_t011s_contract`)
+- [x] A real end-to-end call against the real Ollama/`qwen3:30b-a3b`, using a real packed
   chunk set from T-022 (not synthetic filler), produces a real answer with a real
-  `done_reason` and a real `prompt_eval_count` reading
+  `done_reason` and a real `prompt_eval_count` reading → `scripts/t023_verify_answer.py`,
+  real run against F05 ("Har NeoHorse nämnts de senaste två veckorna?"): 29 real chunks
+  packed (9477 tokens) through the real T-022/T-027 pipeline (dedup + eval anchor), real
+  answer correctly identified NeoHorse-1 (2609.08183, feed date 2026-09-09) as inside the
+  window, `done_reason="stop"`, `prompt_eval_count=11080`, 1628-char reasoning cleanly
+  separated from the answer
 
 **Out of scope:** citation formatting (T-024); the UI that displays the answer (T-025);
 building T-011 itself (already its own ticket).
@@ -915,7 +928,15 @@ building T-011 itself (already its own ticket).
 **Notes:** Kept as one ticket rather than split further — message structure, the generation
 cap, and `done_reason` are all properties of the exact same single `/api/chat` call and its
 one response; splitting them would mean two tickets both needing to make the same real call to
-test anything.
+test anything. 77/77 tests pass (12 new).
+
+**Real observation, not a defect, worth knowing before T-024:** the real F05 answer cited its
+source as "source [27]" (the source's position in the assembled prompt) rather than literally
+following the system prompt's requested `[Title, YYYY-MM-DD]` inline format, though it did
+separately state the title and feed date in prose. The model's citation *style* isn't fully
+prompt-compliant - T-024 builds structured citations from chunk metadata directly rather than
+parsing the model's own inline text, so this doesn't block it, but it's a real data point for
+Phase 3 if inline-citation quality ever matters on its own.
 
 ---
 
