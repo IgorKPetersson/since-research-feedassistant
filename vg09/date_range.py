@@ -119,6 +119,27 @@ def extract_date_range(question: str, today: date) -> DateRange | None:
     return None
 
 
+_TIME_UNIT_AFTER_SENASTE = r"(veckan|veckorna|dagarna|m[aå]naden|m[aå]naderna)"
+
+
+def detect_recency_ranking(question: str) -> bool:
+    """T-022: "det/den/de [absolut] senaste [N]" (F01/F03/F06) asks for a *ranking* -
+    the most recent matching items, with no boundary at all - not a bounded window like
+    "senaste veckan"/"senaste manaden" (already handled by `extract_date_range()`).
+    Distinguished purely by what follows "senaste": a time-unit word means it's a
+    window question (this returns False, `extract_date_range` handles it); anything
+    else (a topic noun, or nothing) means it's a ranking question (this returns True).
+    See docs/DESIGN.md's "Filtering by date and sorting by date are two different
+    mechanisms" note - retrieval (T-022) sorts by feed date descending instead of by
+    similarity score when this is True, instead of filtering to a window."""
+    q = question.lower()
+    if not re.search(r"\bsenaste\b", q):
+        return False
+    if re.search(r"senaste\s+(" + _NUM + r"\s+)?" + _TIME_UNIT_AFTER_SENASTE + r"\b", q):
+        return False
+    return True
+
+
 def resolve_date_range(
     question: str, today: date, manual_override: DateRange | None = None
 ) -> DateRange | None:

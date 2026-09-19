@@ -13,7 +13,7 @@ from __future__ import annotations
 import unittest
 from datetime import date
 
-from vg09.date_range import extract_date_range, resolve_date_range
+from vg09.date_range import detect_recency_ranking, extract_date_range, resolve_date_range
 
 
 class RelativeWeeksTests(unittest.TestCase):
@@ -123,6 +123,47 @@ class ResolveDateRangeTests(unittest.TestCase):
     def test_none_and_none_means_unfiltered_not_an_error(self):
         result = resolve_date_range("Nämns LEGO?", date(2026, 9, 16), manual_override=None)
         self.assertIsNone(result)
+
+
+class DetectRecencyRankingTests(unittest.TestCase):
+    """T-022: real ranking questions from docs/eval-questions.md (F01/F03/F06) vs.
+    real window questions that also contain the word "senaste" (F02/F04/F05/F07/F11/
+    F13/F15) - the two must not be confused, since they trigger different retrieval
+    mechanisms (sort vs. filter, docs/DESIGN.md)."""
+
+    def test_f01_two_latest_news_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking(
+            "I området Recursive self-improvement, vad är de två senaste nyheterna "
+            "och vad handlar de om?"
+        ))
+
+    def test_f03_absolute_latest_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking(
+            "Vad är det absolut  senaste inom Video genereation och är det "
+            "hårdvaru- eller mjukvarurelaterat?"
+        ))
+
+    def test_f06_the_latest_within_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking(
+            "Vad är det senaste inom benchmarking av coding agents?"
+        ))
+
+    def test_f04_last_week_is_a_window_question_not_ranking(self):
+        self.assertFalse(detect_recency_ranking(
+            "Den senaste veckan, vad har sagts om Copding Agents. Vänligen sammanfatta."
+        ))
+
+    def test_f05_last_two_weeks_is_a_window_question_not_ranking(self):
+        self.assertFalse(detect_recency_ranking("Har NeoHorse nämnts de senaste två veckorna?"))
+
+    def test_f09_bare_plural_weeks_is_neither_ranking_nor_a_window(self):
+        """"de senaste veckorna" (F09) is a plain existence-check with an ambiguous
+        window phrase, not a ranking question - detect_recency_ranking and
+        extract_date_range both correctly return the "no signal" result for it."""
+        self.assertFalse(detect_recency_ranking("Har AutoDev nämnts de senaste veckorna?"))
+
+    def test_no_senaste_at_all_is_not_a_ranking_question(self):
+        self.assertFalse(detect_recency_ranking("Nämns LEGO i någon artikel?"))
 
 
 if __name__ == "__main__":

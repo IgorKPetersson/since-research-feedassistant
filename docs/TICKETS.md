@@ -791,7 +791,7 @@ number as unparseable (not silently defaulting to 1 or 2 weeks).
 
 ### T-022 — Similarity search with an optional date-range filter, packed to T-008's measured token budget
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-022-retrieval-packing`  ·  **Phase:** 2
 
 **Goal:** given a question (embedded) and an optional date range (T-021), retrieval returns
@@ -807,36 +807,65 @@ a top-k out of thin air. D-002's feed-date filtering is the project's central cl
 strict, comparable variant, not two code paths that could drift apart.
 
 **Acceptance criteria**
-- [ ] Similarity search runs via `vg09.store`'s existing Chroma collection, embedding the
+- [x] Similarity search runs via `vg09.store`'s existing Chroma collection, embedding the
   question through `embed_batch()` (explicit `bge-m3`, `num_ctx=8192`) — never
   `query_texts=` (CLAUDE.md hard rule, per `docs/DESIGN.md`'s "Interfaces and contracts"
-  warning)
-- [ ] When a date range is given, results are filtered by `feed_date_ordinal` (`$gte`/`$lte`),
-  per KB-004 — never by the string `feed_date`
-- [ ] A separate recency-**sort** mode exists alongside the date-range **filter**, per
+  warning) → `vg09/retrieval.py::query_candidates()`/`embed_question()`; asserted directly in
+  `tests/test_retrieval.py::test_never_calls_query_texts`
+- [x] When a date range is given, results are filtered by `feed_date_ordinal` (`$gte`/`$lte`),
+  per KB-004 — never by the string `feed_date` → `query_candidates()`'s `where` clause;
+  real run confirmed every returned feed date fell inside the requested window
+  (`scripts/t022_verify_retrieval.py`)
+- [x] A separate recency-**sort** mode exists alongside the date-range **filter**, per
   `docs/DESIGN.md`'s "Filtering by date and sorting by date are two different mechanisms"
   note: when the question is a ranking question ("det/de senaste [N]", no bound named),
   candidates are ordered by `feed_date_ordinal` descending instead of by similarity score —
   tested for real against F01/F03/F06, the three real questions T-021 already classified as
   ranking rather than window questions. Filter and sort are independent — either, both, or
-  neither can be active for a given question
-- [ ] Candidate chunks are packed greedily by real measured qwen3 token count (not chunk
+  neither can be active for a given question → `vg09.date_range.detect_recency_ranking()`
+  (added to T-021's module) + `vg09/retrieval.py::order_candidates()`; real run against F06
+  showed genuinely different top-5s (similarity order: 2026-08-11/07-23/09-07/07-29/09-04;
+  recency order: 2026-09-13/09-07/09-04/08-27/08-18, correctly descending)
+- [x] Candidate chunks are packed greedily by real measured qwen3 token count (not chunk
   count) in relevance-descending (or, in recency-sort mode, date-descending) order, stopping
   once the running total would exceed 13789 tokens, per `docs/DESIGN.md`'s algorithm — tested
-  against a real query where the naive top-34 would have overflowed
-- [ ] A single chunk too large to fit even alone is dropped, not sent, and this is observable
-  (a returned count vs. requested count, or a log line) — not a silent drop
-- [ ] Retrieval is runnable both with and without the date-range filter against the same
+  against a real query where the naive top-34 would have overflowed → `pack_to_budget()`,
+  unit-tested for the stop-early branch (`tests/test_retrieval.py`); **real finding**: against
+  a real, topic-rich 60-candidate pool, a naive top-34's real token sum was 10265 — well under
+  the 13789 budget, so it did *not* overflow this time. `docs/DESIGN.md`'s own 400-token
+  worst-case margin (34×400=13600 ≤ 13789) explains why: real chunks average well under the
+  cap (max single real chunk observed: 405 tokens, 5 over the intended 400 target — a T-012
+  chunking-calibration note for whoever next touches it, not a T-022 defect). The
+  packing-stops-early branch itself is proven correct by the mocked unit tests, which force
+  the overflow case directly rather than hoping a real query happens to produce one
+- [x] A single chunk too large to fit even alone is dropped, not sent, and this is observable
+  (a returned count vs. requested count, or a log line) — not a silent drop →
+  `RetrievalResult.dropped_oversized` (list of ids); unit-tested
+  (`test_a_single_oversized_candidate_is_dropped_not_sent_and_packing_continues`)
+- [x] Retrieval is runnable both with and without the date-range filter against the same
   question, producing two comparable result sets — the mechanism Phase 3's evaluation needs
-  to compare date-aware vs plain retrieval
-- [ ] A real query against the production Chroma store returns results — not just against a
-  synthetic test fixture
+  to compare date-aware vs plain retrieval → `query_candidates(question, date_range=None)` vs.
+  `query_candidates(question, date_range=(...))`; real run against a broad "AI agents" query
+  compared both
+- [x] A real query against the production Chroma store returns results — not just against a
+  synthetic test fixture → `scripts/t022_verify_retrieval.py`, real Chroma (1971 real chunks)
+  + real Ollama (`qwen3:30b-a3b`, `bge-m3`) calls throughout, real run recorded above
 
 **Out of scope:** the date-range extraction itself (T-021, though `detect_recency_ranking()`
 is a small sibling addition to the same module); the LLM call that turns chunks into an
 answer (T-023).
 
 **Depends on:** T-012 (the store), T-021 (date range input and, now, ranking detection).
+**Notes:** Packing is purely token-budget-driven, not chunk-count-driven — `docs/DESIGN.md`'s
+"34 = 13789 // 400" is a worst-case ceiling (every chunk exactly at the cap), not a runtime
+limit this code enforces. Real consequence, observed in the packing stress test: a real
+45-chunk pack (13586 tokens) exceeded the "34" ceiling while still safely fitting the budget,
+because real chunks mostly run smaller than the 400-token worst case. Not a bug — exactly what
+a worst-case bound is supposed to allow once reality is better than the worst case.
+`MAX_TOP_K` was written into the module as a constant, then removed before committing:
+nothing in the packing logic actually used it as a cap, and an unused constant restating a
+number `CHUNK_BUDGET_TOKENS`'s own comment already shows would have been dead weight. 54/54
+tests pass (17 new — 7 for `detect_recency_ranking()`, 10 for `vg09/retrieval.py`).
 
 ---
 
