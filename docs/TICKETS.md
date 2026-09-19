@@ -1142,7 +1142,7 @@ right outcome, not a miss). Two real, honest results, not both wins:
 
 ### T-011 — Separate Qwen3's reasoning from its answer before display
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-011-reasoning-answer-split`  ·  **Phase:** 2
 
 **Goal:** any code that calls a Qwen3 chat model and shows or stores its output keeps the
@@ -1156,16 +1156,26 @@ string requires `think:true`, reading `thinking` and the answer as separate fiel
 raw chain-of-thought as if it were the answer.
 
 **Acceptance criteria**
-- [ ] A shared utility takes a raw Ollama chat/generate response called with `think:true`
-  and returns `(reasoning, answer)` as two separate strings
-- [ ] A unit test covers the response shape KB-007 confirmed (reasoning in `thinking`, not
-  merged into content, when `think:true` is used)
-- [ ] A unit test covers the failure mode KB-007 found: the utility either detects a merged
-  `think:false` response, or the code path is guarded to never call with `think:false`
-- [ ] Phase 2's answer-generation code goes through this utility rather than reading the raw
-  response field directly
-- [ ] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this as a project-wide
-  contract
+- [x] A shared utility takes a raw Ollama chat/generate response called with `think:true`
+  and returns `(reasoning, answer)` as two separate strings → `vg09.llm.
+  split_reasoning_and_answer()`; verified against a real live `/api/chat` call
+  (`qwen3:30b-a3b`, `think=True`) — real response keys `['role', 'content', 'thinking']`,
+  split into a 1080-char reasoning string and a clean one-sentence answer
+- [x] A unit test covers the response shape KB-007 confirmed (reasoning in `thinking`, not
+  merged into content, when `think:true` is used) → `tests/test_llm.py::
+  test_think_true_shape_splits_cleanly`
+- [x] A unit test covers the failure mode KB-007 found: the utility either detects a merged
+  `think:false` response, or the code path is guarded to never call with `think:false` →
+  both: `split_reasoning_and_answer()` raises on an empty `thinking` field (KB-007's real,
+  observed `think:false` signature), tested directly
+  (`test_think_false_shape_is_detected_and_raises`, plus a defensive
+  `test_missing_thinking_key_entirely_is_also_detected`); *and* T-023's answer-generation
+  call always passes `think=True` explicitly, never `False`
+- [x] Phase 2's answer-generation code goes through this utility rather than reading the raw
+  response field directly → satisfied by T-023 (implemented immediately after this ticket in
+  the same session) — `vg09/answer.py` never reads `response["message"]["content"]` directly
+- [x] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this as a project-wide
+  contract → new "Reasoning/answer split is a project-wide contract" subsection
 
 **Out of scope:** anything else in the answer-generation pipeline (retrieval, prompt
 assembly, citations) — this is only the reasoning/answer split.

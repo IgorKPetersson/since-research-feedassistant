@@ -306,6 +306,22 @@ A question can trigger either, both (rare — "the most recent one from last mon
 neither (plain semantic lookup, e.g. F08/F12/F14's "did X come up") — the two mechanisms
 compose, they don't replace each other, and building one is never a substitute for the other.
 
+**Reasoning/answer split is a project-wide contract, not an answer-generation implementation
+detail (T-011).** `vg09.llm.split_reasoning_and_answer(response) -> (reasoning, answer)` is
+the *only* sanctioned way any code reads a Qwen3 chat response's text. KB-007's real, measured
+finding: `think:false` does not suppress reasoning — it leaves `message["thinking"]` empty and
+merges the chain-of-thought narrative straight into `message["content"]` instead, with no
+field to detect that after the fact. Consequences:
+
+- Every real call to a Qwen3 chat model in this project passes `think=True` explicitly, never
+  `False` — there is no code path that's allowed to call with `think=False` and separately
+  guard against the merged shape; the split utility is the single point that would catch it if
+  one ever slipped through (`message["thinking"]` empty → raises, rather than silently
+  returning merged reasoning+answer text as if it were a clean answer).
+- No call site reads `response["message"]["content"]` directly and treats it as "the answer" —
+  every real caller (T-023's answer-generation call, and anything built later that shows or
+  stores a Qwen3 response) goes through this function first.
+
 ## What we deliberately don't build
 
 - <…>
