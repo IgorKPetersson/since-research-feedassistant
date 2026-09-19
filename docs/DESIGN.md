@@ -258,6 +258,54 @@ truncation). Always embed via `vg09.store.embed_batch()` (explicit `bge-m3`,
 `num_ctx=8192`) first, then pass the vectors in directly. Caught by self-review while
 building T-012's smoke test, before it could have reached the real store.
 
+**Date range: the UI ↔ retrieval contract (T-021).** `vg09.date_range.resolve_date_range
+(question, today, manual_override=None) -> tuple[date, date] | None` is the single function
+T-022 (retrieval) and T-025 (the chat UI) both call to get the date range a query should be
+filtered by:
+
+- `manual_override`, whenever the UI's date picker sets one, **always wins** over whatever
+  was (or wasn't) extracted from the question text — never the reverse.
+- With no override, the question text is parsed by `extract_date_range()` — a small,
+  rule-based, stdlib-only Swedish parser (no LLM call, no new dependency), matching exactly
+  the relative-time vocabulary T-014's real 15-question eval set uses ("senaste N
+  veckorna/dagarna/månaderna", "senaste veckan"/"månaden" without a number, "förra veckan",
+  "den D `<månad>`"). `today` is always an explicit parameter, `date.today()` is never read
+  inside the module, so a re-run against the frozen eval dataset (T-020) resolves the same
+  way regardless of the real wall-clock date.
+- `None` — from either path — means **no date filter**: retrieval runs unfiltered, per
+  T-021's explicit rule that no range is ever invented. A bare plural with no number ("de
+  senaste veckorna") is treated the same way: genuinely ambiguous, not a number to guess at.
+- Real result against T-014's 15 real questions (`scripts/t021_test_date_extraction_against_
+  eval_questions.py`, `today=2026-09-16`): 8/15 resolve to a concrete window matching
+  `docs/eval-questions.md`'s own written conventions exactly, 7/15 correctly resolve to
+  `None` (no time phrase, or a ranking word like "det senaste" that isn't a window) — 0
+  wrong extractions, 0 unexpected extractions on the unparseable ones.
+
+**Filtering by date and sorting by date are two different mechanisms, not one (T-021/T-022).**
+Three of T-021's real `None` results (F01 "de två senaste nyheterna", F03 "det absolut
+senaste", F06 "det senaste") aren't missing a time phrase — they're a different question
+*type* than the other 12. "senaste N veckorna"/"den D `<månad>`" name a **bounded window**:
+retrieval should exclude everything outside it (a filter). "det/de senaste [N]" names a
+**ranking**: "show me the most recent ones", with no boundary at all — every document is a
+candidate, ordered by feed date descending, and the answer is whichever come out on top. A
+window filter answers the first kind correctly and would silently produce nothing useful for
+the second (there's no boundary to filter to), and a recency sort would be the wrong tool for
+"what happened last month" (a sort has no cutoff, so it doesn't exclude anything outside the
+month). Both mechanisms exist independently in retrieval (T-022):
+
+- **Filter** (`resolve_date_range()`, above) narrows the candidate set to a `feed_date_ordinal`
+  range before/while ranking by similarity. Produces nothing when the question names no
+  window (`None`) — retrieval runs date-unfiltered.
+- **Sort** re-orders an already similarity-matched candidate set by `feed_date_ordinal`
+  descending instead of by similarity score, triggered by ranking language in the question
+  (`vg09.date_range.detect_recency_ranking()`, T-022) — F01/F03/F06 are its real test cases.
+  Produces nothing (falls back to plain similarity order) when the question names no ranking
+  language either.
+
+A question can trigger either, both (rare — "the most recent one from last month"), or
+neither (plain semantic lookup, e.g. F08/F12/F14's "did X come up") — the two mechanisms
+compose, they don't replace each other, and building one is never a substitute for the other.
+
 ## What we deliberately don't build
 
 - <…>

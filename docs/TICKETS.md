@@ -714,7 +714,7 @@ own subject at commit time, not just plausible-looking.
 
 ### T-021 — Extract a date range from the question, with a manual UI picker as the always-available fallback
 
-**Status:** todo
+**Status:** done
 **Size:** L (touches a new UI↔retrieval contract; kept as one ticket — see Notes)  ·
 **Branch:** `t/T-021-date-range`  ·  **Phase:** 2
 
@@ -730,22 +730,33 @@ unreliable" (Medium) with "a date-range control in the UI as a fallback" as the 
 — this ticket is that mitigation, not a new decision.
 
 **Acceptance criteria**
-- [ ] Given a question that names a relative range ("senaste N veckorna/dagarna/månaden",
+- [x] Given a question that names a relative range ("senaste N veckorna/dagarna/månaden",
   "förra veckan"), a concrete `(start_date, end_date)` pair in feed-date terms is produced —
   anchored the same way `docs/eval-questions.md`'s "Time-window conventions" section already
-  fixes them, not a fresh ad-hoc interpretation
-- [ ] Given a question with no discernible date range, no range is invented — the question is
-  treated as unbounded unless the UI's manual picker sets one
-- [ ] The UI exposes a manual start/end date control that, when set, overrides whatever (if
+  fixes them, not a fresh ad-hoc interpretation → `vg09/date_range.py::extract_date_range()`;
+  "senaste månaden" resolves to a real calendar month back (matches the convention exactly),
+  not a fixed 30 days
+- [x] Given a question with no discernible date range, no range is invented — the question is
+  treated as unbounded unless the UI's manual picker sets one → confirmed on 7/15 real
+  questions (see real test below); a bare plural with no number ("de senaste veckorna", F09)
+  is deliberately treated as unparseable rather than guessed
+- [x] The UI exposes a manual start/end date control that, when set, overrides whatever (if
   anything) was extracted from the question text — the override always wins; extraction is
-  never the only path to a date range
-- [ ] The extracted-or-manual range is passed to retrieval (T-022) as a single explicit
-  parameter (e.g. `date_range: tuple[str, str] | None`), not re-derived downstream
-- [ ] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this parameter's shape —
-  the first contract between the UI and retrieval that Phase 2 creates
-- [ ] At least one of T-014's real eval questions with an explicit relative range (e.g. F02
+  never the only path to a date range → `resolve_date_range(question, today,
+  manual_override=None)`; the actual rendered control is T-025's job (no UI framework is
+  decided yet, per `CLAUDE.md`), this ticket delivers the override-always-wins contract that
+  control will call
+- [x] The extracted-or-manual range is passed to retrieval (T-022) as a single explicit
+  parameter (e.g. `date_range: tuple[str, str] | None`), not re-derived downstream →
+  `resolve_date_range()`'s return type, `tuple[date, date] | None`
+- [x] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this parameter's shape —
+  the first contract between the UI and retrieval that Phase 2 creates → new "Date range: the
+  UI ↔ retrieval contract (T-021)" subsection
+- [x] At least one of T-014's real eval questions with an explicit relative range (e.g. F02
   "senaste månaden", F05 "senaste två veckorna") is used as a real test case for the
-  extraction path — not only synthetic examples
+  extraction path — not only synthetic examples → went beyond "at least one": all 15 real
+  questions tested, read live from `docs/eval-questions.md`
+  (`scripts/t021_test_date_extraction_against_eval_questions.py`), not retyped
 
 **Out of scope:** the retrieval/packing logic itself (T-022); the exact extraction technique
 (rule-based vs. a model call) is left to whoever implements this — not decided here.
@@ -754,6 +765,27 @@ unreliable" (Medium) with "a date-range control in the UI as a fallback" as the 
 **Notes:** Kept as one ticket rather than split into "extraction" and "UI picker" — the
 picker's default comes from extraction and extraction is worthless without an override path
 for when it's wrong; the risk register's own mitigation is the *pair*, not either half alone.
+
+**Real test against all 15 of T-014's real questions** (`today=2026-09-16`, fixed in code so
+a re-run against the frozen eval dataset resolves the same way): **8/15 correct** (matched
+`docs/eval-questions.md`'s own written windows exactly — F02, F04, F05, F07, F10, F11, F13,
+F15), **0/15 wrong**, **7/15 correctly unparseable → `None`** (F01, F03, F06, F08, F09, F12,
+F14). Rule-based, stdlib-only (`re`/`datetime`) — no LLM call, no new dependency.
+
+**Real finding, reported to and confirmed by me before closing:** three of the seven
+`None` results (F01 "de två senaste nyheterna", F03 "det absolut senaste", F06 "det senaste")
+aren't a missing time phrase at all — they're a *different question type*: a ranking
+("show me the most recent") with no bound to filter to, not a window with one. Documented in
+`docs/DESIGN.md` ("Filtering by date and sorting by date are two different mechanisms") and
+added as a new acceptance criterion on **T-022** (`detect_recency_ranking()`, F01/F03/F06 as
+its real test cases) rather than reopening this ticket's own scope, since `extract_date_range`
+returning `None` for these is still the *correct* answer to "is there a bounded window here"
+— the gap was downstream, in what retrieval does with that `None`, not in this ticket's own
+extraction logic.
+
+Two design choices, explicitly confirmed by me rather than assumed: calendar-month
+subtraction for "senaste månaden" (not a fixed 30 days), and treating a bare plural with no
+number as unparseable (not silently defaulting to 1 or 2 weeks).
 
 ---
 
@@ -781,22 +813,30 @@ strict, comparable variant, not two code paths that could drift apart.
   warning)
 - [ ] When a date range is given, results are filtered by `feed_date_ordinal` (`$gte`/`$lte`),
   per KB-004 — never by the string `feed_date`
+- [ ] A separate recency-**sort** mode exists alongside the date-range **filter**, per
+  `docs/DESIGN.md`'s "Filtering by date and sorting by date are two different mechanisms"
+  note: when the question is a ranking question ("det/de senaste [N]", no bound named),
+  candidates are ordered by `feed_date_ordinal` descending instead of by similarity score —
+  tested for real against F01/F03/F06, the three real questions T-021 already classified as
+  ranking rather than window questions. Filter and sort are independent — either, both, or
+  neither can be active for a given question
 - [ ] Candidate chunks are packed greedily by real measured qwen3 token count (not chunk
-  count) in relevance-descending order, stopping once the running total would exceed 13789
-  tokens, per `docs/DESIGN.md`'s algorithm — tested against a real query where the naive
-  top-34 would have overflowed
+  count) in relevance-descending (or, in recency-sort mode, date-descending) order, stopping
+  once the running total would exceed 13789 tokens, per `docs/DESIGN.md`'s algorithm — tested
+  against a real query where the naive top-34 would have overflowed
 - [ ] A single chunk too large to fit even alone is dropped, not sent, and this is observable
   (a returned count vs. requested count, or a log line) — not a silent drop
 - [ ] Retrieval is runnable both with and without the date-range filter against the same
   question, producing two comparable result sets — the mechanism Phase 3's evaluation needs
   to compare date-aware vs plain retrieval
-- [ ] A real query against the production Chroma store (1994 real chunks after T-012/T-013)
-  returns results — not just against a synthetic test fixture
+- [ ] A real query against the production Chroma store returns results — not just against a
+  synthetic test fixture
 
-**Out of scope:** the date-range extraction itself (T-021); the LLM call that turns chunks
-into an answer (T-023).
+**Out of scope:** the date-range extraction itself (T-021, though `detect_recency_ranking()`
+is a small sibling addition to the same module); the LLM call that turns chunks into an
+answer (T-023).
 
-**Depends on:** T-012 (the store), T-021 (date range input).
+**Depends on:** T-012 (the store), T-021 (date range input and, now, ranking detection).
 
 ---
 
