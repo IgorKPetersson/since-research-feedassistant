@@ -10,7 +10,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-from vg09.answer import SYSTEM_PROMPT, build_user_message, generate_answer
+from vg09.answer import SYSTEM_PROMPT, build_user_message, generate_answer, number_sources
 from vg09.retrieval import Candidate
 
 
@@ -31,11 +31,24 @@ def fake_response(content="An answer.", thinking="Some reasoning.", done_reason=
     }
 
 
+class NumberSourcesTests(unittest.TestCase):
+    def test_numbers_least_relevant_first(self):
+        most_relevant = make_chunk("most relevant", "text A")
+        least_relevant = make_chunk("least relevant", "text B")
+        source_map = number_sources([most_relevant, least_relevant])
+        self.assertEqual(source_map[1], least_relevant)
+        self.assertEqual(source_map[2], most_relevant)
+
+    def test_empty_chunks_gives_an_empty_map(self):
+        self.assertEqual(number_sources([]), {})
+
+
 class BuildUserMessageTests(unittest.TestCase):
     def test_chunks_appear_least_relevant_first_question_last(self):
         most_relevant = make_chunk("most relevant", "text A")
         least_relevant = make_chunk("least relevant", "text B")
-        message = build_user_message("what happened?", [most_relevant, least_relevant])
+        source_map = number_sources([most_relevant, least_relevant])
+        message = build_user_message("what happened?", source_map)
 
         pos_least = message.index("least relevant")
         pos_most = message.index("most relevant")
@@ -45,14 +58,14 @@ class BuildUserMessageTests(unittest.TestCase):
 
     def test_source_includes_title_url_and_feed_date(self):
         chunk = make_chunk("A Paper", "abstract text", feed_date="2026-09-10")
-        message = build_user_message("q", [chunk])
+        message = build_user_message("q", number_sources([chunk]))
         self.assertIn("A Paper", message)
         self.assertIn("https://example.com/A Paper", message)
         self.assertIn("2026-09-10", message)
         self.assertIn("abstract text", message)
 
-    def test_empty_chunks_produces_an_honest_no_sources_note(self):
-        message = build_user_message("q", [])
+    def test_empty_source_map_produces_an_honest_no_sources_note(self):
+        message = build_user_message("q", {})
         self.assertIn("No sources were retrieved", message)
         self.assertIn("Question: q", message)
 
@@ -102,6 +115,15 @@ class GenerateAnswerTests(unittest.TestCase):
     def test_prompt_eval_count_is_returned(self):
         result, _ = self._run(prompt_eval_count=1234)
         self.assertEqual(result.prompt_eval_count, 1234)
+
+    def test_source_map_matches_what_was_sent_in_the_prompt(self):
+        """T-024: the returned source_map must be the exact numbering used to build
+        the prompt, so the model's own positional citations resolve correctly."""
+        chunk = make_chunk("A Paper", "abstract text")
+        result, mock_post = self._run(chunks=[chunk])
+        self.assertEqual(result.source_map, {1: chunk})
+        message_content = mock_post.call_args.kwargs["json"]["messages"][1]["content"]
+        self.assertIn("[1] A Paper", message_content)
 
     def test_a_think_false_shaped_response_raises_via_t011s_contract(self):
         """generate_answer never silently accepts a merged-reasoning response - it

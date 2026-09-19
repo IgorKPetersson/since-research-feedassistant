@@ -942,7 +942,7 @@ Phase 3 if inline-citation quality ever matters on its own.
 
 ### T-024 — Attach structured citations (title, feed date, link, YouTube timestamp) to every answer
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-024-citations`  ·  **Phase:** 2
 
 **Goal:** every answer comes back with the real citation data `docs/GOAL.md`'s success
@@ -956,27 +956,64 @@ this step wouldn't have to go back to `data/raw/` or re-derive a citation from t
 text.
 
 **Acceptance criteria**
-- [ ] Every chunk that contributed to a packed answer (T-022/T-023) produces one structured
-  citation: title, feed_date, url
-- [ ] An HF citation additionally carries `arxiv_published_at`, per `docs/GOAL.md`'s explicit
-  success criterion
-- [ ] A YouTube citation whose chunk has a real `start_seconds` carries a url with
+- [x] Every chunk that contributed to a packed answer (T-022/T-023) produces one structured
+  citation: title, feed_date, url → `vg09.citations.build_citations()`
+- [x] An HF citation additionally carries `arxiv_published_at`, per `docs/GOAL.md`'s explicit
+  success criterion → `Citation.arxiv_published_at`, tested and confirmed for real (below)
+- [x] A YouTube citation whose chunk has a real `start_seconds` carries a url with
   `&t={int(start_seconds)}` appended, linking to the exact point in the video — a
   `title_description` fallback chunk (no `start_seconds`) links to the video URL unmodified,
-  per `docs/DESIGN.md`
-- [ ] A chunk built from a `title_description` fallback document is marked as such in its
+  per `docs/DESIGN.md` → already true of `Candidate.metadata["url"]` since T-012's chunking
+  builds it that way; this module passes it through unmodified rather than re-deriving it -
+  confirmed for real below (`&t=1268`, `&t=0`)
+- [x] A chunk built from a `title_description` fallback document is marked as such in its
   citation (`text_source`, per D-006) — distinguishable from a real transcript/abstract
-  citation, not presented with equal confidence
-- [ ] Citations are deduplicated by `doc_id` when multiple chunks from the same document
-  contributed — one citation per source document, not one per chunk
-- [ ] A real answer generated against the real store (T-023) produces citations that, checked
-  by hand, actually match the real `data/raw/` documents they claim to cite
+  citation, not presented with equal confidence → `Citation.is_fallback`
+- [x] Citations are deduplicated by `doc_id` when multiple chunks from the same document
+  contributed — one citation per source document, not one per chunk → dedup by `doc_id`,
+  first-cited order kept; tested for the same-number-twice case and the
+  two-different-numbers-same-document case separately
+- [x] A real answer generated against the real store (T-023) produces citations that, checked
+  by hand, actually match the real `data/raw/` documents they claim to cite → real run below,
+  hand-checked against `data/raw/hf/2026-09-09/2609.08183.json` and the real YouTube videos
 
 **Out of scope:** rendering citations in the UI (T-025); the answer-generation call itself
 (T-023).
 
 **Depends on:** T-012 (chunk metadata), T-022 (which chunks contributed), T-023 (when
 citations attach to a response).
+**Notes:** Built directly on T-023's own real finding rather than fighting it: the model
+doesn't reliably follow a `[Title, YYYY-MM-DD]` instruction, but does reliably cite the
+bracketed *source number* already shown for each source in the prompt ("source [27]"). Two
+changes make that reliable rather than accidental: `vg09/answer.py::number_sources()` now
+returns the exact number→chunk mapping the prompt was built from (`AnswerResult.source_map`),
+and `SYSTEM_PROMPT`'s citation instruction was rewritten to ask for exactly that instead of
+the old format - re-measured for real: **157 qwen3 tokens** (was 171). `docs/DESIGN.md`'s
+budget math and `vg09.retrieval.CHUNK_BUDGET_TOKENS` updated to match (13803, was 13789 - more
+headroom, the safe direction); T-008/T-022's own historical ticket text is left describing
+what was true when those tickets closed, not rewritten.
+
+A bracketed reference that can't be resolved - an out-of-range number, or any other bracket
+shape the model still produces - is collected into `CitationResult.unlinked_references`
+(deduplicated), never silently dropped, per explicit instruction.
+
+**Real run** (`scripts/t024_verify_citations.py`, real store + real Ollama):
+- F05 ("Har NeoHorse nämnts de senaste två veckorna?"): real answer cited `[27]` and `[4]`;
+  both resolved correctly - `[27]` → NeoHorse-1 (`2609.08183`, feed date 2026-09-09, arXiv
+  `2026-09-08`, hand-checked against `data/raw/hf/2026-09-09/2609.08183.json`), `[4]` → a
+  YouTube video with a real `&t=1268` timestamp preserved unmodified. Zero unlinked
+  references.
+- F12 ("Har Palantir nämnts i någon video?"): real answer correctly said "not mentioned" -
+  but still produced 2 "citations", both false positives. **Real, discovered limitation, not
+  fixed here per explicit instruction not to fight the model's format:** the answer text
+  contained "I've carefully reviewed all 38 sources (from `[1]` to `[38]`)" - a *range*
+  description, not an evidence citation, but indistinguishable from a real citation by
+  bracket shape alone. Positional-citation resolution cannot tell "cited as evidence" apart
+  from "mentioned descriptively" without a stricter format than what was asked for; recorded
+  here as a known limitation of this approach, worth watching in Phase 3 if false-positive
+  citations turn out to be common on negative ("not mentioned") answers specifically.
+
+93/93 tests pass (16 new).
 
 ---
 

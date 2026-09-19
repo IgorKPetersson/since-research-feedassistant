@@ -37,12 +37,16 @@ measured, not assumed equal:
 
 ### System prompt and question
 
-A representative (draft, to be refined when Phase 2 actually builds answer generation)
-system prompt — instructs the model to answer only from the provided sources, cite title +
-URL + feed date per claim, respect a date range implied by the question, and stay concise —
-tokenizes to **171 qwen3 tokens**. Three real questions, one per `docs/GOAL.md` question
-type, tokenized to 19, 21 and 22 tokens. **Reserved: 40 tokens** (rounded up from the
-observed max with headroom for a longer real question from T-014's eval set).
+T-008's original draft system prompt tokenized to 171 qwen3 tokens. **Finalized by T-024**
+(`vg09.answer.SYSTEM_PROMPT`) after a real run (T-023) found the model doesn't reliably
+follow a "cite like [Title, YYYY-MM-DD]" instruction — it cites the bracketed *source
+number* shown in the prompt instead. The instruction now asks for exactly that (cite by
+number; T-024 resolves the number back to a real citation), which happens to be slightly
+shorter: **157 qwen3 tokens**, re-measured for real. Otherwise unchanged — answer only from
+the provided sources, respect a date range implied by the question, stay concise. Three real
+questions, one per `docs/GOAL.md` question type, tokenized to 19, 21 and 22 tokens.
+**Reserved: 40 tokens** (rounded up from the observed max with headroom for a longer real
+question from T-014's eval set).
 
 ### Reasoning + answer reservation
 
@@ -73,11 +77,16 @@ risks blowing the budget.)
 
 ```
 16000 (num_ctx)
- - 171 (system prompt)
- -  40 (question, reserved)
+ -  157 (system prompt, T-024's finalized wording)
+ -   40 (question, reserved)
  - 2000 (reasoning + answer, reserved via num_predict cap)
- = 13789 tokens available for retrieved chunks
+ = 13803 tokens available for retrieved chunks
 ```
+
+(171/13789 in earlier tickets' own historical records, e.g. T-008/T-022's acceptance-criteria
+evidence, describe the draft prompt as it stood when those tickets closed — not rewritten
+after the fact; this section and `vg09.retrieval.CHUNK_BUDGET_TOKENS` are the current, live
+numbers.)
 
 ### Chunk size and max top-k
 
@@ -112,7 +121,8 @@ no-punctuation auto-captions — see `scripts/t012_caption_token_calibration.py`
 350 of the 400-token cap. Re-check against real transcript-derived chunks once T-017
 unblocks and produces real captions.
 
-**Max top-k: 34** = `13789 // 400`, floored — the number of 400-token chunks that
+**Max top-k: 34** = `13803 // 400`, floored (T-024's re-measurement; was `13789 // 400`,
+same result) — the number of 400-token chunks that
 provably fit the remaining budget in the worst case (every chunk at the cap). This is a
 ceiling, not a target: the real retrieval call should still request whatever top-k the
 retrieval design wants (likely far fewer than 34 for answer quality), with 34 only as the
@@ -127,8 +137,9 @@ chunks) must:
 
 1. **Pack chunks by real measured token count, not by count alone.** Sum each candidate
    chunk's real qwen3 token count (same `num_predict:1` technique) in relevance-descending
-   order, and stop adding once the running total would exceed the 13789-token chunk budget
-   — regardless of whether that happens before or after 34 chunks.
+   order, and stop adding once the running total would exceed the chunk budget (13803,
+   `vg09.retrieval.CHUNK_BUDGET_TOKENS`) — regardless of whether that happens before or
+   after 34 chunks.
 2. **Order the assembled prompt so the least-recoverable content is added last, not
    first.** KB-005: content beyond `num_ctx` is silently dropped from the **front**, with no
    error. So the prompt is built as `[chunks, least-relevant-first] + [system prompt] +
@@ -190,7 +201,8 @@ section, T-008/T-012) is therefore the real defense once `/api/chat` is used —
 chunks least-relevant-first inside the user message's own content is still worth doing
 (free, and helps if the packing accounting has a bug), but it cannot protect the system
 prompt the way raw-string "system last" ordering could. Keeping the system prompt short
-(171 tokens, measured) limits how bad a worst-case truncation would be.
+(157 tokens, measured — T-024's finalized wording) limits how bad a worst-case truncation
+would be.
 
 **Detect and surface `done_reason == "length"`.** T-008's `num_predict:2000` reasoning+answer
 cap is a real ceiling, not just a budget estimate — it *can* cut a genuinely longer answer
@@ -321,6 +333,19 @@ field to detect that after the fact. Consequences:
 - No call site reads `response["message"]["content"]` directly and treats it as "the answer" —
   every real caller (T-023's answer-generation call, and anything built later that shows or
   stores a Qwen3 response) goes through this function first.
+
+**Citations are resolved from the model's own positional references, not forced into a
+different format (T-024).** A real run (T-023) found the model doesn't reliably follow a
+"cite like `[Title, YYYY-MM-DD]`" instruction — it cites the bracketed *source number* shown
+for each source in the prompt instead ("source [27]"). `vg09.answer.SYSTEM_PROMPT` now asks
+for exactly that; `vg09.answer.number_sources()` is the single place source numbering happens
+(the same mapping builds the prompt and resolves citations afterward, via
+`vg09.citations.build_citations()`), so a number always means the same chunk on both ends. A
+bracketed reference that can't be resolved — an out-of-range number, or any other bracket
+shape — is collected as unlinked, never silently dropped. **Known limitation, not fixed:**
+this can't distinguish a real evidence citation from a bracketed number the model used
+descriptively (e.g. "reviewed sources `[1]` to `[38]`") — confirmed for real on a negative
+answer, `docs/PLAN.md`'s risk register.
 
 ## What we deliberately don't build
 

@@ -28,14 +28,16 @@ CHAT_MODEL = "qwen3:30b-a3b"  # D-005
 NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUDE.md)
 
 # docs/DESIGN.md § "Remaining budget for retrieved chunks":
-# 16000 (num_ctx) - 171 (system prompt) - 40 (question) - 2000 (reasoning+answer) = 13789
-CHUNK_BUDGET_TOKENS = 13789
+# 16000 (num_ctx) - 157 (system prompt, re-measured after T-024's citation-instruction
+# wording change - was 171) - 40 (question) - 2000 (reasoning+answer) = 13803
+CHUNK_BUDGET_TOKENS = 13803
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's "34 = 13789 // 400" is a worst-case ceiling (every chunk at the
+# docs/DESIGN.md's "34 = 13789 // 400" (now ~34 = 13803 // 400, T-024's re-measurement
+# doesn't change this meaningfully) is a worst-case ceiling (every chunk at the
 # 400-token cap), not a target - packing here is purely token-budget-driven, not
 # chunk-count-driven, so a real candidate pool of smaller-than-cap chunks can (and in
 # scripts/t022_verify_retrieval.py's real run, did: 45) pack more than 34 while still
