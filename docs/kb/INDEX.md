@@ -16,6 +16,7 @@ edited in place — it is superseded by a new one and marked.
 - HF Daily Papers API — fetching and shape of the papers feed
 - Local model (Ollama) — running models on the RTX 4090
 - Local model (faster-whisper) — GPU audio transcription, CUDA setup on Windows
+- Retrieval (`vg09.retrieval`, `vg09.date_range`) — measurement methodology
 - Vector store (ChromaDB) — embedded local store, date-range filtering
 
 ## Entries
@@ -37,6 +38,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-013](KB-013-faster-whisper-timing-vram-and-segment-shape.md) | faster-whisper `small`/GPU transcribed a 30.8-min video in 39.7s at ~1.1GB VRAM (isolated, not with Ollama loaded); segment shape is `{text, start, end}`, not `{text, start, duration}` | Local model (faster-whisper) — timing, VRAM, output shape | provisional | 2026-09-17 |
 | [KB-014](KB-014-real-auto-captions-do-have-punctuation.md) | Real fetched auto-captions DO have punctuation/capitalization, contradicting `vg09/chunking.py`'s unverified "no punctuation" premise; real proper-noun garbling examples found ("Palunteer", "Open AAI", "Sunno V6") | YouTube ingest — captions | verified | 2026-09-17 |
 | [KB-015](KB-015-whisper-fits-alongside-ollama-models.md) | faster-whisper fits alongside qwen3:30b-a3b + bge-m3 both loaded (D-005) — real peak 23646/24564 MiB, ~0.9GB headroom, neither Ollama model evicted | Local model (faster-whisper) — joint VRAM residency | verified | 2026-09-17 |
+| [KB-016](KB-016-comparing-retrieval-measurements-needs-the-same-today-anchor.md) | Comparing two retrieval measurements (e.g. old vs. new chunk budget) needs the same `today` anchor for both, or the delta is meaningless — a real mixup produced a false "regression" | Retrieval — measurement methodology | verified | 2026-09-19 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 

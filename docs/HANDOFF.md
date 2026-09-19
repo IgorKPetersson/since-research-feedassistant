@@ -28,6 +28,85 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-09-19 — Phase 2 built end to end (T-011, T-021–T-025), then two real bugs found and fixed via T-028
+
+**Tickets:** T-014, T-020, T-026, T-021, T-022, T-027, T-011, T-023, T-024, T-025, T-028  ·
+**Tree:** docs/sessions/2026-09-19-phase-2-built-end-to-end.md
+
+**Done this session:**
+- T-014 closed (F14/F15 cross-source questions), Phase 1 fully closed
+- `grill-me` review of all Phase 1 → 6 findings, triaged: 2 now / 4 deferred → **T-020**
+  (frozen-dataset SHA-256 manifest + yt-dlp timeout)
+- Phase 2 opened (**T-026**) and every ticket in it shipped, real end to end:
+  - **T-021** date-range extraction (`vg09/date_range.py`) - tested against all 15 real
+    T-014 questions, 8/15 resolved correctly, 0 wrong, 7/15 correctly unparseable
+  - **T-022** retrieval (`vg09/retrieval.py`) - filter/sort/pack, real Chroma + real Ollama
+  - **T-027** two real fixes found by re-testing T-022 against the real questions: per-doc
+    chunk dedup (crowding), and anchoring `today` to the whole dataset's real latest content
+    instead of one source's cutoff (`vg09.store.latest_feed_date()`, **D-011**)
+  - **T-011** reasoning/answer split (`vg09/llm.py`) - built as T-023's hard dependency
+  - **T-023** the real `/api/chat` call (`vg09/answer.py`)
+  - **T-024** citations (`vg09/citations.py`) - resolved by the model's own bracketed
+    *position* citations ("source [27]"), not the originally-requested `[Title, date]`
+    format, which the model never reliably followed
+  - **T-025** the chat UI (Streamlit, `app.py`) - real browser smoke test of all three
+    `docs/GOAL.md` question types
+- **T-028**, from manual use of the shipped UI: fixed multi-number citation
+  brackets (`"[17, 18]"` now resolves both, was silently dropping everything after the
+  first); measured a real `done_reason=="length"` truncation (reasoning alone ate 61.5-92.1%
+  of the 2000-token cap across 3 real runs); chosen: "raise `NUM_PREDICT`" over "shorter
+  reasoning" - new value derived from the measurement: `1842 + 400 + 300 = 2542`, not rounded.
+  `docs/DESIGN.md`'s whole context-budget section updated to match (`CHUNK_BUDGET_TOKENS`
+  13803 → 13261, top-k ceiling 34 → 33)
+
+**In progress / half-finished:**
+- **T-028's last acceptance criterion is unverified.** Does the smaller chunk budget (13261)
+  still pack enough real chunks across T-014's 15 questions, and does the 11/14 headline
+  hold? A first attempt used the wrong `today` anchor and produced a misleading 10/14 (see
+  KB-016 — this was a measurement bug, not a real regression). A corrected script
+  (`today=2026-09-17`, matching exactly what the original 11/14 was measured against — **not**
+  D-011's `2026-09-16` eval-pinned anchor, that's a different, already-settled question) was
+  running in the background when this session ended on a token warning; never confirmed
+  finished. Full instructions for resuming are in T-028's own ticket Notes in
+  `docs/TICKETS.md`.
+
+**Learned (not obvious from the code):**
+- KB-016: comparing two retrieval measurements needs the *same* `today` anchor in both arms,
+  or the delta is meaningless — caught a false "regression" this way, see above.
+- The model reliably cites by the bracketed source *number* shown in the prompt, never
+  reliably by `[Title, YYYY-MM-DD]` even when explicitly asked — T-024 leaned into this
+  instead of fighting it, and it's now the system prompt's own instruction.
+- Reasoning length is the real truncation risk, not answer length — T-008's original 2000
+  budget was sized against *combined* reasoning+answer across different question types, but
+  reasoning alone can eat 90%+ of that on a single real question; the two need separate
+  measurement, not one combined estimate.
+- Positional citation resolution can't tell a real evidence citation from a bracketed number
+  used descriptively ("reviewed sources `[1]` to `[38]`") — a real false-positive citation
+  was produced on a correct negative answer (F12). Recorded as a known limitation
+  (`docs/PLAN.md` risk register), not fixed — fixing it would mean forcing the stricter
+  format that was already shown not to work reliably.
+
+**Blocked / needs me:**
+- Nothing blocked on a decision right now. T-028's chunk-budget re-verification (above) just
+  needs finishing and reporting — no judgment call pending, just computation.
+
+**Next session should start with:** re-run the corrected T-028 chunk-budget-impact script
+(pattern is in T-028's ticket Notes in `docs/TICKETS.md` — real per-question `pack_to_budget()`
+comparison at `today=2026-09-17`, old budget 13803 vs. new 13261, plus a re-confirmed
+top-5-vs-facit headline at that same anchor) and report the result. After that,
+T-028 can close and Phase 2's checkpoint (all tickets done, `grill-me` not yet run — see
+`docs/PLAN.md`'s "Current phase" line) is the next real decision point, not something to walk
+past on autopilot.
+
+**Doc updates made:** D-011 (amended) · KB-016 (new) · `docs/DESIGN.md` § Context budget
+(system prompt, reasoning+answer reservation, remaining budget, max top-k) · `docs/PLAN.md`
+risk register (2 new rows: the semantic-gap limitation, the false-positive-citation
+limitation) and Phase 2 checklist (all ticked, phase not yet declared complete) ·
+`docs/TICKETS.md` T-011/T-020/T-021/T-022/T-023/T-024/T-025/T-026/T-027/T-028 (T-028
+in-progress, rest done)
+
+---
+
 ## 2026-09-17 — Phase 1 closed except T-014: Whisper un-parked and wired in (T-018, T-019), T-013 finished for real
 
 **Tickets:** T-017, T-018, T-019, T-013  ·  **Tree:**
