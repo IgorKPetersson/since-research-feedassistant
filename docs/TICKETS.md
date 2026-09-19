@@ -712,6 +712,264 @@ own subject at commit time, not just plausible-looking.
 
 ---
 
+### T-021 — Extract a date range from the question, with a manual UI picker as the always-available fallback
+
+**Status:** todo
+**Size:** L (touches a new UI↔retrieval contract; kept as one ticket — see Notes)  ·
+**Branch:** `t/T-021-date-range`  ·  **Phase:** 2
+
+**Goal:** a question like "senaste 3 veckorna" resolves to a concrete feed-date range that
+retrieval (T-022) can filter on, and I can always override or supply that range
+directly in the UI when extraction is absent, wrong, or the question doesn't state one.
+
+**Why:** `docs/GOAL.md`'s third question type ("has Q progressed in the last n weeks") and
+the project's central claim (date-aware retrieval beats plain similarity search) both
+depend on a real date range reaching retrieval, not just parsed for display.
+`docs/PLAN.md`'s risk register already names "Extracting a date range from free text is
+unreliable" (Medium) with "a date-range control in the UI as a fallback" as the mitigation
+— this ticket is that mitigation, not a new decision.
+
+**Acceptance criteria**
+- [ ] Given a question that names a relative range ("senaste N veckorna/dagarna/månaden",
+  "förra veckan"), a concrete `(start_date, end_date)` pair in feed-date terms is produced —
+  anchored the same way `docs/eval-questions.md`'s "Time-window conventions" section already
+  fixes them, not a fresh ad-hoc interpretation
+- [ ] Given a question with no discernible date range, no range is invented — the question is
+  treated as unbounded unless the UI's manual picker sets one
+- [ ] The UI exposes a manual start/end date control that, when set, overrides whatever (if
+  anything) was extracted from the question text — the override always wins; extraction is
+  never the only path to a date range
+- [ ] The extracted-or-manual range is passed to retrieval (T-022) as a single explicit
+  parameter (e.g. `date_range: tuple[str, str] | None`), not re-derived downstream
+- [ ] `docs/DESIGN.md`'s "Interfaces and contracts" section documents this parameter's shape —
+  the first contract between the UI and retrieval that Phase 2 creates
+- [ ] At least one of T-014's real eval questions with an explicit relative range (e.g. F02
+  "senaste månaden", F05 "senaste två veckorna") is used as a real test case for the
+  extraction path — not only synthetic examples
+
+**Out of scope:** the retrieval/packing logic itself (T-022); the exact extraction technique
+(rule-based vs. a model call) is left to whoever implements this — not decided here.
+
+**Depends on:** T-014 (real example questions to test extraction against).
+**Notes:** Kept as one ticket rather than split into "extraction" and "UI picker" — the
+picker's default comes from extraction and extraction is worthless without an override path
+for when it's wrong; the risk register's own mitigation is the *pair*, not either half alone.
+
+---
+
+### T-022 — Similarity search with an optional date-range filter, packed to T-008's measured token budget
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-022-retrieval-packing`  ·  **Phase:** 2
+
+**Goal:** given a question (embedded) and an optional date range (T-021), retrieval returns
+the ranked set of chunks that actually fits the 13789-token budget `docs/DESIGN.md`'s Context
+budget section measured — a real packed set with a provable token count, not just "top-k
+chunks".
+
+**Why:** T-008 already measured the real budget and specified the packing algorithm
+(`docs/DESIGN.md` § "What happens if retrieved chunks don't fit") before any retrieval code
+existed, specifically so retrieval wouldn't have to re-derive a budget from scratch or invent
+a top-k out of thin air. D-002's feed-date filtering is the project's central claim under test
+(date-aware vs plain) — retrieval must support running with and without the date filter as a
+strict, comparable variant, not two code paths that could drift apart.
+
+**Acceptance criteria**
+- [ ] Similarity search runs via `vg09.store`'s existing Chroma collection, embedding the
+  question through `embed_batch()` (explicit `bge-m3`, `num_ctx=8192`) — never
+  `query_texts=` (CLAUDE.md hard rule, per `docs/DESIGN.md`'s "Interfaces and contracts"
+  warning)
+- [ ] When a date range is given, results are filtered by `feed_date_ordinal` (`$gte`/`$lte`),
+  per KB-004 — never by the string `feed_date`
+- [ ] Candidate chunks are packed greedily by real measured qwen3 token count (not chunk
+  count) in relevance-descending order, stopping once the running total would exceed 13789
+  tokens, per `docs/DESIGN.md`'s algorithm — tested against a real query where the naive
+  top-34 would have overflowed
+- [ ] A single chunk too large to fit even alone is dropped, not sent, and this is observable
+  (a returned count vs. requested count, or a log line) — not a silent drop
+- [ ] Retrieval is runnable both with and without the date-range filter against the same
+  question, producing two comparable result sets — the mechanism Phase 3's evaluation needs
+  to compare date-aware vs plain retrieval
+- [ ] A real query against the production Chroma store (1994 real chunks after T-012/T-013)
+  returns results — not just against a synthetic test fixture
+
+**Out of scope:** the date-range extraction itself (T-021); the LLM call that turns chunks
+into an answer (T-023).
+
+**Depends on:** T-012 (the store), T-021 (date range input).
+
+---
+
+### T-023 — The answer-generation call: message structure, generation cap, and detecting a cut-off answer
+
+**Status:** todo
+**Size:** L (touches the shape of "an answer" as a contract; kept as one ticket — see Notes)
+·  **Branch:** `t/T-023-answer-generation`  ·  **Phase:** 2
+
+**Goal:** a packed set of chunks (T-022) plus the question produces one real
+`qwen3:30b-a3b` answer via `/api/chat`, following the exact message structure and generation
+limits T-008/KB-011 already measured and specified — and a genuinely cut-off answer is never
+presented as if it were complete.
+
+**Why:** `docs/DESIGN.md`'s "Answer generation" section already specifies both non-obvious
+findings from T-008/T-012 that would otherwise get silently reinvented or gotten wrong:
+KB-011's real chat-template finding that message *order* in the API call does not control
+*rendered* prompt order, and the `num_predict:2000` cap's real failure mode
+(`done_reason=="length"`). `CLAUDE.md`'s hard rule (every LLM call checks `prompt_eval_count`
+against `num_ctx`) applies to every real call this ticket makes, not just T-012's embedding
+calls.
+
+**Acceptance criteria**
+- [ ] The system prompt is sent as its own `{"role": "system", ...}` message; the packed
+  chunks and the question go together in one `{"role": "user", ...}` message — per
+  `docs/DESIGN.md`, not the system-last string-concatenation shape T-008's raw `/api/generate`
+  experiment used
+- [ ] `num_predict` is set to exactly 2000 on every real call, per T-008's measured
+  reservation — not left to Ollama's default or a different guess
+- [ ] The response's `done_reason` is checked on every call; `"length"` is surfaced to the
+  caller as an explicit incomplete-answer signal (not merged into the answer text, not
+  silently dropped) — `"stop"` is passed through as a complete answer
+- [ ] The response's real `prompt_eval_count` is compared against the `num_ctx` sent (16000,
+  D-005) and a warning is raised on truncation risk, per `CLAUDE.md`'s hard rule — the same
+  pattern `vg09/store.py` already uses for embedding calls
+- [ ] The call goes through T-011's reasoning/answer-split utility — this ticket never reads
+  `response.message.content` directly and calls it "the answer" without going through that
+  split first
+- [ ] A real end-to-end call against the real Ollama/`qwen3:30b-a3b`, using a real packed
+  chunk set from T-022 (not synthetic filler), produces a real answer with a real
+  `done_reason` and a real `prompt_eval_count` reading
+
+**Out of scope:** citation formatting (T-024); the UI that displays the answer (T-025);
+building T-011 itself (already its own ticket).
+
+**Depends on:** T-011, T-022, D-005 (`num_ctx=16000`).
+**Notes:** Kept as one ticket rather than split further — message structure, the generation
+cap, and `done_reason` are all properties of the exact same single `/api/chat` call and its
+one response; splitting them would mean two tickets both needing to make the same real call to
+test anything.
+
+---
+
+### T-024 — Attach structured citations (title, feed date, link, YouTube timestamp) to every answer
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-024-citations`  ·  **Phase:** 2
+
+**Goal:** every answer comes back with the real citation data `docs/GOAL.md`'s success
+criteria require — link, title, feed date, and arXiv publication date for papers — derived
+from the chunk metadata T-012 already stores in Chroma, not re-fetched or re-derived.
+
+**Why:** `docs/GOAL.md`: "Every answer cites its sources: link, title, feed date, and — for
+papers — the arXiv publication date." T-012 already stores exactly this metadata on every
+chunk (`url`, `title`, `feed_date`, `arxiv_published_at`, `start_seconds`) specifically so
+this step wouldn't have to go back to `data/raw/` or re-derive a citation from the answer
+text.
+
+**Acceptance criteria**
+- [ ] Every chunk that contributed to a packed answer (T-022/T-023) produces one structured
+  citation: title, feed_date, url
+- [ ] An HF citation additionally carries `arxiv_published_at`, per `docs/GOAL.md`'s explicit
+  success criterion
+- [ ] A YouTube citation whose chunk has a real `start_seconds` carries a url with
+  `&t={int(start_seconds)}` appended, linking to the exact point in the video — a
+  `title_description` fallback chunk (no `start_seconds`) links to the video URL unmodified,
+  per `docs/DESIGN.md`
+- [ ] A chunk built from a `title_description` fallback document is marked as such in its
+  citation (`text_source`, per D-006) — distinguishable from a real transcript/abstract
+  citation, not presented with equal confidence
+- [ ] Citations are deduplicated by `doc_id` when multiple chunks from the same document
+  contributed — one citation per source document, not one per chunk
+- [ ] A real answer generated against the real store (T-023) produces citations that, checked
+  by hand, actually match the real `data/raw/` documents they claim to cite
+
+**Out of scope:** rendering citations in the UI (T-025); the answer-generation call itself
+(T-023).
+
+**Depends on:** T-012 (chunk metadata), T-022 (which chunks contributed), T-023 (when
+citations attach to a response).
+
+---
+
+### T-025 — Chat UI: ask a question, see the answer with sources, or the empty state
+
+**Status:** todo
+**Size:** L (the one ticket the Phase 2 checkpoint is judged against; kept as one ticket —
+see Notes)  ·  **Branch:** `t/T-025-chat-ui`  ·  **Phase:** 2
+
+**Goal:** one person can type a question, optionally set a date range, and see a real answer
+with real citations — or, if no data has been ingested yet, a clear empty state instead of a
+confusing blank or broken screen.
+
+**Why:** `docs/GOAL.md`'s Definition of done #3 ("a simple chat UI that answers with sources,
+including an empty state when no data exists") and success criterion ("the three question
+types work end to end"). This is the one Phase 2 ticket a human actually looks at directly.
+
+**Acceptance criteria**
+- [ ] A question can be typed and submitted, and the resulting answer (T-023) is displayed
+- [ ] The manual date-range picker from T-021 is present, and its value, when set, is what's
+  sent to retrieval — verified by checking a request/response, not just that the control
+  renders
+- [ ] Citations (T-024) are displayed alongside the answer as clickable links, showing title
+  and feed date; a YouTube citation's link opens at the `&t=` timestamp
+- [ ] An answer flagged incomplete (`done_reason=="length"`, T-023) is visibly marked as
+  incomplete in the UI — never rendered identically to a complete answer
+- [ ] When `data/raw/`/the Chroma store has no documents at all, the UI shows an explicit
+  empty state ("no data yet — run ingest") instead of an empty result, an endless spinner, or
+  an error
+- [ ] All three question types from `docs/GOAL.md` ("what's new", "did X come up", "has Q
+  progressed") are each exercised once against the real Phase 1 dataset as a manual smoke
+  test, not only unit-tested in isolation
+
+**Out of scope:** authentication, multi-user, conversation history (all explicit non-goals,
+`docs/GOAL.md`); styling/visual polish beyond "simple" (`docs/GOAL.md`'s own word).
+
+**Depends on:** T-021, T-023, T-024.
+**Notes:** This ticket's own acceptance criteria are what `docs/PLAN.md`'s Phase 2 checkpoint
+("the three question types... work end to end with sources") will actually be checked
+against.
+
+---
+
+### T-026 — Open Phase 2: PLAN updates and the Phase 2 ticket set
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (docs-only, see note)
+
+**Goal:** Phase 2 is formally open and its work exists as checkable tickets instead of only
+`docs/PLAN.md`'s umbrella checkboxes, so work can start from a backlog rather than from a
+chat instruction — same pattern T-016 established for opening Phase 1.
+
+**Why:** `docs/PLAN.md`'s own rule: "when a phase starts, turn its checkboxes into tickets in
+`docs/TICKETS.md` using the `ticket-write` skill." My explicit go-ahead to start Phase 2,
+with five already-settled design points named to be carried into the tickets rather than
+re-decided: date range extraction + a manual UI picker as fallback (risk register); T-008's
+context budget (greedy packing by measured token count, `num_predict:2000`); the system
+message / user message split (KB-011); detecting and surfacing `done_reason=="length"`; and
+citations (title, feed date, link, YouTube `&t=`).
+
+**Acceptance criteria**
+- [x] `docs/PLAN.md`'s "Current phase" is set to Phase 2
+- [x] `docs/PLAN.md`'s Phase 2 checklist references the tickets that now back each item
+- [x] Tickets T-021 through T-025 written for Phase 2's checklist items, each with observable
+  acceptance criteria and correct `Depends on` chains, plus T-011 (already existed, moved
+  here from Phase 1) confirmed still in scope
+- [x] Every already-settled point named in my go-ahead is a concrete acceptance
+  criterion in one of T-021/T-022/T-023/T-024, not left as background context that could get
+  silently reinterpreted later: date range + UI picker fallback → T-021; greedy token-budget
+  packing → T-022; `num_predict:2000` and system/user message split → T-023; `done_reason`
+  detection → T-023; citations → T-024
+- [x] None of T-011/T-021–T-025 executed — this ticket covers only the planning artifacts
+
+**Out of scope:** doing any of T-011/T-021 through T-025's actual work.
+
+**Depends on:** T-014 (real eval questions T-021 tests against), T-020 (this session's prior
+work).
+**Notes:** Docs-only, same shape as T-016. `docs/DESIGN.md`'s "Answer generation" section and
+`docs/PLAN.md`'s risk register already carried the design decisions this ticket set draws
+from — nothing here is a new decision, only turning existing ones into checkable work.
+
+---
+
 ### T-011 — Separate Qwen3's reasoning from its answer before display
 
 **Status:** todo
