@@ -21,8 +21,18 @@ from vg09.llm import split_reasoning_and_answer
 from vg09.retrieval import CHAT_MODEL, NUM_CTX, Candidate
 
 OLLAMA = "http://localhost:11434"
-NUM_PREDICT = 2000  # docs/DESIGN.md's measured reasoning+answer reservation (T-008) -
-# a real ceiling enforced via this call, not just a budget estimate
+# T-028: raised from 2000 after a real truncation I found (done_reason=="length")
+# on "Vad har hänt med AI-agenter senaste veckan?". Three real re-runs of that exact
+# question (same retrieved context, only sampling varied) measured reasoning alone at
+# 1230/1842/1349 qwen tokens (61.5%/92.1%/67.5% of the old 2000 cap) - reasoning, not
+# the answer, was eating the budget. New value derived from that measurement, not a
+# round number: 1842 (worst observed reasoning) + 400 (room for a full answer - real
+# complete answers measured 176-322 tokens) + 300 (margin - roughly half the 612-token
+# spread already observed across just three samples, hedging against further variance
+# without inflating the chunk budget more than three data points can justify) = 2542.
+# docs/DESIGN.md's budget math and CHUNK_BUDGET_TOKENS updated to match (13261, down
+# from 13803 - this reservation now costs 542 more tokens against the chunk budget).
+NUM_PREDICT = 2542
 
 # T-008's representative system prompt (scripts/t008_context_budget.py), with one
 # change (T-024): the citation instruction asked for [Title, YYYY-MM-DD] inline, but

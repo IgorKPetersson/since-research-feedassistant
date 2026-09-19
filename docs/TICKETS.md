@@ -1261,8 +1261,11 @@ right outcome, not a miss). Two real, honest results, not both wins:
 
 ### T-028 — Reasoning can eat the whole generation cap; citations with more than one number in a bracket aren't resolved
 
-**Status:** todo
-**Size:** M  ·  **Branch:** `t/T-028-truncation-and-multi-citations`  ·  **Phase:** 2
+**Status:** in-progress (citations fix done; NUM_PREDICT raised and re-verified for the
+truncation itself; the "does the chunk budget still suffice" re-check across all 15 real
+questions is running as of this note - see Notes for how to finish it)
+**Size:** M  ·  **Branch:** `t/T-028-truncation-and-multi-citations` (citations fix,
+merged), `t/T-028-raise-num-predict` (this branch)  ·  **Phase:** 2
 
 **Goal:** three real findings from my own manual use of the chat UI (T-025),
 against the real question "Vad har hänt med AI-agenter senaste veckan?": (1) measure why a
@@ -1282,9 +1285,25 @@ per number after the first.
   stochastic, T-008's own established practice), measuring the real qwen3 token count of the
   reasoning and of the answer separately, and reporting both against the 2000-token
   `NUM_PREDICT` cap - reported in this ticket's Notes, not silently assumed
-- [ ] Two candidate fixes are written up with their real tradeoff (a higher `NUM_PREDICT`
+- [x] Two candidate fixes are written up with their real tradeoff (a higher `NUM_PREDICT`
   against `docs/DESIGN.md`'s chunk budget, vs. a system-prompt instruction asking for shorter
-  reasoning) - **neither is implemented**; I pick
+  reasoning) - **neither is implemented**; I pick → **I picked option 1** (raise
+  `NUM_PREDICT`). Implemented: `1842` (worst observed reasoning) `+ 400` (room for a full
+  answer) `+ 300` (margin - half the observed 612-token spread) `= 2542`, derived from the
+  measurement per explicit instruction, not a round number.
+  `vg09.retrieval.CHUNK_BUDGET_TOKENS` recomputed to `13261` (was 13803); `docs/DESIGN.md`
+  updated throughout (system prompt/reasoning/chunk-budget/top-k sections). Re-verified: the
+  exact same real question, re-run 3 more times with the new cap, `done_reason=="stop"` all
+  three times (1903/1800/1608 real total reasoning+answer tokens - comfortably under 2542
+  where the old 2000 cap had already failed once in 3 tries)
+- [ ] **Pending (in progress):** confirm the smaller resulting chunk budget (13261, down from
+  13803) doesn't cost real recall - re-run all 15 of T-014's real questions' full pipeline
+  under both the old and new budget and compare packed chunk counts, and re-confirm the
+  top-5-vs-facit headline (11/14, T-027) using the **same anchor T-027 used**
+  (`today=2026-09-17`, not D-011's later eval-pinned `2026-09-16` - that's a different,
+  already-settled question and must not be conflated with this one). First pass caught this
+  exact mixup (wrongly showed 10/14) before being corrected mid-run - if resuming this, use
+  `today=2026-09-17` throughout
 - [x] `vg09.citations.build_citations()` resolves every number in a bracket containing more
   than one, comma-separated (`"[17, 18]"`, `"[17,18]"`, `"[17, 18, 19]"`) - each number
   resolved independently against `source_map`, exactly as if it were its own single-number
@@ -1336,6 +1355,28 @@ even started, and the answer was cut off mid-word. This is a real, repeatable ri
 
 Neither was picked or measured further - that's explicitly my decision, not this
 ticket's.
+
+**Follow-up (same session): I picked option 1.** `NUM_PREDICT` raised to 2542
+(derivation above, checked into `vg09/answer.py`). Re-verification, real, not simulated:
+
+- **Truncation fixed:** the exact same question, 3 more real runs, `done_reason=="stop"`
+  every time (reasoning+answer totals: 1903, 1800, 1608 - all comfortably under 2542, where
+  the old 2000 cap had failed once in 3 tries). One of these runs also produced a real
+  multi-number citation (`"[7, 11]"`), confirmed to resolve correctly (both numbers pointed
+  to the same real document, correctly deduplicated to one citation) - a live confirmation of
+  this same ticket's citation fix, not constructed.
+- **Chunk-budget sufficiency check: incomplete, stopped mid-run for me (tokens
+  running low).** First attempt used the wrong anchor (`today=2026-09-16`, D-011's later
+  eval-pinned value) and produced a misleading 10/14 headline - **not a real regression**,
+  just comparing against the wrong baseline (T-027's original 11/14 was measured at
+  `today=2026-09-17`). Caught before trusting it; a corrected re-run using `today=2026-09-17`
+  throughout was started but not confirmed finished before this session ended. **To finish:**
+  re-run `scripts/`-equivalent logic (see the two measurement scripts referenced in T-027's
+  own Notes for the pattern) comparing `pack_to_budget(..., budget_tokens=13803)` vs.
+  `pack_to_budget(..., budget_tokens=13261)` for all 15 real questions at `today=2026-09-17`,
+  and separately re-confirm the top-5-vs-facit headline at that same anchor. Do **not** use
+  `today=2026-09-16` for this specific check - that anchor answers a different, already-
+  settled question (D-011).
 
 ---
 

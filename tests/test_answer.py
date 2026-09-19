@@ -10,7 +10,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-from vg09.answer import SYSTEM_PROMPT, build_user_message, generate_answer, number_sources
+from vg09.answer import NUM_PREDICT, SYSTEM_PROMPT, build_user_message, generate_answer, number_sources
 from vg09.retrieval import Candidate
 
 
@@ -89,9 +89,12 @@ class GenerateAnswerTests(unittest.TestCase):
         _, mock_post = self._run()
         self.assertTrue(mock_post.call_args.kwargs["json"]["think"])
 
-    def test_num_predict_is_exactly_2000(self):
+    def test_num_predict_matches_the_module_constant(self):
+        """T-028: raised from 2000 to 2542 after a real truncation - asserted against
+        the constant, not a hardcoded number, so this test can't silently go stale the
+        next time the reservation is re-measured."""
         _, mock_post = self._run()
-        self.assertEqual(mock_post.call_args.kwargs["json"]["options"]["num_predict"], 2000)
+        self.assertEqual(mock_post.call_args.kwargs["json"]["options"]["num_predict"], NUM_PREDICT)
 
     def test_num_ctx_is_16000(self):
         _, mock_post = self._run()

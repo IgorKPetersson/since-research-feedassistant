@@ -66,12 +66,32 @@ itself the reason a single sample wouldn't have been trustworthy):
 | "did X come up" | 4 | 515 | 663 |
 | "has Q progressed" | 4 | 708 | 868 |
 
-Max observed across both runs: 1150. **Reserved: 2000 tokens**, set as `num_predict:2000` on
-every real answer-generation call — not just a budget line item but an actual hard ceiling,
-so the reservation is a guarantee, not a hope. (~74% headroom over the observed max; six
-samples across two runs already show real run-to-run variance, and the system prompt asks
-for concision, so a stricter cap risks cutting off a real answer more than a looser one
-risks blowing the budget.)
+Max observed across both runs: 1150. T-008's original reservation was 2000 tokens (~74%
+headroom over that max).
+
+**Superseded by T-028: raised to 2542 tokens, after a real truncation I found.** A real
+user question ("Vad har hänt med AI-agenter senaste veckan?", 20 packed chunks) hit
+`done_reason=="length"` in the real chat UI (T-025) — the *reasoning*, not the answer, was
+eating the 2000-token cap. Three real re-runs of that exact question (same retrieved context,
+only sampling varied) measured reasoning alone, separately from the answer:
+
+| Run | `done_reason` | reasoning tokens | % of the old 2000 cap | answer tokens |
+|---|---|---|---|---|
+| 1 | `stop` | 1230 | 61.5% | 272 |
+| 2 | `length` | **1842** | **92.1%** | 176 (cut off mid-word) |
+| 3 | `stop` | 1349 | 67.5% | 322 |
+
+T-008's original table measured *combined* reasoning+answer length across different question
+types; this table is the first time reasoning and answer were measured **separately** for the
+*same* question, and shows reasoning alone — not the answer — is what threatens the cap.
+
+**New reservation: 2542 tokens**, derived from this measurement, not a round number:
+`1842` (worst observed reasoning) `+ 400` (room for a full answer — real complete answers
+measured 176-322 tokens) `+ 300` (margin — roughly half the 612-token spread already observed
+across just three samples, hedging against further variance without inflating the chunk
+budget more than three real data points can justify) `= 2542`. Set as `num_predict:2542`
+(`vg09.answer.NUM_PREDICT`) on every real call — an actual hard ceiling, not just a budget
+line item.
 
 ### Remaining budget for retrieved chunks
 
@@ -79,14 +99,14 @@ risks blowing the budget.)
 16000 (num_ctx)
  -  157 (system prompt, T-024's finalized wording)
  -   40 (question, reserved)
- - 2000 (reasoning + answer, reserved via num_predict cap)
- = 13803 tokens available for retrieved chunks
+ - 2542 (reasoning + answer, T-028's measured reservation)
+ = 13261 tokens available for retrieved chunks
 ```
 
-(171/13789 in earlier tickets' own historical records, e.g. T-008/T-022's acceptance-criteria
-evidence, describe the draft prompt as it stood when those tickets closed — not rewritten
-after the fact; this section and `vg09.retrieval.CHUNK_BUDGET_TOKENS` are the current, live
-numbers.)
+(171/13789/2000/13803 in earlier tickets' own historical records, e.g. T-008/T-022/T-024's
+acceptance-criteria evidence, describe the numbers as they stood when those tickets closed —
+not rewritten after the fact; this section and `vg09.retrieval.CHUNK_BUDGET_TOKENS`/
+`vg09.answer.NUM_PREDICT` are the current, live numbers.)
 
 ### Chunk size and max top-k
 
@@ -121,9 +141,9 @@ no-punctuation auto-captions — see `scripts/t012_caption_token_calibration.py`
 350 of the 400-token cap. Re-check against real transcript-derived chunks once T-017
 unblocks and produces real captions.
 
-**Max top-k: 34** = `13803 // 400`, floored (T-024's re-measurement; was `13789 // 400`,
-same result) — the number of 400-token chunks that
-provably fit the remaining budget in the worst case (every chunk at the cap). This is a
+**Max top-k: 33** = `13261 // 400`, floored (T-028: down from 34, since raising
+`NUM_PREDICT` costs one worst-case chunk against the budget) — the number of 400-token
+chunks that provably fit the remaining budget in the worst case (every chunk at the cap). This is a
 ceiling, not a target: the real retrieval call should still request whatever top-k the
 retrieval design wants (likely far fewer than 34 for answer quality), with 34 only as the
 hard stop this budget allows.
@@ -137,9 +157,9 @@ chunks) must:
 
 1. **Pack chunks by real measured token count, not by count alone.** Sum each candidate
    chunk's real qwen3 token count (same `num_predict:1` technique) in relevance-descending
-   order, and stop adding once the running total would exceed the chunk budget (13803,
+   order, and stop adding once the running total would exceed the chunk budget (13261,
    `vg09.retrieval.CHUNK_BUDGET_TOKENS`) — regardless of whether that happens before or
-   after 34 chunks.
+   after 33 chunks.
 2. **Order the assembled prompt so the least-recoverable content is added last, not
    first.** KB-005: content beyond `num_ctx` is silently dropped from the **front**, with no
    error. So the prompt is built as `[chunks, least-relevant-first] + [system prompt] +
@@ -204,11 +224,13 @@ prompt the way raw-string "system last" ordering could. Keeping the system promp
 (157 tokens, measured — T-024's finalized wording) limits how bad a worst-case truncation
 would be.
 
-**Detect and surface `done_reason == "length"`.** T-008's `num_predict:2000` reasoning+answer
-cap is a real ceiling, not just a budget estimate — it *can* cut a genuinely longer answer
-off mid-thought. Every answer-generation call must check the response's `done_reason`:
-`"stop"` means a real, complete answer (matches how T-008's own measurements were validated
-— all real samples ended `"stop"`); `"length"` means the model was still generating when the
+**Detect and surface `done_reason == "length"`.** The reasoning+answer cap
+(`vg09.answer.NUM_PREDICT`, 2542 since T-028) is a real ceiling, not just a budget estimate —
+it *can* cut a genuinely longer answer off mid-thought, and did for real before T-028's raise
+(a `done_reason=="length"` I found in the live chat UI, T-025). Every answer-generation
+call must check the response's `done_reason`: `"stop"` means a real, complete answer (matches
+how T-008's own original measurements were validated — all real samples ended `"stop"`, at
+the smaller scale they were tested at); `"length"` means the model was still generating when the
 cap hit. A `"length"` result must be flagged to the user/UI as incomplete — never displayed
 as if it were a finished answer with nothing missing.
 
