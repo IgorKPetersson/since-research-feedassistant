@@ -326,7 +326,7 @@ larger-VRAM model earns its cost over the smaller one.
 
 ### T-032 — Comparison 1: date-aware retrieval vs plain similarity search on the same 15 real questions
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-032-date-aware-vs-plain-comparison`  ·  **Phase:** 3
 
 **Goal:** for each of the 15 real questions, both the real date-aware retrieval result and
@@ -340,29 +340,41 @@ yet — T-021/T-022/T-027's own real testing exercised date-aware retrieval alon
 compared side by side against the plain-search alternative on the same questions.
 
 **Acceptance criteria**
-- [ ] Reuses T-031's harness: each question is run twice — once with the real resolved
+- [x] Reuses T-031's harness: each question is run twice — once with the real resolved
   `date_range`/`ranking` (date-aware, exactly as `app.py` behaves), once with
-  `date_range=None` and `ranking=False` forced (plain similarity search only) —
-  `vg09.retrieval.retrieve()`'s existing parameters already support both call shapes
-  directly, no new retrieval code needed
-- [ ] Output shows both arms' answers and citations per question, clearly labeled, so a
-  human can compare without cross-referencing two separate files
-- [ ] For the questions where date-awareness plausibly matters most (the explicit
-  window/ranking questions — F01–F07, F10, F11, F13, F15), both arms' retrieved sources'
-  real feed dates are visible in the output, not just the final answer prose — so a human
-  can see *why* the two arms differ, not just infer it
-- [ ] Real run against the production store/Ollama completes all 15 questions × 2 arms
-  with no unhandled exception
+  `date_range=None` and `ranking=False` forced (plain similarity search only) →
+  `scripts/t032_date_aware_vs_plain_comparison.py`, imports `load_questions_with_facit()`/
+  `describe_mode()` directly from `scripts/t031_evaluation_harness.py` so the two harnesses
+  can't drift on what "the 15 real questions" means
+- [x] Output shows both arms' answers and citations per question, clearly labeled, so a
+  human can compare without cross-referencing two separate files → "Läge A"/"Läge B"
+  sections per question, facit shown once beneath both, real run:
+  `data/eval_results/2026-09-20-2136-t032-date-aware-vs-plain.md`
+- [x] For the questions where date-awareness plausibly matters most, both arms' retrieved
+  sources' real feed dates are visible in the output, not just the final answer prose →
+  every citation line leads with its real feed date in bold
+- [x] Real run against the production store/Ollama completes all 15 questions × 2 arms
+  with no unhandled exception → 30/30 real calls completed. **Real finding, not a new
+  bug:** 4/30 hit `done_reason=="length"` (F06-A, F07-A, F11-B, F14-A) despite T-038's
+  packing-budget fix — same `prompt_eval_count` as T-031's clean re-verification run for
+  the identical arm/question in at least one case (F06-A, F07-A: byte-for-byte same
+  packed context both times), so this is sampling variance in how much the model reasons
+  before answering, exactly the residual risk T-028 already documented (reasoning ranged
+  61.5-92.1% of the cap across identical real re-runs) — not a packing regression. Each
+  instance is visibly marked "⚠ OFULLSTÄNDIGT" in the output for manual grading
 - [ ] `docs/PLAN.md`'s Phase 3 "results table committed" exit criterion is satisfied by
   committing the reviewed output once I have graded it against
-  `docs/eval-questions.md`'s facit — grading itself is my own manual step, out of
-  scope for this ticket to automate
+  `docs/eval-questions.md`'s facit — grading itself is my own manual step, **not
+  yet done** — I have the real output file but hasn't graded/committed it yet
 
 **Out of scope:** the model-size comparison (T-033); any change to `vg09.retrieval` itself
 — the plain-search arm is an existing call shape, not new code.
 
-**Depends on:** T-031 (the harness).
-**Notes:** —
+**Depends on:** T-031 (the harness), T-038 (the packing-budget fix — this comparison would
+have been untrustworthy without it, per T-038's own Why section).
+**Notes:** Marked `done` for the harness/real-run work itself; the "results table
+committed" criterion is explicitly left unchecked above since grading is my own
+step, still pending as of this ticket closing.
 
 ---
 
