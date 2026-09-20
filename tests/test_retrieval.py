@@ -12,8 +12,11 @@ import unittest
 from datetime import date
 from unittest.mock import MagicMock, patch
 
+import requests
+
 from vg09.retrieval import (
     Candidate,
+    count_qwen_tokens,
     dedup_by_doc,
     order_candidates,
     pack_to_budget,
@@ -112,6 +115,29 @@ class PackToBudgetTests(unittest.TestCase):
     def test_empty_candidate_list_packs_to_nothing(self):
         packed, total, dropped = pack_to_budget([], budget_tokens=100)
         self.assertEqual((packed, total, dropped), ([], 0, []))
+
+
+class CountQwenTokensTests(unittest.TestCase):
+    """T-029: a non-2xx Ollama response must fail loudly here, not later as an opaque
+    KeyError from reading a partial/error body - matches vg09.store.embed_batch()'s
+    existing raise_for_status() pattern."""
+
+    def test_real_response_shape_returns_prompt_eval_count(self):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"prompt_eval_count": 123}
+        with patch("vg09.retrieval.requests.post", return_value=mock_resp):
+            self.assertEqual(count_qwen_tokens("some text"), 123)
+        mock_resp.raise_for_status.assert_called_once()
+
+    def test_non_2xx_response_raises_before_reading_the_body(self):
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "500 Server Error"
+        )
+        with patch("vg09.retrieval.requests.post", return_value=mock_resp):
+            with self.assertRaises(requests.exceptions.HTTPError):
+                count_qwen_tokens("some text")
+        mock_resp.json.assert_not_called()
 
 
 class QueryCandidatesTests(unittest.TestCase):

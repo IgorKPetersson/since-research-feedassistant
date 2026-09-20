@@ -10,6 +10,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
+import requests
+
 from vg09.answer import NUM_PREDICT, SYSTEM_PROMPT, build_user_message, generate_answer, number_sources
 from vg09.retrieval import Candidate
 
@@ -134,6 +136,20 @@ class GenerateAnswerTests(unittest.TestCase):
         thinking field (T-011/KB-007)."""
         with self.assertRaises(ValueError):
             self._run(thinking="")
+
+    def test_non_2xx_response_raises_before_reading_the_body(self):
+        """T-029: a real Ollama failure (model not pulled, OOM, ...) must fail loudly
+        here via raise_for_status() - matching vg09.store.embed_batch()'s existing
+        pattern - not surface later as an opaque KeyError from split_reasoning_and_
+        answer() reading a partial/error body."""
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "500 Server Error"
+        )
+        with patch("vg09.answer.requests.post", return_value=mock_resp):
+            with self.assertRaises(requests.exceptions.HTTPError):
+                generate_answer("what happened?", [])
+        mock_resp.json.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -57,13 +57,25 @@ All source counts/lists below were verified directly against the JSON documents 
 read from each document), not asserted from memory. Chroma was not needed — presence/absence
 in the frozen `data/raw/` files is what these questions test.
 
-**D-011:** any evaluation code that resolves these questions' relative phrases (Phase 3, or a
-re-run of T-022/T-027's retrieval against this set) must pin `today` **explicitly to
-2026-09-16** — the anchor these windows were already computed against — rather than calling
-`vg09.store.latest_feed_date()` (which returns 2026-09-17, YouTube's real latest content,
-correct for live retrieval but one day off from what's written here). Pinning explicitly
-keeps every window above correct without rewriting it; production retrieval uses the other
-anchor for a different, equally deliberate reason (D-011).
+**D-012 (supersedes D-011's original two-anchor split):** any evaluation code that resolves
+these questions' relative phrases (Phase 3, or a re-run of T-022/T-027's retrieval against
+this set) uses `vg09.store.latest_feed_date()` — **2026-09-17** for the current frozen
+dataset — the same anchor production retrieval uses. There is no separate, hand-pinned eval
+anchor any more; D-011 originally said to pin evaluation to 2026-09-16 instead, but that was
+never actually followed (T-027's and T-028's real re-runs both used 2026-09-17) and would,
+if followed literally, exclude YouTube's real latest content from date-filtered windows —
+exactly the failure D-011 exists to prevent. See D-012 for the full reasoning.
+
+This does **not** exactly reproduce every window written above, and that gap is left as-is,
+not silently smoothed over: for the source-crossing questions (F13, F15), 2026-09-17 is
+exactly what their own individually-written windows already assume. For the HF-only window
+questions (F02, F04, F05, F07, F11), the windows above were computed against 2026-09-16 and
+are one calendar day earlier than what `resolve_date_range(..., today=2026-09-17)` computes
+today — harmless for grading against *this* frozen dataset specifically (HF's real content
+stops at 2026-09-16 regardless of where the window edge falls, so no document enters or
+leaves the result because of the extra day — confirmed by T-027/T-028's real re-runs, whose
+HIT/MISS outcomes didn't change), but a real, acknowledged mismatch between this document's
+written window text and what a literal code re-run computes, not a coincidence resolved away.
 
 ## Questions
 

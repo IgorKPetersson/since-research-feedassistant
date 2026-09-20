@@ -419,7 +419,8 @@ per-video logging alone.
 ---
 
 ## D-011 — Relative retrieval windows anchor to the whole dataset's real latest content, not a per-source watermark or a single source's cutoff
-**Status:** accepted
+**Status:** superseded by D-012 (the eval/production anchor split below was never actually
+followed in practice - see D-012)
 
 **Decision:** When retrieval (T-022/T-027) resolves a relative window ("senaste veckan", via
 `vg09.date_range.resolve_date_range()`), the `today` passed in is
@@ -473,6 +474,77 @@ needed.
 **Would change our mind:** If ingest cadence ever became fast enough (multiple runs per
 session) that "latest feed_date in the store" started drifting meaningfully within a single
 retrieval session - not a concern at this project's real daily/weekly ingest cadence.
+
+---
+
+## D-012 — Relative retrieval windows anchor to the dataset's real latest content — one anchor, production and evaluation alike
+**Status:** accepted
+
+**Decision:** `vg09.store.latest_feed_date()` (the maximum `feed_date` actually present
+across the whole Chroma store, both sources combined) is the `today` every caller of
+`vg09.date_range.resolve_date_range()` passes in - production retrieval (`app.py`) and any
+evaluation re-run of T-014's questions (T-027, T-028, Phase 3) alike. There is no longer a
+separate, hand-pinned evaluation anchor. `docs/eval-questions.md`'s own "Time-window
+conventions" section is updated to say so (2026-09-17 for the current frozen dataset, not
+2026-09-16) - the facit's actual expected-source content (F01-F15) is unchanged, only the
+anchor explanation.
+
+**Why:** D-011 originally split this into two rules - production uses
+`latest_feed_date()`, evaluation pins `today` explicitly to 2026-09-16, "the same anchor
+docs/eval-questions.md's facit was already written and reviewed against." That split was
+never actually followed: T-027's own real re-run of T-014's 15 questions (the run that
+produced the 11/14 headline D-011 itself cites) used `today=2026-09-17`, not 2026-09-16;
+T-028's later re-confirmation of that same headline did too, by explicit instruction in its
+own ticket notes. Found by Phase 2's `grill-me` review (2026-09-20, T-029): D-011's written
+rule and the practice it was supposedly describing had already diverged, undetected, across
+two tickets.
+
+Investigating why the practice drifted rather than just re-aligning it to the written rule:
+the written rule is the one that's wrong. `docs/eval-questions.md`'s own facit windows are
+**asymmetric per source** for questions that touch both (e.g. F13: "fönstret
+2026-09-03–2026-09-17" for a YouTube-only question - one day past D-011's prescribed
+2026-09-16, because YouTube's real latest content is one day newer than HF's). A single
+`resolve_date_range(question, today=2026-09-16)` call cannot reproduce that asymmetry - it
+returns one `(start, end)` pair applied uniformly to a query that filters both sources at
+once (`vg09.retrieval.query_candidates()`'s `where` clause doesn't distinguish source). Pin
+`today` to 2026-09-16 as D-011 literally said, and F13/F15-shaped questions lose exactly the
+real, newer content D-011 was written to stop excluding - the same `YTG0rdHPTDE` case,
+recreated by D-011's own text. `today=2026-09-17` (what was actually run, both times) is the
+only anchor that reproduces the facit's own stated windows correctly for those questions;
+2026-09-16 is silently wrong for them. The practice was right; the decision log was not.
+
+**Rejected:** Keeping D-011's two-anchor split and just correcting its date (e.g. "pin eval
+to 2026-09-17 instead of 2026-09-16") - rejected because the split itself is the defect, not
+the specific date. Any hand-pinned eval constant will drift out of sync with
+`latest_feed_date()`'s real value again the moment the frozen dataset is ever
+re-frozen at a different cutoff (T-020), exactly as D-011's 2026-09-16 silently drifted out
+of sync with T-027's real 2026-09-17 the first time it mattered. One rule, sourced from the
+data itself, can't drift from the data.
+
+**Cost:** None beyond D-011's own already-accepted cost (a full metadata scan,
+cheap at ~2000 chunks). Removes the "two code paths compute `today` differently depending on
+caller" cost D-011's own Cost section flagged as itself a real cost - one caller path is
+strictly simpler than two. `docs/eval-questions.md`'s "Time-window conventions" section and
+its own D-011 callout box need correcting to cite `latest_feed_date()`/2026-09-17, not
+2026-09-16 - documentation-only, not a facit rewrite, but not a perfect match either: flagged
+honestly rather than overclaimed. For source-crossing/YouTube-touching questions
+(F13/F15-shaped), 2026-09-17 is exactly what the facit's own written windows already assumed
+- that part reconciles exactly. For HF-only window questions (F02/F04/F05/F07/F11), the
+individually-written window text (e.g. F02: "2026-08-16–2026-09-16") is one calendar day
+earlier than what a literal `resolve_date_range(..., today=2026-09-17)` call now computes -
+`resolve_date_range()` takes one anchor, not a per-source pair, so it cannot reproduce the
+facit's asymmetric windows exactly for every question at once. This extra day is harmless in
+practice for the current frozen dataset specifically - HF's real content stops at 2026-09-16
+regardless of where the window's edge falls, so grading outcomes for T-027/T-028's real
+re-runs were unaffected (confirmed: neither run's HIT/MISS count changed because of it) - but
+it is a real, acknowledged gap between the written per-question facit text and what the code
+now literally computes, not a coincidence resolved away by this decision.
+
+**Would change our mind:** Same condition D-011 already named - ingest cadence fast enough
+that "latest feed_date in the store" drifts meaningfully within a single session. Also: if a
+future frozen-dataset snapshot's facit windows are ever written to be symmetric across
+sources on purpose (not the current asymmetric case), a hand-pinned eval anchor might become
+appropriate again - not the situation today.
 
 ---
 

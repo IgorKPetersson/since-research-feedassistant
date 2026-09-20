@@ -14,6 +14,93 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-029 — Fix the four grill-me findings from the Phase 2 review
+
+**Status:** done
+**Size:** M (four independent fixes from one review pass, bundled as one ticket per
+my explicit instruction - see Notes)  ·  **Branch:** `t/T-029-phase-2-grill-me-fixes`  ·
+**Phase:** 2
+
+**Goal:** the four real defects the Phase 2 `grill-me` review found (2026-09-20) are fixed:
+D-011's written text matches what production and every real evaluation re-run actually do;
+a real Ollama failure surfaces as a clear message instead of a raw traceback; `app.py` uses
+T-021's own override contract instead of a hand-rolled copy of it; and real titles can't
+break a rendered citation link.
+
+**Why:** `grill-me`'s own findings, triaged by me 2026-09-20. (1) is a real
+reality-contradicts-documentation case per `CLAUDE.md`'s own rule - D-011 as written
+prescribes an eval anchor (2026-09-16) that every real re-run of T-014's questions
+(T-027, T-028) has actually contradicted, and would - if ever followed literally - exclude
+`YTG0rdHPTDE` again, the exact case D-011 exists to stop excluding. (2) is a real gap in
+the single most user-facing code path (`vg09/store.py::embed_batch()` already does this
+correctly; the two other real Ollama call sites don't). (3)/(4) are real, if smaller,
+inconsistencies the same review found by reading the shipped code, not hypothesized.
+
+**Acceptance criteria**
+- [x] D-011 (`docs/DECISIONS.md`) is rewritten so the anchor is the same in both
+  production and evaluation - `vg09.store.latest_feed_date()` (the dataset's real latest
+  `feed_date`, 2026-09-17 for the current frozen set) - not two different rules for two
+  callers → D-011's `Status` changed to `superseded by D-012`, its original text kept intact
+  (nothing deleted); new **D-012** written with the unified rule. D-012 also records an
+  honest residual gap found while writing it, not smoothed over: a single anchor can't
+  reproduce every individually-written per-question facit window exactly (HF-only window
+  questions are one calendar day off from the anchor text, harmless in practice for this
+  frozen dataset since HF has no real content on the extra day - see D-012's Cost section)
+- [x] `docs/eval-questions.md`'s anchor references are updated to say
+  2026-09-17/`latest_feed_date()`/D-012, not 2026-09-16/D-011 - the facit's own written
+  windows/content (F01-F15's expected sources, dates, answers) untouched, confirmed by
+  `git diff docs/eval-questions.md` touching only the "Time-window conventions" callout box,
+  no line under "## Questions"
+- [x] `vg09/answer.py::generate_answer()` and `vg09/retrieval.py::count_qwen_tokens()` call
+  `resp.raise_for_status()` before reading the response body, matching
+  `vg09/store.py::embed_batch()`'s existing pattern → **correction to this ticket's own
+  Why section, found while implementing:** `count_qwen_tokens()` already had
+  `raise_for_status()` (T-022 shipped it correctly the first time) - the grill-me finding
+  that named both functions was wrong about this one; only `generate_answer()` was actually
+  missing it. Fixed there; `count_qwen_tokens()`'s call renamed for consistency only, no
+  behavior change. Both now have a dedicated unit test for a mocked non-2xx response
+  confirming the exception raises before `.json()`/any field is read
+  (`test_answer.py::test_non_2xx_response_raises_before_reading_the_body`,
+  `test_retrieval.py::CountQwenTokensTests::test_non_2xx_response_raises_before_reading_the_body`) -
+  110/110 tests pass
+- [x] That exception is caught once, at the UI boundary (`app.py`), and shown as a clear
+  Swedish message - "Ollama svarar inte – är den igång och är modellen nedladdad?" - instead
+  of an unhandled traceback reaching the Streamlit page → `app.py`'s retrieval/answer/
+  citation block wrapped in `try/except requests.exceptions.RequestException` (the common
+  base class covering both a non-2xx `raise_for_status()` and Ollama simply not running -
+  `ConnectionError` - with one handler)
+- [x] `app.py` calls `resolve_date_range(question, today, manual_override=manual_range)`
+  directly for the range actually used, instead of computing `interpreted_range` and then
+  separately picking between it and `manual_range` by hand - the override precedence lives
+  in exactly one place (`vg09.date_range`), not two → done; `interpreted_range` is now only
+  computed (with `manual_override=None`) for `describe_retrieval_mode()`'s own display
+  purposes, never used to derive the actual `date_range`
+- [x] Titles interpolated into `app.py`'s citation markdown links are escaped so a real
+  title containing `]`, `)`, or other markdown-significant characters can't break the
+  rendered link - tested against at least one real title pulled from `data/raw/` containing
+  such a character → `vg09.ui_helpers.escape_markdown_link_text()`; tested against the real
+  title "He Built The Ultimate Spy Tool (Free and Open-Source)"
+  (`data/raw/youtube/2026-09-16/S2VJU5DQqlU.json`, embedded as a literal since `data/raw/`
+  is gitignored, per D-004 - test file says so). That real title's parens turned out not to
+  be the dangerous character under CommonMark (parens inside `[text]` don't need escaping;
+  only `]`/`[`/backslash do) - the real title confirms escaping doesn't mangle ordinary
+  punctuation, and a synthetic `[SOTA]`-shaped title covers the actually-dangerous case
+
+**Out of scope:** `latest_feed_date()` running a full collection scan up to twice per UI
+interaction (grill-me's fifth finding) - noted as a `docs/PLAN.md` risk-register row only,
+not fixed here, per my explicit instruction. Any other Ollama/network call site not
+named above. Rewriting `docs/eval-questions.md`'s facit content itself.
+
+**Depends on:** T-027, T-028 (produced the anchor drift this corrects), D-011 (the decision
+being amended).
+**Notes:** Bundled as one ticket per my explicit instruction, even though the four
+fixes are independent of each other and could ship as separate commits/PRs - all four come
+from the same single `grill-me` review pass and none has enough surface area alone to
+justify its own ticket. `docs/PLAN.md`'s risk register gets a new row for the deferred
+fifth finding as part of this ticket's own doc updates, even though it isn't an acceptance
+criterion above.
+
+---
 
 ### T-012 — Chunk, embed and store documents with feed date metadata (idempotent)
 

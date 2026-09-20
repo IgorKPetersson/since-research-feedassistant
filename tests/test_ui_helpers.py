@@ -1,11 +1,41 @@
-"""Unit tests for vg09.ui_helpers (T-025)."""
+"""Unit tests for vg09.ui_helpers (T-025, T-029)."""
 
 from __future__ import annotations
 
 import unittest
 from datetime import date
 
-from vg09.ui_helpers import describe_retrieval_mode
+from vg09.ui_helpers import describe_retrieval_mode, escape_markdown_link_text
+
+# T-029: a real title, not synthetic - copied verbatim from
+# data/raw/youtube/2026-09-16/S2VJU5DQqlU.json's "title" field (data/raw/ is
+# gitignored per D-004, so the test embeds the real string rather than reading it
+# live - same pattern test_llm.py/test_chunking.py use for other real-shaped data).
+REAL_PARENTHETICAL_TITLE = "He Built The Ultimate Spy Tool (Free and Open-Source)"
+
+
+class EscapeMarkdownLinkTextTests(unittest.TestCase):
+    def test_real_parenthetical_title_round_trips_intact(self):
+        """T-029: parens inside a markdown [text] portion don't need escaping under
+        CommonMark, but this confirms a real title survives escaping unmangled - no
+        accidental corruption of ordinary punctuation, only the genuinely dangerous
+        characters get a backslash."""
+        escaped = escape_markdown_link_text(REAL_PARENTHETICAL_TITLE)
+        self.assertIn("(Free and Open-Source)", escaped)
+        self.assertIn("He Built The Ultimate Spy Tool", escaped)
+
+    def test_closing_bracket_is_escaped_so_the_link_cannot_be_cut_short(self):
+        title = "New Model [SOTA]"
+        escaped = escape_markdown_link_text(title)
+        # the raw, unescaped "]" that would close a [text](url) link early is gone -
+        # every bracket in the output is backslash-escaped
+        self.assertNotIn(title, escaped)  # escaping actually changed something
+        self.assertIn("\\[SOTA\\]", escaped)
+
+    def test_backslash_is_escaped_first_so_output_is_not_double_escaped(self):
+        title = "C:\\path and a * and a _"
+        escaped = escape_markdown_link_text(title)
+        self.assertEqual(escaped, "C:\\\\path and a \\* and a \\_")
 
 
 class DescribeRetrievalModeTests(unittest.TestCase):

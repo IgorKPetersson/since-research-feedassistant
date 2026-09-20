@@ -71,7 +71,7 @@ def count_qwen_tokens(text: str) -> int:
     measured the whole budget with: `num_predict:1` is the minimal-cost way to read a
     real `prompt_eval_count` without generating a real answer (KB-009 - `num_predict:0`
     does NOT mean "generate nothing")."""
-    resp = requests.post(
+    http_resp = requests.post(
         f"{OLLAMA}/api/generate",
         json={
             "model": CHAT_MODEL,
@@ -81,8 +81,10 @@ def count_qwen_tokens(text: str) -> int:
         },
         timeout=120,
     )
-    resp.raise_for_status()
-    count = resp.json()["prompt_eval_count"]
+    # T-029: fail loudly on a non-2xx Ollama response here, not later as an opaque
+    # KeyError from reading a partial/error body.
+    http_resp.raise_for_status()
+    count = http_resp.json()["prompt_eval_count"]
     if count >= NUM_CTX:
         print(f"  !! TRUNCATION RISK: count_qwen_tokens prompt_eval_count={count} >= "
               f"num_ctx={NUM_CTX}")

@@ -8,6 +8,22 @@ from __future__ import annotations
 from datetime import date
 
 
+_MARKDOWN_SPECIAL_CHARS = "\\`*_[]"
+
+
+def escape_markdown_link_text(text: str) -> str:
+    """T-029: real HF/YouTube titles are free text pulled straight from a source's own
+    API - not authored for this app - and can contain markdown-significant characters
+    ("]" closes a `[text](url)` citation link's text portion early; a real example:
+    "He Built The Ultimate Spy Tool (Free and Open-Source)"). Escaping keeps the
+    rendered link intact regardless of what a real title contains. Backslash is escaped
+    first so escaping the rest doesn't double-escape it."""
+    result = text.replace("\\", "\\\\")
+    for ch in _MARKDOWN_SPECIAL_CHARS[1:]:
+        result = result.replace(ch, f"\\{ch}")
+    return result
+
+
 def describe_retrieval_mode(
     date_range: tuple[date, date] | None,
     ranking: bool,

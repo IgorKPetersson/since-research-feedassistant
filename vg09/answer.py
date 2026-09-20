@@ -103,7 +103,7 @@ def generate_answer(question: str, chunks: list[Candidate]) -> AnswerResult:
     used in the prompt (T-024), so the model's own positional citations can be
     resolved afterward."""
     source_map = number_sources(chunks)
-    resp = requests.post(
+    http_resp = requests.post(
         f"{OLLAMA}/api/chat",
         json={
             "model": CHAT_MODEL,
@@ -116,7 +116,11 @@ def generate_answer(question: str, chunks: list[Candidate]) -> AnswerResult:
             "options": {"num_ctx": NUM_CTX, "num_predict": NUM_PREDICT},
         },
         timeout=300,
-    ).json()
+    )
+    # T-029: a non-2xx Ollama response (model not pulled, OOM, ...) must fail loudly
+    # here, not surface later as an opaque KeyError from reading a partial/error body.
+    http_resp.raise_for_status()
+    resp = http_resp.json()
 
     prompt_eval_count = resp.get("prompt_eval_count", 0)
     if prompt_eval_count >= NUM_CTX:
