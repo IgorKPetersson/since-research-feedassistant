@@ -9,7 +9,8 @@ loader so the two harnesses can't drift apart on what "the 15 real questions" me
 
 Run manually; makes real network/GPU calls against the real production store and real
 Ollama - each question runs the full pipeline twice, so this costs roughly 2x T-031's
-real run. Output goes to data/eval_results/ (gitignored).
+real run. Output goes to docs/eval-results/ - the project's own generated results,
+tracked and committed (my review first), not fetched source data.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from vg09.date_range import detect_recency_ranking, resolve_date_range
 from vg09.retrieval import retrieve
 from vg09.store import latest_feed_date
 
-OUTPUT_DIR = Path("data/eval_results")
+OUTPUT_DIR = Path("docs/eval-results")
 
 
 def render_arm(label: str, question: str, date_range, ranking: bool) -> str:

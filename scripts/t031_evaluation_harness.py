@@ -8,8 +8,9 @@ manual step. `today` is set explicitly via vg09.store.latest_feed_date() (D-012)
 at the top of the run.
 
 Run manually; makes real network/GPU calls against the real production store and real
-Ollama. Output goes to data/eval_results/ (gitignored, per .gitignore's blanket `data/`
-rule) - a real generated report to review, not committed data.
+Ollama. Output goes to docs/eval-results/ - the project's own generated results, not
+fetched source data, so unlike data/raw/ this is tracked and committed (my review
+first, per this project's own workflow, but the directory itself isn't gitignored).
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from vg09.retrieval import retrieve
 from vg09.store import latest_feed_date
 
 EVAL_QUESTIONS_PATH = Path("docs/eval-questions.md")
-OUTPUT_DIR = Path("data/eval_results")
+OUTPUT_DIR = Path("docs/eval-results")
 
 
 def load_questions_with_facit() -> dict[int, dict[str, str]]:

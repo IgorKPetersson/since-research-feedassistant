@@ -64,7 +64,7 @@ budget and produce untrustworthy results either way.
   `pack_to_budget()` measures the formatted string, not bare `c.text` — plus a direct
   `FormatSourceTests` class for the moved function. 113/113 tests pass
 - [x] Real re-verification: all 15 real questions re-run through T-031's harness after the
-  fix (`data/eval_results/2026-09-20-2043-t031-harness.md`) → **15/15 `done_reason==
+  fix (`docs/eval-results/2026-09-20-2043-t031-harness.md`) → **15/15 `done_reason==
   "stop"`, zero empty answers, zero `length` truncations.** Max real `prompt_eval_count`:
   13005 (F03, **81%** of 16000) — comfortably under the 90% (14400) threshold. Full
   per-question numbers in Notes
@@ -349,7 +349,7 @@ compared side by side against the plain-search alternative on the same questions
 - [x] Output shows both arms' answers and citations per question, clearly labeled, so a
   human can compare without cross-referencing two separate files → "Läge A"/"Läge B"
   sections per question, facit shown once beneath both, real run:
-  `data/eval_results/2026-09-20-2136-t032-date-aware-vs-plain.md`
+  `docs/eval-results/2026-09-20-2136-t032-date-aware-vs-plain.md`
 - [x] For the questions where date-awareness plausibly matters most, both arms' retrieved
   sources' real feed dates are visible in the output, not just the final answer prose →
   every citation line leads with its real feed date in bold
@@ -362,10 +362,12 @@ compared side by side against the plain-search alternative on the same questions
   before answering, exactly the residual risk T-028 already documented (reasoning ranged
   61.5-92.1% of the cap across identical real re-runs) — not a packing regression. Each
   instance is visibly marked "⚠ OFULLSTÄNDIGT" in the output for manual grading
-- [ ] `docs/PLAN.md`'s Phase 3 "results table committed" exit criterion is satisfied by
-  committing the reviewed output once I have graded it against
-  `docs/eval-questions.md`'s facit — grading itself is my own manual step, **not
-  yet done** — I have the real output file but hasn't graded/committed it yet
+- [x] `docs/PLAN.md`'s Phase 3 "results table committed" exit criterion — the real,
+  ungraded output is committed (moved from the gitignored `data/eval_results/` to tracked
+  `docs/eval-results/`, per my explicit instruction) so it's part of the repo and the
+  report. **Grading itself (the `☐ A bättre ☐ B bättre ☐ Likvärdiga ☐ Båda fel` lines) is
+  still my own manual step, not done as part of this** — committed-but-ungraded,
+  not committed-because-graded
 
 **Out of scope:** the model-size comparison (T-033); any change to `vg09.retrieval` itself
 — the plain-search arm is an existing call shape, not new code.
