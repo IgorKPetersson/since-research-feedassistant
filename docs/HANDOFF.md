@@ -28,6 +28,84 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-09-20 — T-028 closed, Phase 2 `grill-me` (T-029), English-answer decision (T-030), Phase 2 declared complete
+
+**Tickets:** T-028, T-029, T-030  ·  **Tree:**
+docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md
+
+**Done this session:**
+- **T-028 closed:** its one open acceptance criterion (does the smaller chunk budget cost
+  real recall?) finished for real — `scripts/t028_verify_chunk_budget_impact.py`, real run
+  at `today=2026-09-17` (T-027's own anchor). Packed chunk count dropped 1-2 on 5/15
+  broad/unfiltered questions; **top-5 unchanged on all 15 of 15**, confirmed directly.
+  T-027's F15/F06 checkpoints reproduced exactly — the 11/14 headline holds
+- `grill-me` run against the whole of Phase 2 (T-011, T-021–T-028, D-011) —
+  found D-011's written evaluation-anchor rule was never actually followed by any real
+  measurement taken under it (top finding), a missing `raise_for_status()` in the
+  single most-exercised code path, and two smaller code-quality gaps
+- **T-029**, fixing all four triaged findings:
+  - D-011 marked `superseded by D-012`; **D-012** gives production and evaluation the same
+    anchor (`vg09.store.latest_feed_date()`). A real, honest residual gap recorded rather
+    than smoothed over: no single anchor reproduces every individually-written HF-only
+    facit window exactly (one day off, harmless for this frozen dataset specifically —
+    confirmed HIT/MISS unaffected)
+  - `vg09/answer.py::generate_answer()` now calls `raise_for_status()` (self-correction
+    mid-ticket: the grill-me finding was wrong that `count_qwen_tokens()` also lacked it —
+    it already had it since T-022); `app.py` catches the resulting exception and shows a
+    clear Swedish message instead of a traceback
+  - `app.py` now calls `resolve_date_range(..., manual_override=manual_range)` directly
+    instead of hand-rolling the override precedence
+  - Citation titles escaped (`vg09.ui_helpers.escape_markdown_link_text()`) before going
+    into markdown links, tested against a real title and a synthetic bracket-shaped one
+  - Fifth finding (`latest_feed_date()` scanned twice per UI interaction) deferred to
+    `docs/PLAN.md`'s risk register only
+- **T-030**: **D-013** — answers are always in English regardless of the question's
+  language, for OSS/international usability; questions keep working in any language
+  (`bge-m3`, unaffected). `SYSTEM_PROMPT` updated, real re-measurement (173 qwen3 tokens,
+  was 157) propagated through `CHUNK_BUDGET_TOKENS` (13245, down from 13261) and
+  `docs/DESIGN.md`. Verified end to end: two real Swedish questions against the real
+  store/Ollama both produced English answers (`scripts/t030_verify_english_answer.py`)
+- **Phase 2 declared complete** in `docs/PLAN.md` — all tickets done, `grill-me` run and
+  every finding triaged. Phase 3 **not** started
+
+**In progress / half-finished:** nothing — T-028/T-029/T-030 all reached `done`, Phase 2 is
+closed.
+
+**Learned (not obvious from the code):**
+- KB-017 (new): a markdown `[text](url)` link's text portion only needs `[`, `]` and
+  backslash escaped under CommonMark — parentheses inside `[text]` are safe unescaped. The
+  real title used to test the citation-escaping fix ("He Built The Ultimate Spy Tool (Free
+  and Open-Source)") turned out not to exercise the actually-dangerous character; a
+  synthetic `[SOTA]`-shaped title covers that case instead
+- A decision log entry can drift out of sync with the practice it documents, silently,
+  across multiple tickets, if nothing ever cross-checks the written rule against what a
+  real re-run actually does. D-011 said "pin eval to 2026-09-16"; T-027's and T-028's real
+  runs both used 2026-09-17, and nobody noticed until a `grill-me` pass read the decision
+  log and the scripts side by side. Worth remembering as a reason to occasionally re-read a
+  decision against the code that's supposed to implement it, not just trust it was followed
+- A `grill-me` finding can itself be wrong in a narrow, checkable way (`count_qwen_tokens()`
+  already had `raise_for_status()` before T-029) — worth verifying findings against the
+  actual code before fixing, not just implementing the review verbatim
+
+**Blocked / needs me:** nothing blocking. Phase 3 (evaluation script, README/LICENSE,
+report) waits for a go-ahead per `docs/PLAN.md`'s own gating rule — not started this
+session.
+
+**Next session should start with:** Phase 3, if and when I gives the go-ahead —
+turn `docs/PLAN.md`'s Phase 3 checkboxes into tickets with `ticket-write` first. One loose
+end worth remembering before Phase 3's evaluation script is built: D-013 means a strict
+re-grading of `docs/eval-questions.md`'s facit (written and graded in Swedish) now needs to
+expect an English answer even though the facit's own descriptive text stays Swedish —
+flagged in T-030's own ticket Notes, not resolved there.
+
+**Doc updates made:** D-011 (superseded by D-012) · D-012 (new) · D-013 (new) · KB-017
+(new) · `docs/DESIGN.md` § Context budget (system prompt 157→173, chunk budget
+13261→13245) · `docs/eval-questions.md` (anchor callout only, facit content untouched) ·
+`docs/PLAN.md` (Phase 2 declared complete, new risk-register row for `latest_feed_date()`'s
+double scan) · `docs/TICKETS.md` (T-028, T-029, T-030 all closed/done)
+
+---
+
 ## 2026-09-19 — Phase 2 built end to end (T-011, T-021–T-025), then two real bugs found and fixed via T-028
 
 **Tickets:** T-014, T-020, T-026, T-021, T-022, T-027, T-011, T-023, T-024, T-025, T-028  ·

@@ -18,6 +18,7 @@ edited in place — it is superseded by a new one and marked.
 - Local model (faster-whisper) — GPU audio transcription, CUDA setup on Windows
 - Retrieval (`vg09.retrieval`, `vg09.date_range`) — measurement methodology
 - Vector store (ChromaDB) — embedded local store, date-range filtering
+- UI (Streamlit / markdown rendering) — rendering free-text into markdown safely
 
 ## Entries
 
@@ -39,6 +40,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-014](KB-014-real-auto-captions-do-have-punctuation.md) | Real fetched auto-captions DO have punctuation/capitalization, contradicting `vg09/chunking.py`'s unverified "no punctuation" premise; real proper-noun garbling examples found ("Palunteer", "Open AAI", "Sunno V6") | YouTube ingest — captions | verified | 2026-09-17 |
 | [KB-015](KB-015-whisper-fits-alongside-ollama-models.md) | faster-whisper fits alongside qwen3:30b-a3b + bge-m3 both loaded (D-005) — real peak 23646/24564 MiB, ~0.9GB headroom, neither Ollama model evicted | Local model (faster-whisper) — joint VRAM residency | verified | 2026-09-17 |
 | [KB-016](KB-016-comparing-retrieval-measurements-needs-the-same-today-anchor.md) | Comparing two retrieval measurements (e.g. old vs. new chunk budget) needs the same `today` anchor for both, or the delta is meaningless — a real mixup produced a false "regression" | Retrieval — measurement methodology | verified | 2026-09-19 |
+| [KB-017](KB-017-commonmark-link-text-only-needs-bracket-and-backslash-escaping.md) | A markdown `[text](url)` link's text portion only needs `[`, `]` and backslash escaped under CommonMark — parentheses inside `[text]` are safe unescaped, unlike inside `(url)` | UI (Streamlit / markdown rendering) | verified | 2026-09-20 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
