@@ -28,6 +28,86 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-09-20 (kväll) — Phase 3 opened, T-031/T-038/T-032 run for real, evaluation results committed
+
+**Tickets:** T-037, T-031, T-038, T-032  ·  **Tree:**
+docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md §§ 6-10
+
+**Done this session (continuation of the same day's Phase 2 close-out above):**
+- **T-037**: Phase 3 opened. Six tickets written (T-031-T-036)
+  for this round's named scope — evaluation harness + two comparisons, README/LICENSE/
+  fresh-clone, a deliberately narrow project rename, two deferred risk-register test
+  tickets. Report/presentation (Phase 3's third checklist item) still has no ticket, not
+  forgotten. None of T-031-T-036 executed at this point
+- **T-031**: `scripts/t031_evaluation_harness.py` built and run for real — all 15 of
+  T-014's questions through the real pipeline, `today` anchored via `latest_feed_date()`
+  (D-012), output is one Markdown file per question with the facit reproduced verbatim
+  alongside (format extended past the ticket's original scope).
+  First real run found **F07's answer came back completely empty**
+  (`done_reason=="length"`) — root-caused, not just noted, and **not** fixed as
+  part of T-031; fixed in its own ticket first
+- **T-038** (bugfix, landed before T-032): the real root cause was
+  `pack_to_budget()` measuring only bare chunk text, never the real
+  `"[N] Title (url, feed date)\n"` wrapper `vg09.answer._format_source()` adds before
+  sending to the model. Fixed: that formatting logic moved to
+  `vg09.retrieval.format_source()` (public, one source of truth for both packing-time
+  measurement and real prompt construction). `CHUNK_BUDGET_TOKENS` (13245) did **not** need
+  to change — the reservation formula was always correct; what needed recomputing was the
+  max-top-k ceiling, corrected 33 → **27** from a real measured worst-case chunk (488
+  tokens: 405 bare + 83 real wrapper overhead, `scripts/t038_measure_wrapper_overhead.py`).
+  **KB-018** records the finding: the budget has under-counted the real prompt since T-008.
+  Real re-verification: **15/15 `done_reason=="stop"`**, zero empty answers, max
+  `prompt_eval_count` 81% of `num_ctx`. The 300s `ReadTimeout` checked against real elapsed
+  times (7.7-18.4s, ~16x margin) — left unchanged, the one real timeout seen earlier reads
+  as transient, not structural
+- **T-032**: `scripts/t032_date_aware_vs_plain_comparison.py` built and run for real — each
+  of the 15 questions through the real pipeline twice (date-aware vs. plain, no date filter)
+  side by side against the same facit. 30/30 real calls completed; 4 hit
+  `done_reason=="length"` despite the T-038 fix — confirmed as real sampling variance
+  (identical `prompt_eval_count` to a clean T-038 re-verification run for the same
+  arm/question in at least one case), matching T-028's own already-documented residual
+  risk, not a regression. Each instance visibly flagged in the output
+- Real evaluation results **moved into the tracked repo**: the two valid runs (T-031 post-
+  fix, T-032 comparison) moved from gitignored `data/eval_results/` to tracked
+  `docs/eval-results/` — these are the project's own generated
+  results, not fetched source data. Both harness scripts' default output directory updated
+  to match. The earlier buggy pre-fix T-031 run stays in `data/eval_results/` deliberately
+  (a bug artifact, not a result — already quoted in full in T-031's ticket entry and KB-018)
+
+**In progress / half-finished:**
+- **Grading is not done.** Both real result files in `docs/eval-results/` are committed but
+  **ungraded** — every `☐` checkbox in both files is still unchecked. This is a
+  manual step, not automatable (no model grading, per T-031's own scope)
+- `docs/PLAN.md`'s Phase 3 exit criteria ("results table committed") is satisfied for the
+  *committing* half; the *graded* half is still open
+
+**Learned (not obvious from the code):**
+- A file reported as "missing" is worth verifying directly (real `ls` + `git show
+  --stat`) before "fixing" something — the files were present and committed all along;
+  the IDE file tree had not refreshed after the directory was created mid-session.
+- KB-018 (new): the retrieval packing budget has silently under-counted the real prompt
+  sent to the model since T-008 — see `docs/kb/` for the full real measurement (41-83
+  tokens/chunk of real, previously-uncounted citation-wrapper overhead)
+
+**Blocked / needs me:**
+- **Grading**, on both `docs/eval-results/2026-09-20-2043-t031-harness.md` (T-031, single
+  arm) and `docs/eval-results/2026-09-20-2136-t032-date-aware-vs-plain.md` (T-032, two arms
+  side by side) — check the `☐` boxes against each question's facit. Nothing else is
+  waiting on this to continue (T-033, the model-size comparison, doesn't depend on grading),
+  but it's the one open loop from this stretch
+
+**Next session should start with:** either grade the two committed result files, or — if
+grading isn't the next priority — pick up **T-033** (the `qwen3:30b-a3b` vs `qwen3:8b`
+comparison, same shape as T-032, already written and ready in `docs/TICKETS.md`). Both are
+real, available next steps; neither is blocked on the other.
+
+**Doc updates made:** KB-018 (new) · `docs/DESIGN.md` § Context budget (max top-k 33→27,
+the T-038 correction) · `docs/PLAN.md` (Phase 3 current-phase block, risk register row
+corrected) · `docs/TICKETS.md` (T-031, T-032, T-037, T-038 all done; T-033-T-036 written,
+not started) · `docs/eval-results/` (new, tracked — two real result files)
+
+---
+
 ## 2026-09-20 — T-028 closed, Phase 2 `grill-me` (T-029), English-answer decision (T-030), Phase 2 declared complete
 
 **Tickets:** T-028, T-029, T-030  ·  **Tree:**

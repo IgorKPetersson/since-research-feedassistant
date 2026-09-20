@@ -15,10 +15,15 @@ were otherwise done.
 
 Current phase: **Phase 3** (started 2026-09-20, by my explicit go-ahead). Its ticket set
 is written (**T-031**–**T-036**), per this file's own "turn checkboxes into tickets when a
-phase starts" rule below — **none of them started yet**, per my explicit instruction:
-tickets only, no execution, until further direction. `docs/PLAN.md`'s own third Phase 3
-checklist item, "Report and presentation — run `defense-prep`," has **no ticket yet** — not
-forgotten, just not included in this round's explicit instruction.
+phase starts" rule below. **T-037** (this ticket set itself), **T-031** (the evaluation
+harness), **T-038** (the packing-budget fix T-031's real run found, landed before T-032 by
+explicit instruction) and **T-032** (date-aware vs plain comparison) are `done` — real
+runs, real results, committed to `docs/eval-results/`. **T-033**–**T-036** are written but
+not yet started. Grading the two committed result files against
+`docs/eval-questions.md`'s facit is still open — my own manual step, not
+automated. `docs/PLAN.md`'s own third Phase 3 checklist item, "Report and presentation —
+run `defense-prep`," has **no ticket yet** — not forgotten, just not included in this
+round's explicit instruction.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`

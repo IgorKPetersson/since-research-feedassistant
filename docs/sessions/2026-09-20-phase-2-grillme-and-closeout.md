@@ -1,8 +1,11 @@
-# Session tree · 2026-09-20 · T-028 close-out, Phase 2 grill-me, T-029/T-030, Phase 2 closed
+# Session tree · 2026-09-20 · T-028 close-out, Phase 2 grill-me, T-029/T-030, Phase 2 closed, Phase 3 opened and T-031/T-038/T-032 run
 
-**Tickets:** T-028, T-029, T-030 · **Handoff:** docs/HANDOFF.md § 2026-09-20
+**Tickets:** T-028, T-029, T-030, T-031, T-037, T-038, T-032 · **Handoff:** docs/HANDOFF.md
+§ 2026-09-20
 **Read this if you want to know:** why D-011 was replaced by D-012, what grill-me actually
-found in Phase 2's code, or why the system prompt now pins the answer's language.
+found in Phase 2's code, why the system prompt now pins the answer's language, why the
+packing budget silently undercounted every real prompt since T-008, or where the real
+evaluation results live.
 
 ## 1. Resuming T-028's last open criterion  [T-028]
    - 1.1 Re-read HANDOFF/PLAN/TICKETS to find where the project stood
@@ -83,3 +86,94 @@ found in Phase 2's code, or why the system prompt now pins the answer's language
    - 5.1 `docs/PLAN.md`'s "Current phase" block rewritten: all tickets done, `grill-me` run
      and every finding triaged/fixed (T-029) or deferred to the risk register, T-030 landed
      · outcome: declared complete. Phase 3 **not** started yet
+
+## 6. Phase 3 opened  [T-037]
+   - 6.1 Phase 3 started, with the scope for this round:
+     evaluation harness + two comparisons, README/LICENSE/fresh-clone, project rename
+     (scoped), the two deferred risk-register test tickets — not the
+     report/presentation checklist item
+   - 6.2 Six tickets written (T-031-T-036) plus T-037 itself, `docs/PLAN.md`'s current phase
+     set to Phase 3
+     · outcome: T-035 (rename) deliberately scoped narrow while writing it — found the
+       `vg09` package (41 importing files) and `vg09.store.COLLECTION_NAME` (a real stored
+       Chroma identifier) mid-write and excluded both, flagged as separate decisions rather
+       than folded into a routine rename
+   - 6.3 None of T-031-T-036 executed this round · outcome: done,
+     committed (`b2a9490`)
+
+## 7. T-031 — the evaluation harness, first real run  [T-031]
+   - 7.1 Built `scripts/t031_evaluation_harness.py`: loads the 15 real questions *and* their
+     full facit blocks live from `docs/eval-questions.md`, runs the real pipeline, writes
+     one Markdown file with question/mode/answer/sources/facit side by side plus a grading
+     checkbox line
+     · outcome: format extended beyond the ticket's original scope (facit reproduced
+       verbatim) — noted in the ticket rather than treated as the original plan
+   - 7.2 First real run hit a genuine `ReadTimeout` (300s) on F03 · outcome: a clean retry
+     completed all 15 with no error — treated as transient, not investigated further at
+     this point (later re-examined in T-038, § 8.4)
+   - 7.3 Reviewing the real output found F07's answer completely empty, `done_reason==
+     "length"`
+     · outcome: root-caused, not just noted — `pack_to_budget()` measured only bare chunk
+       text, never the real `"[N] Title (url, feed date)\n"` wrapper actually sent to the
+       model. Real `prompt_eval_count` 15349 vs. the ~13458 the budget assumed. **Not fixed
+       as part of T-031** — deferred to a new ticket (T-038), to be fixed before T-032
+
+## 8. T-038 — fixing the packing-budget undercount  [T-038]
+   - 8.1 Ticket written: move the formatting logic to one shared place, measure the real
+     formatted string during packing, recompute what actually needs recomputing, write a
+     KB entry, re-verify for real, check the timeout
+   - 8.2 `vg09.answer._format_source()` moved to `vg09.retrieval.format_source()` (public),
+     reused by both `pack_to_budget()` and `build_user_message()`
+     · outcome: a 2-digit placeholder citation number used for packing-time measurement
+       (real number isn't known until after packing) — documented as a safe-direction
+       approximation, not a real inaccuracy source
+   - 8.3 Real measurement (`scripts/t038_measure_wrapper_overhead.py` against the
+     production store, 1971 real chunks): wrapper overhead 41-83 real tokens/chunk
+     · outcome: `CHUNK_BUDGET_TOKENS`'s own arithmetic (13245) did **not** need to change —
+       the reservation formula was always right, only the per-chunk measurement was wrong.
+       What did need recomputing: max top-k, corrected 33 → 27 (`13245 // 488`, 488 being a
+       real observed worst-case chunk: 405 bare + 83 wrapper)
+   - 8.4 Real re-verification: all 15 questions re-run, timing instrumentation added to the
+     harness
+     · outcome: **15/15 `done_reason=="stop"`**, zero empty answers, max `prompt_eval_count`
+       81% of `num_ctx`. Real elapsed `generate_answer()` times 7.7s-18.4s — ~16x margin
+       under the 300s timeout, so the earlier F03 timeout (§ 7.2) is now confidently read as
+       transient (GPU/network hiccup), not an undersized timeout. Left unchanged
+   - 8.5 KB-018 written (the under-counted-since-T-008 finding); tests updated (fixtures
+     gained real title/url/feed_date, new regression test); committed (`2e6665d`)
+
+## 9. T-032 — the date-aware-vs-plain comparison, first real run  [T-032]
+   - 9.1 Built `scripts/t032_date_aware_vs_plain_comparison.py`, reusing T-031's question/
+     facit loader directly (import, not a copy) so the two harnesses can't drift on what
+     "the 15 real questions" means
+     · outcome: import needed `scripts/` itself on `sys.path` (no `__init__.py` there) —
+       caught by a dry-run sanity check before spending the real 2x-cost run on a broken
+       import
+   - 9.2 Real run: 30/30 calls (15 questions × 2 modes) completed
+     · outcome: 4/30 hit `done_reason=="length"` despite T-038's fix (F06-A, F07-A, F11-B,
+       F14-A) — checked against T-038's own re-verification numbers and found identical
+       `prompt_eval_count` for the same arm/question in at least one case, confirming this
+       is real sampling variance (T-028's own already-documented residual risk), not a
+       packing regression. Each instance visibly flagged in the output, not fixed or hidden
+   - 9.3 User asked twice whether the background run was still active while waiting
+     · outcome: confirmed both times via real process CPU time / Ollama's own CPU
+       accumulation and TCP connection state, not by guessing or polling the (buffered)
+       output file
+   - 9.4 Committed (`4a148a5`)
+
+## 10. Moving the real results into the tracked repo  [T-032]
+   - 10.1 Decision: the project's own generated results belong in the repo/report,
+     not gitignored `data/`
+     · outcome: the two valid runs (T-031's post-fix run, T-032's comparison) moved to new
+       `docs/eval-results/` (tracked); the earlier pre-fix buggy T-031 run deliberately left
+       in `data/eval_results/` (gitignored) — a bug artifact, not a result, already quoted
+       in full in T-031's ticket entry and KB-018. Both harness scripts' `OUTPUT_DIR`
+       updated so future runs land in the tracked location by default. Committed (`62ab286`)
+   - 10.2 User reported the moved files "missing" from `docs/eval-results/` (IDE only
+     showed the unrelated `data/`-side file)
+     · outcome: verified directly against the real filesystem (`ls`) and git
+       (`git show --stat`) rather than trusting the report at face value or the IDE's own
+       view — both confirmed the files were correctly present and committed all along; the
+       IDE's file tree had simply not refreshed. Nothing was actually wrong, nothing fixed
+       — **the correct response to "it's missing" was to verify independently, not to
+       assume the user's report was right and start "fixing" a problem that didn't exist**
