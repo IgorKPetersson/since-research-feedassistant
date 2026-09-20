@@ -14,6 +14,308 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-037 — Open Phase 3: PLAN updates and the Phase 3 ticket set
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (docs-only, see note)
+
+**Goal:** Phase 3 is formally open and its work exists as checkable tickets instead of only
+`docs/PLAN.md`'s umbrella checkboxes — same pattern T-016/T-026 established for opening
+Phase 1 and Phase 2.
+
+**Why:** `docs/PLAN.md`'s own rule: "when a phase starts, turn its checkboxes into tickets
+in `docs/TICKETS.md` using the `ticket-write` skill." My explicit go-ahead to start
+Phase 3, with the exact scope for this round named: an evaluation harness plus its two
+named comparisons, README/LICENSE/fresh-clone, the project rename, and the two deferred
+risk-register test-coverage items — explicitly **not** including Phase 3's third checklist
+item (report/presentation), and explicitly **no execution** of any ticket this round.
+
+**Acceptance criteria**
+- [x] `docs/PLAN.md`'s "Current phase" is set to Phase 3
+- [x] `docs/PLAN.md`'s Phase 3 checklist references the tickets that now back each item,
+  and explicitly notes the one checklist item (report/presentation) with no ticket yet
+- [x] Tickets T-031 through T-036 written, each with observable acceptance criteria and
+  correct `Depends on` chains
+- [x] Two out-of-scope items surfaced while writing the tickets, not silently folded in:
+  T-035 (rename) explicitly excludes the `vg09` package/import path and the Chroma
+  `COLLECTION_NAME` stored-data identifier, flagging both as separate decisions per
+  `CLAUDE.md`'s stop-and-ask rule for stored data formats and blast-radius-large changes
+- [x] None of T-031–T-036 executed — this ticket covers only the planning artifacts
+
+**Out of scope:** doing any of T-031 through T-036's actual work; writing a ticket for
+Phase 3's report/presentation checklist item (not part of this round's instruction).
+
+**Depends on:** T-029, T-030 (Phase 2's own close-out, completed the same session).
+**Notes:** Docs-only, same shape as T-016/T-026. The risk-register rows for `store.py`/
+`youtube_backfill.py` (Phase 1's `grill-me` findings) are updated to point at T-036 instead
+of the old "Deferred to Phase 3, T-020's triage" placeholder text.
+
+---
+
+### T-036 — Test coverage for the two deferred risk-register items: `store.py` and `youtube_backfill.py`
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-036-store-and-backfill-tests`  ·  **Phase:** 3
+
+**Goal:** the two test-coverage gaps Phase 1's `grill-me` review found and deferred to
+Phase 3 (`docs/PLAN.md`'s risk register) are closed: `vg09/store.py`'s compliance with
+`CLAUDE.md`'s hard rules, and `vg09/youtube_backfill.py`'s orchestration logic, are both
+under real test for the first time.
+
+**Why:** both were flagged by name in the risk register with "Deferred to Phase 3" as the
+plan, not "won't fix" — `store.py` implements two of `CLAUDE.md`'s three hard rules
+(explicit `bge-m3`, explicit `num_ctx`) with nothing to catch a future refactor that
+silently drops either; `youtube_backfill.py` is "the riskiest orchestration code in the
+ingest pipeline, verified only by real production runs" (T-019's own self-flagged note).
+Phase 3 is the last chance to close this before the project is published.
+
+**Acceptance criteria**
+- [ ] A test asserts `vg09.store.embed_batch()`'s real request body always includes
+  `model="bge-m3"` and an explicit `num_ctx` — mocked at the `requests.post` boundary,
+  matching this project's existing test pattern (`tests/test_store.py` already exists for
+  `is_empty()`/`latest_feed_date()`)
+- [ ] A mocked test covers `youtube_backfill.py`'s resumability: a video already present in
+  `data/raw/` (via `document.exists()`) is skipped, not re-fetched, on a second run
+- [ ] A mocked test covers its pacing: the pause-between-videos call happens between
+  consecutive video attempts, asserted against a mocked sleep/pause function — no real
+  wall-clock wait in the automated suite
+- [ ] A mocked test covers watermark-write-on-completion: the watermark is written only
+  after the full backfill window completes successfully, and stays unwritten if the run is
+  interrupted partway (matching D-006/D-010's already-described design)
+- [ ] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
+  included, no live network or GPU calls added to the automated suite
+
+**Out of scope:** fixing any real defect these tests might surface — if one turns up, it
+gets its own ticket, not a silent fix bundled into this one (unless genuinely trivial and
+directly caused by writing the test itself, noted if so).
+
+**Depends on:** —
+**Notes:** Both risk-register rows cite the Phase 1 `grill-me` review (2026-09-19) as their
+origin; see `docs/PLAN.md`'s risk register for the exact original wording.
+
+---
+
+### T-035 — Rename the project from "VG-09" to "research-feed-assistant" (user-facing naming only)
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-035-project-rename`  ·  **Phase:** 3
+
+**Goal:** the project's real, current name — "research-feed-assistant" — replaces the
+placeholder codename "VG-09" everywhere a human reading the published repo would see it,
+without touching anything that would require a data migration or a mechanical rewrite of
+every import in the codebase.
+
+**Why:** (2026-09-20) "VG-09" is still the name in `CLAUDE.md`
+and elsewhere, but the project is about to be published as OSS under its real name.
+
+**Acceptance criteria**
+- [ ] Every occurrence of "VG-09" in `CLAUDE.md` (the "What this is" section, examples,
+  branch/PR naming illustrations, etc.) is replaced with "research-feed-assistant" or the
+  appropriate grammatical form
+- [ ] `app.py`'s UI-facing strings (`st.set_page_config(page_title=...)`,
+  `st.title(...)`) say "research-feed-assistant", not "VG-09"
+- [ ] A repo-wide search for "VG-09" is run and every *currently-live, forward-looking*
+  occurrence is updated; historical records (past session notes under `docs/sessions/`,
+  already-closed ticket text describing what was true at the time, git history) are
+  deliberately left unchanged, since rewriting history to match a later rename would
+  misrepresent what those records actually said at the time — this ticket records exactly
+  which files were touched and which were deliberately left alone, and why
+- [ ] Existing tests pass unchanged — a pure display-string rename shouldn't touch any
+  test assertion that isn't itself asserting the old name
+
+**Out of scope, flagged explicitly rather than silently decided:**
+- The Python package itself, `vg09/` (all 41 files that `import vg09`/`from vg09...`) —
+  renaming the actual package/import path is a mechanical but blast-radius-large change
+  touching every module in the codebase, not a "few files" S-sized rename. A real decision
+  for me: is `vg09` (the import path) worth renaming too, given nobody outside this
+  repo depends on it yet, or does it stay as an internal implementation detail separate
+  from the project's public-facing name?
+- `vg09.store.COLLECTION_NAME = "vg09_chunks"` — this is a **stored data identifier** in
+  the real, existing production Chroma store (`data/chroma_store/`, gitignored). Renaming
+  it without a migration step would orphan the existing local collection (a fresh
+  `get_or_create_collection()` call under a new name starts empty) — a real, if
+  self-inflicted, data-loss risk for whoever already has a populated local store. Per
+  `CLAUDE.md`'s stop-and-ask rule for stored data formats, this needs an explicit decision
+  (rename + migration script, or leave it), not a silent rewrite bundled into a "S-sized"
+  cosmetic rename
+- `scripts/t020_freeze_dataset.py`'s `ARCHIVE_DIR = Path(r"C:\AIProjects\VG-09-frozen")` —
+  this is a reference to a real external directory that exists on disk under that literal
+  name (the T-020 frozen-dataset archive). Changing the string without also renaming the
+  real directory would break the script; left alone here as out of scope, not silently
+  "fixed" into a path that doesn't exist
+
+**Depends on:** —
+**Notes:** Scoped deliberately narrow (display strings and current-facing docs only) after
+finding, while writing this ticket, that a full rename touches a real stored-data
+identifier and 41 importing files — exactly the kind of thing `CLAUDE.md` says to flag and
+stop on rather than fold into a routine rename.
+
+---
+
+### T-034 — README, Apache-2 LICENSE, and a real fresh-clone test
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-034-readme-license-fresh-clone`  ·  **Phase:** 3
+
+**Goal:** anyone can clone the public repo, follow only the README, and reach a first real
+answer from the chat UI — proven by actually doing it, not assumed because the code exists.
+
+**Why:** `docs/GOAL.md`'s Definition of done requires "a public GitHub repo with Apache-2
+`LICENSE` and a README covering install, ingest and asking," and `docs/PLAN.md`'s Phase 3
+exit criteria requires "a fresh-clone test following the README only." Neither exists yet.
+
+**Acceptance criteria**
+- [ ] `README.md` covers: what the project does (one paragraph, from `docs/GOAL.md`),
+  prerequisites (Ollama, the specific models pulled, Python version), install steps, how to
+  run ingest (backfill + catch-up), how to run the chat UI (`streamlit run app.py`), and
+  where the evaluation results live (T-031/T-032/T-033's output, once they exist)
+- [ ] `LICENSE` at the repo root is the real, unmodified Apache-2.0 license text
+- [ ] A real fresh clone (a separate directory, not the existing working copy) is tested
+  end to end: clone → follow only what the README says, nothing outside it → reach a first
+  real answer in the chat UI. Run for real, not assumed
+- [ ] Any step the fresh-clone test finds missing, wrong, or assumed (e.g. an
+  undocumented environment variable, an unpulled Ollama model) is fixed in the README
+  itself before this ticket closes, not worked around silently in the test run
+- [ ] `docs/GOAL.md`'s Definition of done README/LICENSE criterion can be pointed to
+  directly as met
+
+**Out of scope:** CI/CD (no pipeline decided yet, per `CLAUDE.md`'s "still undecided"
+stack notes); packaging/publishing to PyPI or similar; the evaluation results themselves
+(T-031/T-032/T-033) — the README references where they'll live, doesn't require them
+finished first.
+
+**Depends on:** T-035 (so the README is written under the project's real name from the
+start, not written against "VG-09" and then edited).
+**Notes:** —
+
+---
+
+### T-033 — Comparison 2: `qwen3:30b-a3b` vs `qwen3:8b` on the same 15 real questions
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-033-model-size-comparison`  ·  **Phase:** 3
+
+**Goal:** the same 15 real questions, same retrieved context, run through both models in
+D-005's VRAM-differentiated pair — so I can judge for themselves whether the
+larger-VRAM model earns its cost over the smaller one.
+
+**Why:** `docs/PLAN.md`'s Phase 3 exit criteria names this comparison explicitly
+("large vs small model"); D-005 is the decision that chose this specific pair
+(VRAM-differentiated, not "small vs large" model size) and named this as the eventual test.
+
+**Acceptance criteria**
+- [ ] `vg09.answer.generate_answer()` accepts an explicit model name as a parameter rather
+  than always using the hardcoded `CHAT_MODEL` constant — a minimal, backward-compatible
+  signature change (default value stays `qwen3:30b-a3b`, so `app.py` and every existing
+  test/caller is unaffected)
+- [ ] Reuses T-031's harness and output format: each of the 15 questions is run through
+  **both** models with the **same retrieved chunks held identical** between the two runs,
+  so only the model varies, not the retrieved context
+- [ ] Output shows both models' answers and citations per question, clearly labeled by
+  model name, in the same human-gradable format T-031 established
+- [ ] Both models are called with the same explicit `num_ctx=16000` and the same
+  `prompt_eval_count`-vs-`num_ctx` truncation-risk check (`CLAUDE.md`'s hard rule) — `qwen3:
+  8b` doesn't get a silently different/default context window just because it's the
+  smaller model
+- [ ] Real run against the production store/Ollama completes all 15 questions × 2 models
+  with no unhandled exception; if switching between the two loaded models mid-run costs
+  real reload time (KB-003's original finding about this model pair), that cost is measured
+  and reported, not assumed away
+
+**Out of scope:** the retrieval-mode comparison (T-032); changing which model production
+(`app.py`) actually uses — it stays on `qwen3:30b-a3b`, D-005's chosen default.
+
+**Depends on:** T-031 (the harness), D-005 (the model pair).
+**Notes:** —
+
+---
+
+### T-032 — Comparison 1: date-aware retrieval vs plain similarity search on the same 15 real questions
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-032-date-aware-vs-plain-comparison`  ·  **Phase:** 3
+
+**Goal:** for each of the 15 real questions, both the real date-aware retrieval result and
+a plain (unfiltered, similarity-only) retrieval result are produced side by side — the
+comparison the whole project's central claim (`docs/GOAL.md`) rests on.
+
+**Why:** `docs/GOAL.md`'s core claim is that date-aware retrieval answers these three
+question types better than plain similarity search; `docs/PLAN.md`'s Phase 3 exit criteria
+names this comparison explicitly. Nothing in the codebase has run this comparison for real
+yet — T-021/T-022/T-027's own real testing exercised date-aware retrieval alone, never
+compared side by side against the plain-search alternative on the same questions.
+
+**Acceptance criteria**
+- [ ] Reuses T-031's harness: each question is run twice — once with the real resolved
+  `date_range`/`ranking` (date-aware, exactly as `app.py` behaves), once with
+  `date_range=None` and `ranking=False` forced (plain similarity search only) —
+  `vg09.retrieval.retrieve()`'s existing parameters already support both call shapes
+  directly, no new retrieval code needed
+- [ ] Output shows both arms' answers and citations per question, clearly labeled, so a
+  human can compare without cross-referencing two separate files
+- [ ] For the questions where date-awareness plausibly matters most (the explicit
+  window/ranking questions — F01–F07, F10, F11, F13, F15), both arms' retrieved sources'
+  real feed dates are visible in the output, not just the final answer prose — so a human
+  can see *why* the two arms differ, not just infer it
+- [ ] Real run against the production store/Ollama completes all 15 questions × 2 arms
+  with no unhandled exception
+- [ ] `docs/PLAN.md`'s Phase 3 "results table committed" exit criterion is satisfied by
+  committing the reviewed output once I have graded it against
+  `docs/eval-questions.md`'s facit — grading itself is my own manual step, out of
+  scope for this ticket to automate
+
+**Out of scope:** the model-size comparison (T-033); any change to `vg09.retrieval` itself
+— the plain-search arm is an existing call shape, not new code.
+
+**Depends on:** T-031 (the harness).
+**Notes:** —
+
+---
+
+### T-031 — Evaluation harness: run the 15 real questions, D-012's anchor explicit, human-gradable output
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-031-evaluation-harness`  ·  **Phase:** 3
+
+**Goal:** a script that runs all 15 of T-014's real questions through the real pipeline and
+produces each answer plus its resolved citations in a format a human can read straight
+through — no automated pass/fail verdict, no model-based grading. This is the shared
+foundation T-032 and T-033's comparisons both build on.
+
+**Why:** `docs/PLAN.md`'s Phase 3 exit criteria requires an evaluation script; my explicit
+instruction that grading is manual, against `docs/eval-questions.md`'s facit, never
+delegated to a model. D-012 requires the anchor be set explicitly wherever T-014's
+questions are re-run against the pipeline — this is exactly such a re-run.
+
+**Acceptance criteria**
+- [ ] Questions are loaded live from `docs/eval-questions.md` (not retyped), matching
+  T-021's established pattern (`re.finditer(r"^Fr[aå]ga (\d+): (.+)$", ...)`)
+- [ ] `today` is set explicitly via `vg09.store.latest_feed_date()` (D-012) once, at the
+  top of the run — not hardcoded to a specific date, not re-derived per question
+- [ ] For each question: `vg09.date_range.resolve_date_range()`/`detect_recency_ranking()`
+  resolve the real date range/ranking mode, `vg09.retrieval.retrieve()` returns the real
+  packed chunks, `vg09.answer.generate_answer()` produces the real answer, and
+  `vg09.citations.build_citations()` resolves its real citations — the exact same call
+  sequence `app.py` uses, against the real store/Ollama, not a synthetic fixture
+- [ ] Output is one human-readable file (Markdown) with one section per question, showing:
+  the question's F-number and text, the resolved date range/ranking mode, the full answer
+  text, and its resolved citations (title, feed date, url) — laid out so it can be read
+  straight through against `docs/eval-questions.md`'s facit without cross-referencing code
+- [ ] A real run against the production store/Ollama produces output for all 15 questions
+  with no unhandled exception (T-029's Ollama error handling gets its first real exercise
+  across 15 consecutive real calls, more exposure than any single UI question ever gave it)
+
+**Out of scope:** grading/scoring logic — I do this manually, by reading the
+output against the facit; the two comparison arms (T-032/T-033) — this ticket is the
+shared harness they both extend; committing any one specific run's output as "the" result
+— that's each comparison ticket's own concern once I have reviewed it.
+
+**Depends on:** T-014 (the real questions), T-021/T-022/T-023/T-024 (the pipeline this
+calls), D-012 (the anchor), T-029 (the error handling this harness will exercise for real).
+**Notes:** —
+
+---
+
 ### T-030 — Answers are always in English, regardless of the question's language
 
 **Status:** done

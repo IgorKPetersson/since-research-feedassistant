@@ -3,16 +3,22 @@
 Phases are gated. **Each phase ends at a checkpoint where the agent stops and I
 reviews.** Do not start phase N+1 without explicit go-ahead.
 
-**Phase 2 complete** (started 2026-09-19, closed 2026-09-20, by my explicit go-ahead
-both times). All of Phase 2's tickets (T-011, T-021–T-025, T-027, T-028) are `done`, its
+Phase 2 complete (started 2026-09-19, closed 2026-09-20, by my explicit go-ahead both
+times). All of Phase 2's tickets (T-011, T-021–T-025, T-027, T-028) are `done`, its
 checklist below is ticked, `grill-me` ran against the whole phase (2026-09-20) and every
 finding it raised was triaged and fixed (**T-029**: D-011→D-012's eval-anchor correction,
 `raise_for_status()` on the two Ollama call sites that lacked it, `app.py`'s override-
 contract reuse, citation-title escaping — one deferred to the risk register, `latest_
 feed_date()`'s double scan per interaction). **T-030** (D-013: answers always in English,
 regardless of question language) landed the same session, after the phase's own tickets
-were otherwise done. Phase 3 has not started — waits for explicit go-ahead, per this
-file's own gating rule above.
+were otherwise done.
+
+Current phase: **Phase 3** (started 2026-09-20, by my explicit go-ahead). Its ticket set
+is written (**T-031**–**T-036**), per this file's own "turn checkboxes into tickets when a
+phase starts" rule below — **none of them started yet**, per my explicit instruction:
+tickets only, no execution, until further direction. `docs/PLAN.md`'s own third Phase 3
+checklist item, "Report and presentation — run `defense-prep`," has **no ticket yet** — not
+forgotten, just not included in this round's explicit instruction.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
@@ -103,17 +109,24 @@ offline, one run catches up.
 **Exit criteria:** the three question types in `docs/GOAL.md` work end to end with sources —
 met, real browser smoke test against all three (T-025's ticket entry has the detail: F05
 "did X come up", F06 "what's new"/ranking, F02 "has Q progressed").
-**Checkpoint:** I review. Phase 3 has not started — waits for explicit go-ahead, per
-this file's gating rule at the top.
+**Checkpoint:** I reviewed 2026-09-20, `grill-me` ran, every finding triaged (T-029).
+Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead.
 
 ---
 
 ## Phase 3 — Prove and publish (week 3)
 
 - [ ] Evaluation script: date-aware vs plain retrieval, large vs small model. Results table
-  committed
-- [ ] README, Apache-2 `LICENSE`, and a fresh-clone test following the README only
-- [ ] Report and presentation — run `defense-prep`
+  committed — **T-031** (harness, D-012's anchor explicit, human-gradable output — grading
+  is manual, never a model), **T-032** (date-aware vs plain, `docs/GOAL.md`'s central
+  claim), **T-033** (`qwen3:30b-a3b` vs `qwen3:8b`, D-005's VRAM-differentiated pair)
+- [ ] README, Apache-2 `LICENSE`, and a fresh-clone test following the README only —
+  **T-034**, depends on **T-035** (project rename, "VG-09" → "research-feed-assistant" —
+  scoped to user-facing naming only; the `vg09` package/import path and the Chroma
+  `COLLECTION_NAME` stored-data identifier are explicitly out of scope, flagged for a
+  separate decision)
+- [ ] Report and presentation — run `defense-prep` — **no ticket yet**, not included in
+  this round's ticket-writing instruction (2026-09-20)
 
 **Exit criteria:** every item in the Definition of done in `docs/GOAL.md` is met.
 **Checkpoint:** I review. Project complete.
@@ -133,8 +146,8 @@ this file's gating rule at the top.
 | bge-m3 embeds broad conversational questions closer to spoken/YouTube-transcript text than to dense scientific HF abstracts, regardless of language - real, measured (T-022's re-run of T-014's 15 real questions): the same 5 HF papers ranked far outside a 60-candidate pool (600-1600 of 1971) for F14/F15's broad questions in *both* Swedish and English (rank barely moved, sometimes got worse in English), even though the abstracts literally contain the query's own topic words ("agent", "open-source") - ruling out translation as the cause | Confirmed, not hypothetical | **Not fixed** - this is a result to measure in Phase 3's date-aware-vs-plain evaluation, not a retrieval bug. If Phase 3's results look weak for HF-heavy questions, this register entry is why, before assuming the retrieval pipeline itself is broken |
 | T-024's positional citation resolution (`vg09.citations.build_citations()`) can't tell a real evidence citation apart from a bracketed number the model used descriptively - real, observed: a real F12 answer ("not mentioned") contained "reviewed all 38 sources (from `[1]` to `[38]`)", and both numbers were resolved as if they were cited evidence, producing 2 false-positive citations on a correct negative answer | Confirmed once, real; frequency unknown | **Not fixed** - deliberate, per explicit instruction not to force the model into a stricter citation format. Watch in Phase 3 whether false-positive citations cluster on negative/"not mentioned" answers specifically; a stricter format would trade this away against the reliability [Title, YYYY-MM-DD] never had (T-023's finding) |
 | Real RAG prompt (system + retrieved chunks + question) exceeds `num_ctx=16000`, silently dropping the **front** of the prompt with no error (KB-005) — if retrieved chunks are placed there, the exact evidence citations depend on vanishes with no signal | Low — measured, not estimated (T-008): system prompt 171 + question 40 + reasoning/answer 2000 (`num_predict` cap) leaves 13789 tokens, max top-k 34 at a 400-token chunk cap; see `docs/DESIGN.md` § Context budget | Resolved for chunk size/top-k via T-008's measured budget. Residual risk: the 400-token chunk cap is sized from HF abstracts only — no real YouTube transcript text exists yet (KB-008) to confirm chunking holds once T-015 backfills real transcripts. Prompt ordering (chunks least-relevant-first, system+question last) and a real per-call `prompt_eval_count` vs `num_ctx` check remain the defense-in-depth backstop |
-| `vg09/store.py` has no automated tests, but implements two of `CLAUDE.md`'s three hard rules (explicit `bge-m3`, explicit `num_ctx`) — a future refactor could silently drop either with nothing to catch it before a real run. Found by Phase 1's `grill-me` review (2026-09-19) | Low today (code hasn't changed since T-012 shipped it); rises with any future edit to `embed_batch()`/`chunk_metadata()` | Deferred to Phase 3, T-020's triage. Add a test asserting `embed_batch()`'s request body always includes `model="bge-m3"` and an explicit `num_ctx` before Phase 3 closes |
-| `vg09/youtube_backfill.py` (pacing, resumability, pending-retry, watermark-write-on-completion) has no automated tests — the riskiest orchestration code in the ingest pipeline, verified only by real production runs. Self-flagged in T-019's own notes, never followed up; found again by Phase 1's `grill-me` review (2026-09-19) | Low today (stable since T-019); rises if `run()` is ever changed without a real end-to-end run to catch a regression | Deferred to Phase 3, T-020's triage. Add a mocked resumability/pacing/watermark test before the next real change to `youtube_backfill.py` |
+| `vg09/store.py` has no automated tests, but implements two of `CLAUDE.md`'s three hard rules (explicit `bge-m3`, explicit `num_ctx`) — a future refactor could silently drop either with nothing to catch it before a real run. Found by Phase 1's `grill-me` review (2026-09-19) | Low today (code hasn't changed since T-012 shipped it); rises with any future edit to `embed_batch()`/`chunk_metadata()` | **T-036** (Phase 3, written 2026-09-20, not yet executed). Add a test asserting `embed_batch()`'s request body always includes `model="bge-m3"` and an explicit `num_ctx` |
+| `vg09/youtube_backfill.py` (pacing, resumability, pending-retry, watermark-write-on-completion) has no automated tests — the riskiest orchestration code in the ingest pipeline, verified only by real production runs. Self-flagged in T-019's own notes, never followed up; found again by Phase 1's `grill-me` review (2026-09-19) | Low today (stable since T-019); rises if `run()` is ever changed without a real end-to-end run to catch a regression | **T-036** (Phase 3, written 2026-09-20, not yet executed). Add a mocked resumability/pacing/watermark test |
 | `vg09/youtube.py::normalize()`'s Whisper branch catches bare `except Exception` — a real code defect in `fetch_whisper_transcript()` would be misreported as an ordinary Whisper failure and silently produce a weaker `title_description` document, with no alert. Self-flagged in D-010's own Cost section as an accepted, watched risk; found again by Phase 1's `grill-me` review (2026-09-19) | Low today (no known defect); D-010's own "would change our mind" clause already names the failure mode to watch for | Deferred to Phase 3, T-020's triage. Add a threshold alert on `fetched_fallback` counts (e.g. N consecutive full-fallback videos) per D-010's own suggestion |
 | F14's "God's Eye View"/Palantir YouTube citation (`docs/eval-questions.md`) is a softer fit for "stora AI-verktyg" than its Suno-alternative sibling citation — Palantir is a data/intel platform, not squarely an AI tool. Found by Phase 1's `grill-me` review (2026-09-19) | Low — the facit already accepts either citation, so this doesn't block grading | Deferred to Phase 3. If F14 is ever re-graded strictly, prefer the Suno-alternative (`9RtywbN--QE`) citation, or add a stronger second HF+YouTube pair |
 | `app.py` calls `vg09.store.latest_feed_date()` up to twice per UI interaction (once for the sidebar's manual-picker defaults when the checkbox is on, once for the actual question resolution) — each call is a full Chroma metadata scan (D-011/D-012's own accepted cost). Found by Phase 2's `grill-me` review (2026-09-20); explicitly deferred, not fixed, by my instruction when T-029 was scoped | Low today (~2000 chunks, cheap per D-012's Cost section); rises only if the corpus grows by orders of magnitude, same condition D-012 already names | Deferred, no ticket yet. If the corpus ever grows enough for this to matter, cache one `latest_feed_date()` result per script run (Streamlit reruns the whole script per interaction, so a plain module-level cache won't survive between runs — would need `st.session_state` or similar) |
