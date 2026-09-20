@@ -34,17 +34,21 @@ OLLAMA = "http://localhost:11434"
 # from 13803 - this reservation now costs 542 more tokens against the chunk budget).
 NUM_PREDICT = 2542
 
-# T-008's representative system prompt (scripts/t008_context_budget.py), with one
-# change (T-024): the citation instruction asked for [Title, YYYY-MM-DD] inline, but
-# a real end-to-end run (T-023) found the model doesn't follow that - it cites the
+# T-008's representative system prompt (scripts/t008_context_budget.py), with two
+# changes since. T-024: the citation instruction asked for [Title, YYYY-MM-DD] inline,
+# but a real end-to-end run (T-023) found the model doesn't follow that - it cites the
 # bracketed *source number* shown in the prompt instead ("source [27]"), matching the
 # numbering `number_sources()` already assigns for the prompt's own sake. Rather than
 # fighting that, the instruction now asks for exactly what it already does -
-# T-024 resolves those numbers back to real citations (vg09/citations.py). Re-measured
-# after this change: 157 qwen3 tokens (was 171) - docs/DESIGN.md's budget math and
-# CHUNK_BUDGET_TOKENS updated to match (13803, up from 13789 - more headroom, the safe
-# direction).
+# T-024 resolves those numbers back to real citations (vg09/citations.py). T-030/D-013:
+# answers are always in English regardless of the question's language - my explicit
+# decision, questions may still be asked in any language (bge-m3 handles that, T-006/
+# D-005 - unaffected by this prompt change). Re-measured after both changes: 173 qwen3
+# tokens (was 157 after T-024, 171 originally) - docs/DESIGN.md's budget math and
+# CHUNK_BUDGET_TOKENS updated to match.
 SYSTEM_PROMPT = """You are a research-feed assistant. You answer questions about Hugging Face Daily Papers and a set of YouTube channels the user follows, using ONLY the source excerpts provided below - never information from outside them or your own prior knowledge. If the sources don't contain the answer, say so plainly instead of guessing.
+
+Always answer in English, even if the question is asked in a different language.
 
 For every claim, cite the source using the bracketed number shown before it, like [3] - do not invent a different citation format.
 

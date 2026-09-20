@@ -72,6 +72,15 @@ class BuildUserMessageTests(unittest.TestCase):
         self.assertIn("Question: q", message)
 
 
+class SystemPromptTests(unittest.TestCase):
+    def test_english_answer_instruction_is_present(self):
+        """T-030/D-013: a deliberate, explicit language policy - answers are always
+        English regardless of the question's language - not left to whatever the
+        model happens to do by default. Asserted directly so a future prompt rewrite
+        can't silently drop it."""
+        self.assertIn("Always answer in English", SYSTEM_PROMPT)
+
+
 class GenerateAnswerTests(unittest.TestCase):
     def _run(self, chunks=None, **response_overrides):
         mock_resp = MagicMock()

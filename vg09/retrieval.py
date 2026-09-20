@@ -1,6 +1,6 @@
 """T-022: similarity search with an optional date-range filter or recency sort,
 packed to the current chunk budget (`CHUNK_BUDGET_TOKENS`, docs/DESIGN.md §
-"Context budget" - originally T-008's 13789, now T-028's 13261).
+"Context budget" - originally T-008's 13789, then T-028's 13261, now T-030's 13245).
 
 Two independent mechanisms (docs/DESIGN.md § "Filtering by date and sorting by date are
 two different mechanisms"):
@@ -29,18 +29,19 @@ CHAT_MODEL = "qwen3:30b-a3b"  # D-005
 NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUDE.md)
 
 # docs/DESIGN.md § "Remaining budget for retrieved chunks":
-# 16000 (num_ctx) - 157 (system prompt, T-024) - 40 (question) - 2542
-# (reasoning+answer, T-028 - raised from 2000 after a real truncation) = 13261
-CHUNK_BUDGET_TOKENS = 13261
+# 16000 (num_ctx) - 173 (system prompt, T-030 - the English-answer instruction added
+# 16 tokens over T-024's 157) - 40 (question) - 2542
+# (reasoning+answer, T-028 - raised from 2000 after a real truncation) = 13245
+CHUNK_BUDGET_TOKENS = 13245
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's original "34 = 13789 // 400" ceiling is now 13261 // 400 = 33
-# (T-028's NUM_PREDICT raise costs one worst-case chunk) - still a worst-case ceiling
-# (every chunk at the 400-token cap), not a target - packing here is purely
-# token-budget-driven, not chunk-count-driven, so a real candidate pool of
+# docs/DESIGN.md's original "34 = 13789 // 400" ceiling is now 13245 // 400 = 33
+# (unchanged since T-028's 13261 - both fall in the same 13200-13599 band) - still a
+# worst-case ceiling (every chunk at the 400-token cap), not a target - packing here is
+# purely token-budget-driven, not chunk-count-driven, so a real candidate pool of
 # smaller-than-cap chunks can (and in scripts/t022_verify_retrieval.py's real run,
 # did: 45) pack more than the ceiling while still safely fitting the budget.
 # CANDIDATE_POOL_SIZE is generous headroom over that

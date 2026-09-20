@@ -42,11 +42,16 @@ T-008's original draft system prompt tokenized to 171 qwen3 tokens. **Finalized 
 follow a "cite like [Title, YYYY-MM-DD]" instruction — it cites the bracketed *source
 number* shown in the prompt instead. The instruction now asks for exactly that (cite by
 number; T-024 resolves the number back to a real citation), which happens to be slightly
-shorter: **157 qwen3 tokens**, re-measured for real. Otherwise unchanged — answer only from
+shorter: 157 qwen3 tokens, re-measured for real. Otherwise unchanged — answer only from
 the provided sources, respect a date range implied by the question, stay concise. Three real
 questions, one per `docs/GOAL.md` question type, tokenized to 19, 21 and 22 tokens.
 **Reserved: 40 tokens** (rounded up from the observed max with headroom for a longer real
 question from T-014's eval set).
+
+**Amended by T-030/D-013:** an explicit "always answer in English, even if the question is
+asked in a different language" instruction was added — a deliberate language policy, not
+left to whatever the model happens to do by default (D-013). Re-measured for real after the
+change: **173 qwen3 tokens** (was 157).
 
 ### Reasoning + answer reservation
 
@@ -97,16 +102,17 @@ line item.
 
 ```
 16000 (num_ctx)
- -  157 (system prompt, T-024's finalized wording)
+ -  173 (system prompt, T-030's English-answer-instruction wording)
  -   40 (question, reserved)
  - 2542 (reasoning + answer, T-028's measured reservation)
- = 13261 tokens available for retrieved chunks
+ = 13245 tokens available for retrieved chunks
 ```
 
-(171/13789/2000/13803 in earlier tickets' own historical records, e.g. T-008/T-022/T-024's
-acceptance-criteria evidence, describe the numbers as they stood when those tickets closed —
-not rewritten after the fact; this section and `vg09.retrieval.CHUNK_BUDGET_TOKENS`/
-`vg09.answer.NUM_PREDICT` are the current, live numbers.)
+(171/13789/2000/13803/157/13261 in earlier tickets' own historical records, e.g.
+T-008/T-022/T-024/T-028's acceptance-criteria evidence, describe the numbers as they stood
+when those tickets closed — not rewritten after the fact; this section and
+`vg09.retrieval.CHUNK_BUDGET_TOKENS`/`vg09.answer.NUM_PREDICT` are the current, live
+numbers.)
 
 ### Chunk size and max top-k
 
@@ -141,12 +147,13 @@ no-punctuation auto-captions — see `scripts/t012_caption_token_calibration.py`
 350 of the 400-token cap. Re-check against real transcript-derived chunks once T-017
 unblocks and produces real captions.
 
-**Max top-k: 33** = `13261 // 400`, floored (T-028: down from 34, since raising
-`NUM_PREDICT` costs one worst-case chunk against the budget) — the number of 400-token
-chunks that provably fit the remaining budget in the worst case (every chunk at the cap). This is a
-ceiling, not a target: the real retrieval call should still request whatever top-k the
-retrieval design wants (likely far fewer than 34 for answer quality), with 34 only as the
-hard stop this budget allows.
+**Max top-k: 33** = `13245 // 400`, floored (T-028: down from 34, since raising
+`NUM_PREDICT` costs one worst-case chunk against the budget; unchanged again by T-030's
+smaller system-prompt cost — 13245 falls in the same 13200-13599 band as T-028's 13261) —
+the number of 400-token chunks that provably fit the remaining budget in the worst case
+(every chunk at the cap). This is a ceiling, not a target: the real retrieval call should
+still request whatever top-k the retrieval design wants (likely far fewer than 34 for
+answer quality), with 34 only as the hard stop this budget allows.
 
 ### What happens if retrieved chunks don't fit
 

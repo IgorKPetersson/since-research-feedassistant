@@ -14,6 +14,58 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-030 — Answers are always in English, regardless of the question's language
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-030-english-answers`  ·  **Phase:** 2
+
+**Goal:** the model always answers in English, whatever language the question was asked
+in - a deliberate, explicit language policy recorded as a decision and enforced in the
+system prompt, not left to whatever the model happens to do by default.
+
+**Why:** my explicit instruction, 2026-09-20. The project ships as OSS (Apache-2,
+`docs/GOAL.md`) and is meant to be usable internationally; its sources (HF Daily Papers
+abstracts, YouTube transcripts) are English. Questions must keep working in any language -
+`bge-m3`'s multilingual embedding already handles that (T-006, D-005) and this ticket
+doesn't touch it - only the answer's output language is being pinned down.
+
+**Acceptance criteria**
+- [x] A new decision (`D-013`) is recorded in `docs/DECISIONS.md`: answers are always
+  English; questions may be asked in any language → D-013, with the rejected alternative
+  (mirror the question's language) and cost spelled out
+- [x] `vg09.answer.SYSTEM_PROMPT` states the English-answer rule explicitly → new line,
+  "Always answer in English, even if the question is asked in a different language."
+- [x] The new system prompt's real qwen3 token count is re-measured (same method as
+  T-008/T-024 - `POST /api/generate`, `num_predict:1`, real `prompt_eval_count`), and
+  `docs/DESIGN.md`'s § Context budget and `vg09.retrieval.CHUNK_BUDGET_TOKENS` are updated
+  to match if the count changed → real measurement: **173 qwen3 tokens** (was 157).
+  `CHUNK_BUDGET_TOKENS` 13261 → 13245; max top-k unchanged at 33 (same 400-token band);
+  `docs/DESIGN.md`'s Context budget section and `vg09/retrieval.py`'s comments updated
+- [x] A unit test asserts the English-answer instruction is present in `SYSTEM_PROMPT`, so
+  a future prompt rewrite can't silently drop it →
+  `tests/test_answer.py::SystemPromptTests::test_english_answer_instruction_is_present`,
+  111/111 tests pass
+- [x] A real end-to-end call (not just the static prompt text) confirms a Swedish question
+  produces an English answer, against the real store/Ollama →
+  `scripts/t030_verify_english_answer.py`, real run against the production store/Ollama:
+  two real Swedish questions ("Vad har hänt med AI-agenter den senaste veckan?", "Har
+  Palantir nämnts i någon video?") both produced fluent English answers, citing real
+  sources by number as usual - questions still work in Swedish (T-006/D-005's multilingual
+  embedding, untouched), only the answer's language changed
+
+**Out of scope:** changing how questions are parsed/embedded (already language-agnostic,
+T-006/D-005); translating citation titles or source excerpts (they stay as the source
+wrote them).
+
+**Depends on:** T-023 (owns `SYSTEM_PROMPT`), T-006/D-005 (`bge-m3`'s multilingual
+embedding, unaffected by this ticket).
+**Notes:** D-013 flags one residual, unresolved-here consequence: `docs/eval-questions.md`'s
+facit is written and graded in Swedish - a strict Phase 3 re-grading against this decision
+would need to expect an English answer even though the facit's own descriptive text stays
+Swedish. Not rewritten as part of this ticket; left for whoever next re-runs that eval set.
+
+---
+
 ### T-029 — Fix the four grill-me findings from the Phase 2 review
 
 **Status:** done

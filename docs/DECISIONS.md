@@ -548,6 +548,60 @@ appropriate again - not the situation today.
 
 ---
 
+## D-013 — Answers are always in English; questions may be asked in any language
+**Status:** accepted
+
+**Decision:** `vg09.answer.SYSTEM_PROMPT` (T-023/T-024) explicitly instructs the model to
+answer in English regardless of the language the question was asked in - "Always answer in
+English, even if the question is asked in a different language." This applies only to the
+answer's output language. The question side is unaffected and unchanged: a question can
+still be asked in any language, because `bge-m3`'s embedding (D-005) is multilingual by
+construction and already retrieves correctly across languages - verified for real in T-006
+and exercised throughout T-014's eval set, which deliberately includes Swedish questions
+(F01-F15 are all written in Swedish) retrieving correctly against English-language sources.
+This decision pins down the *answer's* language explicitly, in code, rather than leaving it
+to whatever the model happens to do by default when the question and sources are in
+different languages from each other.
+
+**Why:** my explicit instruction (2026-09-20): the project ships as OSS under Apache-2
+(`docs/GOAL.md` §"Definition of done": public GitHub repo with an Apache-2 `LICENSE`) and
+is meant to be usable internationally, not just by Swedish speakers - the international-
+usability framing is my own stated rationale for this decision, not something
+`docs/GOAL.md` already said outright; recorded here so it isn't lost. Its sources (HF Daily
+Papers abstracts, YouTube transcripts) are themselves English, so an
+English answer stays closest to the source material's own wording rather than requiring a
+lossy translation step the model would have to perform silently and unverifiably. Without
+an explicit instruction, a Qwen3 chat model's default behavior is to mirror the question's
+own language (observed informally across this project's own real runs, e.g. T-028's Swedish
+example question producing a Swedish answer) - correct for a single-user Swedish deployment,
+wrong for an internationally-usable OSS project, and not something to leave to chance.
+
+**Rejected:** Detecting the question's language and answering in kind (mirror the question)
+- rejected because it's exactly the *opposite* of what OSS usability needs here: a
+non-Swedish-speaking contributor or user asking a question in their own language would get
+an answer in that language too, unreadable to anyone else evaluating or reviewing the
+project's output regardless of who asked. Translating each source excerpt into the
+question's language before generation - rejected as unnecessary complexity and a new,
+unverified translation-quality risk; the sources are already English, and D-013 only pins
+the answer's language, not a requirement to translate evidence text.
+
+**Cost:** The English-answer instruction adds 16 real qwen3 tokens to `SYSTEM_PROMPT`
+(173, up from T-024's 157, re-measured for real via the same `num_predict:1` method
+T-008/T-024 used) - `docs/DESIGN.md`'s budget math and `vg09.retrieval.CHUNK_BUDGET_TOKENS`
+updated to match (13245, down from 13261). Max top-k stays 33 (13245 // 400 - the same
+400-token band as 13261's 33, so no further consequence). T-014's eval facit
+(`docs/eval-questions.md`) is written and graded in Swedish - a strict re-grading against
+this decision would need a note that a passing answer is now expected in English even
+though the facit's own descriptive text stays Swedish; not rewritten here, flagged for
+whoever next re-runs or re-grades that eval set (Phase 3).
+
+**Would change our mind:** If the project's actual userbase turns out to be exclusively or
+overwhelmingly Swedish-speaking and English answers create real friction - not the
+situation this decision is made for (OSS/Apache-2 public repo, explicit international-
+usability intent per my own stated reasoning above).
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 
