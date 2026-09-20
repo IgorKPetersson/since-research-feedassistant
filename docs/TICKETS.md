@@ -274,7 +274,7 @@ compared side by side against the plain-search alternative on the same questions
 
 ### T-031 — Evaluation harness: run the 15 real questions, D-012's anchor explicit, human-gradable output
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-031-evaluation-harness`  ·  **Phase:** 3
 
 **Goal:** a script that runs all 15 of T-014's real questions through the real pipeline and
@@ -288,31 +288,68 @@ delegated to a model. D-012 requires the anchor be set explicitly wherever T-014
 questions are re-run against the pipeline — this is exactly such a re-run.
 
 **Acceptance criteria**
-- [ ] Questions are loaded live from `docs/eval-questions.md` (not retyped), matching
-  T-021's established pattern (`re.finditer(r"^Fr[aå]ga (\d+): (.+)$", ...)`)
-- [ ] `today` is set explicitly via `vg09.store.latest_feed_date()` (D-012) once, at the
-  top of the run — not hardcoded to a specific date, not re-derived per question
-- [ ] For each question: `vg09.date_range.resolve_date_range()`/`detect_recency_ranking()`
+- [x] Questions are loaded live from `docs/eval-questions.md` (not retyped), matching
+  T-021's established pattern (`re.finditer(r"^Fr[aå]ga (\d+): (.+)$", ...)`) →
+  `scripts/t031_evaluation_harness.py::load_questions_with_facit()`, also parses each
+  question's full facit block (everything under its own `### Fråga NN` heading) live from
+  the same file, per my explicit format instruction (see Notes)
+- [x] `today` is set explicitly via `vg09.store.latest_feed_date()` (D-012) once, at the
+  top of the run — not hardcoded to a specific date, not re-derived per question → real
+  run anchored at **2026-09-17**
+- [x] For each question: `vg09.date_range.resolve_date_range()`/`detect_recency_ranking()`
   resolve the real date range/ranking mode, `vg09.retrieval.retrieve()` returns the real
   packed chunks, `vg09.answer.generate_answer()` produces the real answer, and
   `vg09.citations.build_citations()` resolves its real citations — the exact same call
-  sequence `app.py` uses, against the real store/Ollama, not a synthetic fixture
-- [ ] Output is one human-readable file (Markdown) with one section per question, showing:
+  sequence `app.py` uses, against the real store/Ollama, not a synthetic fixture → done,
+  identical call sequence
+- [x] Output is one human-readable file (Markdown) with one section per question, showing:
   the question's F-number and text, the resolved date range/ranking mode, the full answer
   text, and its resolved citations (title, feed date, url) — laid out so it can be read
   straight through against `docs/eval-questions.md`'s facit without cross-referencing code
-- [ ] A real run against the production store/Ollama produces output for all 15 questions
-  with no unhandled exception (T-029's Ollama error handling gets its first real exercise
-  across 15 consecutive real calls, more exposure than any single UI question ever gave it)
+  → extended per my explicit instruction mid-ticket: each section also reproduces the
+  facit's own "Bedömningskriterier"/"Förväntade källor" text verbatim immediately below the
+  real answer, plus a `☐ Godkänt ☐ Fel` line, so grading needs zero cross-referencing
+- [x] A real run against the production store/Ollama produces output for all 15 questions
+  with no unhandled exception → **15/15**, written to
+  `data/eval_results/2026-09-20-2004-t031-harness.md` (gitignored, `data/`) — first attempt
+  hit a real `ReadTimeout` on F03's `/api/chat` call after 300s (transient — a clean retry
+  completed all 15 with no error)
+
+**Real, significant finding from this run, not fixed here (out of scope for the harness
+ticket itself):** **F07's real answer came back completely empty**, `done_reason=="length"`
+— worse than T-028's original truncation (which at least produced partial text). Root
+cause investigated, not just observed: `vg09.retrieval.pack_to_budget()` measures each
+candidate's token cost via `count_qwen_tokens(c.text)` — the chunk's *bare* text only.
+`vg09.answer._format_source()` then wraps every packed chunk in `"[N] {title} ({url}, feed
+date {date})\n{text}"` before it's actually sent to the model — real title/url/date text
+that was never counted during packing. For F07 (44 packed chunks), real
+`prompt_eval_count` was **15349** — 1891 tokens over the ~13458 the budget math
+(`173+40+13245`) assumes as an upper bound, roughly 43 tokens/chunk of uncounted citation-
+wrapper overhead. That 1891-token overrun ate directly into the 2542-token
+reasoning+answer reservation (16000-15349=651 tokens of real headroom left, not 2542),
+leaving nothing for the answer once reasoning alone consumed what was left. This is a
+**structural undercount in the packing budget, present since T-008/T-022's original
+design** — not unique to F07, just usually not severe enough to visibly fail. Five
+other questions in this same run (F01, F03, F06, F07, F08) logged a real `close to
+num_ctx` warning (95-97% of 16000) via the existing hard-rule check, consistent with this
+same undercount. **Not fixed as part of T-031** — flagged for me to decide how to
+address (e.g. `count_qwen_tokens()` measuring the formatted source string instead of bare
+`c.text`, which would require re-deriving `CHUNK_BUDGET_TOKENS` again, T-008/T-028-style).
 
 **Out of scope:** grading/scoring logic — I do this manually, by reading the
 output against the facit; the two comparison arms (T-032/T-033) — this ticket is the
 shared harness they both extend; committing any one specific run's output as "the" result
-— that's each comparison ticket's own concern once I have reviewed it.
+— that's each comparison ticket's own concern once I have reviewed it; fixing the
+packing-budget undercount finding above.
 
 **Depends on:** T-014 (the real questions), T-021/T-022/T-023/T-024 (the pipeline this
 calls), D-012 (the anchor), T-029 (the error handling this harness will exercise for real).
-**Notes:** —
+**Notes:** The output format was extended beyond this ticket's original acceptance
+criteria (facit block reproduced verbatim per question, plus a grading checkbox line) by
+my explicit instruction given right before execution — the criteria above already
+reflect the extended, actually-built format, not the original narrower one, per this
+project's rule that an in-progress ticket's drift gets a Notes line rather than silent
+acceptance-criteria rewriting.
 
 ---
 
