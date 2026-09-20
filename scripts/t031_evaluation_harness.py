@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -77,13 +78,21 @@ def render_question(n: int, question: str, facit: str) -> str:
     ranking = detect_recency_ranking(question)
 
     retrieval = retrieve(question, date_range=date_range, ranking=ranking)
+    start = time.monotonic()
     result = generate_answer(question, retrieval.chunks)
+    elapsed = time.monotonic() - start
     citations = build_citations(result.answer, result.source_map)
+
+    pct = 100 * result.prompt_eval_count / 16000
+    print(f"    prompt_eval_count={result.prompt_eval_count} ({pct:.0f}% of num_ctx)  "
+          f"generate_answer elapsed={elapsed:.1f}s  done_reason={result.done_reason}")
 
     lines = [f"## Fråga {n:02d}", "", f"**Fråga:** {question}", ""]
     lines.append(f"**Tolkat läge:** {describe_mode(date_range, ranking)}")
     lines.append(f"**Kandidater övervägda:** {retrieval.candidates_considered}  ·  "
                  f"**Chunks paketerade:** {len(retrieval.chunks)}  ·  "
+                 f"**prompt_eval_count:** {result.prompt_eval_count} ({pct:.0f}% av num_ctx)  ·  "
+                 f"**svarstid:** {elapsed:.1f}s  ·  "
                  f"**done_reason:** {result.done_reason}"
                  + (" ⚠ OFULLSTÄNDIGT" if result.incomplete else ""))
     lines.append("")

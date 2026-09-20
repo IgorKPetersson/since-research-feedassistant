@@ -18,6 +18,7 @@ from vg09.retrieval import (
     Candidate,
     count_qwen_tokens,
     dedup_by_doc,
+    format_source,
     order_candidates,
     pack_to_budget,
     query_candidates,
@@ -26,11 +27,33 @@ from vg09.retrieval import (
 
 
 def make_candidate(id_: str, text: str, feed_date_ordinal: int) -> Candidate:
-    return Candidate(id=id_, text=text, metadata={"feed_date_ordinal": feed_date_ordinal})
+    # T-038: title/url/feed_date are always present on a real chunk's metadata
+    # (vg09.store.chunk_metadata() sets them unconditionally) - included here so
+    # pack_to_budget()'s real format_source() call doesn't KeyError in tests.
+    return Candidate(
+        id=id_,
+        text=text,
+        metadata={
+            "feed_date_ordinal": feed_date_ordinal,
+            "title": f"Title {id_}",
+            "url": f"https://example.com/{id_}",
+            "feed_date": "2026-09-16",
+        },
+    )
 
 
 def make_doc_candidate(chunk_id: str, doc_id: str) -> Candidate:
-    return Candidate(id=chunk_id, text=chunk_id, metadata={"doc_id": doc_id, "feed_date_ordinal": 0})
+    return Candidate(
+        id=chunk_id,
+        text=chunk_id,
+        metadata={
+            "doc_id": doc_id,
+            "feed_date_ordinal": 0,
+            "title": f"Title {doc_id}",
+            "url": f"https://example.com/{doc_id}",
+            "feed_date": "2026-09-16",
+        },
+    )
 
 
 class OrderCandidatesTests(unittest.TestCase):
@@ -89,6 +112,17 @@ class DedupByDocTests(unittest.TestCase):
         self.assertEqual(dedup_by_doc([]), [])
 
 
+class FormatSourceTests(unittest.TestCase):
+    def test_includes_number_title_url_feed_date_and_text(self):
+        c = make_candidate("c1", "the chunk body", 0)
+        result = format_source(c, 7)
+        self.assertIn("[7]", result)
+        self.assertIn(c.metadata["title"], result)
+        self.assertIn(c.metadata["url"], result)
+        self.assertIn(c.metadata["feed_date"], result)
+        self.assertIn("the chunk body", result)
+
+
 class PackToBudgetTests(unittest.TestCase):
     def test_packs_until_budget_would_be_exceeded_then_stops(self):
         candidates = [make_candidate(str(i), f"text{i}", 0) for i in range(5)]
@@ -115,6 +149,24 @@ class PackToBudgetTests(unittest.TestCase):
     def test_empty_candidate_list_packs_to_nothing(self):
         packed, total, dropped = pack_to_budget([], budget_tokens=100)
         self.assertEqual((packed, total, dropped), ([], 0, []))
+
+    def test_measures_the_real_formatted_source_not_bare_text(self):
+        """T-038: pack_to_budget() previously measured count_qwen_tokens(c.text) alone -
+        the chunk's bare document text - while the real prompt
+        (vg09.answer.build_user_message()) wraps every chunk in
+        "[N] Title (url, feed date)\\n{text}" before sending it to the model. That
+        wrapper text was never counted, which let a real prompt (T-031's F07) exceed
+        the budget silently. This asserts the real formatted string - not bare text -
+        is what actually gets measured."""
+        candidate = make_candidate("c1", "the raw chunk body", 0)
+        with patch("vg09.retrieval.count_qwen_tokens", return_value=10) as mock_count:
+            pack_to_budget([candidate], budget_tokens=1000)
+        measured_text = mock_count.call_args.args[0]
+        self.assertIn("the raw chunk body", measured_text)
+        self.assertIn(candidate.metadata["title"], measured_text)
+        self.assertIn(candidate.metadata["url"], measured_text)
+        self.assertIn(candidate.metadata["feed_date"], measured_text)
+        self.assertNotEqual(measured_text, candidate.text)
 
 
 class CountQwenTokensTests(unittest.TestCase):
@@ -202,8 +254,12 @@ class RetrieveIntegrationTests(unittest.TestCase):
             "documents": [["new text", "old text"]],
             "metadatas": [
                 [
-                    {"feed_date_ordinal": 200, "doc_id": "doc_newer"},
-                    {"feed_date_ordinal": 100, "doc_id": "doc_older"},
+                    {"feed_date_ordinal": 200, "doc_id": "doc_newer",
+                     "title": "Newer", "url": "https://example.com/newer",
+                     "feed_date": "2026-09-16"},
+                    {"feed_date_ordinal": 100, "doc_id": "doc_older",
+                     "title": "Older", "url": "https://example.com/older",
+                     "feed_date": "2026-09-10"},
                 ],
             ],
         }
@@ -229,10 +285,14 @@ class RetrieveIntegrationTests(unittest.TestCase):
             "ids": [["video:0", "video:1", "video:2", "paper:0"]],
             "documents": [["v0", "v1", "v2", "p0"]],
             "metadatas": [[
-                {"feed_date_ordinal": 100, "doc_id": "video"},
-                {"feed_date_ordinal": 100, "doc_id": "video"},
-                {"feed_date_ordinal": 100, "doc_id": "video"},
-                {"feed_date_ordinal": 100, "doc_id": "paper"},
+                {"feed_date_ordinal": 100, "doc_id": "video",
+                 "title": "Video", "url": "https://example.com/video", "feed_date": "2026-09-16"},
+                {"feed_date_ordinal": 100, "doc_id": "video",
+                 "title": "Video", "url": "https://example.com/video", "feed_date": "2026-09-16"},
+                {"feed_date_ordinal": 100, "doc_id": "video",
+                 "title": "Video", "url": "https://example.com/video", "feed_date": "2026-09-16"},
+                {"feed_date_ordinal": 100, "doc_id": "paper",
+                 "title": "Paper", "url": "https://example.com/paper", "feed_date": "2026-09-16"},
             ]],
         }
         with (

@@ -132,41 +132,76 @@ measured on the same real text rather than assumed equal. Neither ceiling comes 
 close to bge-m3's own 8192-token embedding limit at this chunk size, so bge-m3's window is
 not the binding constraint here.
 
-**Chunk size: capped at 400 qwen3 tokens.** A whole HF Daily Papers abstract is a natural
-chunk unit and already fits this cap with room to spare (max observed 363). This cap is a
-hard requirement on T-012's chunking, not just a description of HF's abstracts: a YouTube
-transcript is not naturally this short, so T-012 splits transcripts into timestamp-based
-windows (§ below) rather than embedding a whole transcript as one chunk.
+**Chunk size: capped at 400 qwen3 tokens** for a chunk's own *document text* — but this is
+no longer the whole story once a chunk is actually packed into a prompt (see the T-038
+correction immediately below). A whole HF Daily Papers abstract is a natural chunk unit and
+already fits this cap with room to spare in general (median 307, though a real production
+chunk was later found at 405 — see T-038 below; this cap bounds T-012's chunking target,
+not a hard per-chunk assertion). This cap is a hard requirement on T-012's chunking, not
+just a description of HF's abstracts: a YouTube transcript is not naturally this short, so
+T-012 splits transcripts into timestamp-based windows (§ below) rather than embedding a
+whole transcript as one chunk.
 **HF confirmed (T-012):** one chunk per paper (the whole abstract) — real production run,
-1184 real chunks, all comfortably under the cap by construction (same 20-abstract
-distribution T-008 measured). **YouTube still an estimate:** this project has no real
-YouTube transcript text yet (`IpBlocked` since T-009, KB-008) — T-012's YouTube chunk-size
-target is calibrated from a real qwen3 tokenizer measurement against *synthetic*
-caption-style text (real English text, lowercased/depunctuated to mimic KB-001's
-no-punctuation auto-captions — see `scripts/t012_caption_token_calibration.py`), targeting
-350 of the 400-token cap. Re-check against real transcript-derived chunks once T-017
-unblocks and produces real captions.
+1184 real chunks, essentially all under the cap by construction (same 20-abstract
+distribution T-008 measured; T-038 later found one real chunk at 405, 5 over the nominal
+cap — the abstract-based chunking target, not an enforced hard ceiling). **YouTube still an
+estimate:** this project has no real YouTube transcript text yet (`IpBlocked` since T-009,
+KB-008) — T-012's YouTube chunk-size target is calibrated from a real qwen3 tokenizer
+measurement against *synthetic* caption-style text (real English text,
+lowercased/depunctuated to mimic KB-001's no-punctuation auto-captions — see
+`scripts/t012_caption_token_calibration.py`), targeting 350 of the 400-token cap. Re-check
+against real transcript-derived chunks once T-017 unblocks and produces real captions.
 
-**Max top-k: 33** = `13245 // 400`, floored (T-028: down from 34, since raising
-`NUM_PREDICT` costs one worst-case chunk against the budget; unchanged again by T-030's
-smaller system-prompt cost — 13245 falls in the same 13200-13599 band as T-028's 13261) —
-the number of 400-token chunks that provably fit the remaining budget in the worst case
-(every chunk at the cap). This is a ceiling, not a target: the real retrieval call should
-still request whatever top-k the retrieval design wants (likely far fewer than 34 for
-answer quality), with 34 only as the hard stop this budget allows.
+**T-038 correction — the packing budget under-counted every real chunk's actual prompt cost
+since T-008.** A packed chunk isn't sent to the model as its bare 400-token-capped document
+text alone: `vg09.retrieval.format_source()` (used identically by both packing-time
+measurement and real prompt construction, since T-038) wraps it in
+`"[N] {title} ({url}, feed date {date})\n{text}"` first — real citation-number, title, url
+and date text that the original packing measurement (`count_qwen_tokens(c.text)` alone)
+never counted. Real measurement against the production store
+(`scripts/t038_measure_wrapper_overhead.py`) found this wrapper costs **41-83 real qwen3
+tokens per chunk** — 41 for the shortest real title in the store, 83 for the longest (189
+real characters: "Specification-first convergence with an AI coding agent: a case study
+of..."), dominated by the fixed-ish `https://huggingface.co/papers/...`/`https://
+www.youtube.com/watch?v=...` URL length even for a short title, not negligible either way.
+This is why a real question (T-031's F07, 44 packed chunks) could reach a real
+`prompt_eval_count` of 15349 — far more than the ~13458 the budget math assumed as an upper
+bound — silently eating into the reasoning+answer reservation and leaving the real answer
+empty. See KB-018.
+
+**`CHUNK_BUDGET_TOKENS`'s own reservation formula did not need to change** — `16000-173-40-
+2542=13245` was always the correct answer to "how many tokens are left over for whatever
+gets packed"; the bug was in what packing *thought* a chunk cost, not in this arithmetic.
+`vg09.retrieval.pack_to_budget()` now measures each candidate's real formatted cost
+directly (`count_qwen_tokens(format_source(c, ...))`), so it naturally packs fewer chunks
+per question and the real total sent to the model correctly stays within 13245 — no
+separate "recomputed budget constant" was needed once the measurement itself was fixed.
+
+**Max top-k: 27** = `13245 // 488`, floored — **corrected from the previous 33**
+(`13245 // 400`, which assumed zero wrapper overhead). 488 is the real worst-case chunk
+cost actually observed in the production store (`scripts/t038_measure_wrapper_overhead.py`):
+405 (a real chunk's own document text, itself already over the nominal 400 cap) + 83 (that
+same chunk's real wrapper overhead) = 488. This is a ceiling, not a target: the real
+retrieval call should still request whatever top-k the retrieval design wants (likely far
+fewer than 27 for answer quality), with 27 only as the hard stop this budget allows. A
+future re-ingestion with an even longer real title could push this real worst case higher
+still — re-measure with `scripts/t038_measure_wrapper_overhead.py` if that's ever suspected,
+rather than assuming 488 holds forever.
 
 ### What happens if retrieved chunks don't fit
 
-34 is a worst-case ceiling, not a promise that any given top-k will fit — a bug in T-012's
+27 is a worst-case ceiling, not a promise that any given top-k will fit — a bug in T-012's
 chunking, or a chunk that slipped past the 400-token cap, could still produce a set of
 chunks that doesn't. The answer-generation code (Phase 2, but binding on how T-012 exposes
 chunks) must:
 
-1. **Pack chunks by real measured token count, not by count alone.** Sum each candidate
-   chunk's real qwen3 token count (same `num_predict:1` technique) in relevance-descending
-   order, and stop adding once the running total would exceed the chunk budget (13261,
-   `vg09.retrieval.CHUNK_BUDGET_TOKENS`) — regardless of whether that happens before or
-   after 33 chunks.
+1. **Pack chunks by the real measured cost of what actually gets sent to the model, not by
+   count and not by bare document text alone (T-038).** Sum each candidate's real qwen3
+   token count of its full formatted source text (`vg09.retrieval.format_source()` —
+   citation number, title, url, feed date, and the chunk's own text, exactly as it will
+   appear in the real prompt) in relevance-descending order, and stop adding once the
+   running total would exceed the chunk budget (13245, `vg09.retrieval.CHUNK_BUDGET_TOKENS`)
+   — regardless of whether that happens before or after 27 chunks.
 2. **Order the assembled prompt so the least-recoverable content is added last, not
    first.** KB-005: content beyond `num_ctx` is silently dropped from the **front**, with no
    error. So the prompt is built as `[chunks, least-relevant-first] + [system prompt] +

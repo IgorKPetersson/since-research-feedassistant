@@ -14,6 +14,100 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-038 — Fix the packing-budget undercount T-031 found: measure the real formatted source string, not bare chunk text
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-038-fix-packing-budget-undercount`  ·  **Phase:** 3
+
+**Goal:** `pack_to_budget()` measures the *real* token cost of what actually gets sent to
+the model for each chunk — including the `"[N] Title (url, feed date)\n"` wrapper
+`vg09.answer._format_source()` adds — so the packed prompt can never silently exceed the
+budget the way it did for T-031's real F07 run.
+
+**Why:** T-031's real run found `pack_to_budget()` measures only `count_qwen_tokens(c.text)`
+— the chunk's bare document text — while `vg09.answer._format_source()` wraps every packed
+chunk in real title/url/feed-date text before it's actually sent to the model, uncounted.
+For F07 (44 packed chunks), real `prompt_eval_count` was 15349 — 1891 tokens over the
+~13458 the budget math assumes — which ate directly into the 2542-token reasoning+answer
+reservation and left F07's real answer completely empty (`done_reason=="length"`). This is
+a structural gap present since T-008/T-022's original design, not unique to F07 — five
+other questions in the same run logged a real "close to num_ctx" warning (95-97%),
+consistent with the same undercount. Must land before **T-032** (date-aware vs plain
+retrieval comparison), which would otherwise compare two arms against a broken shared
+budget and produce untrustworthy results either way.
+
+**Acceptance criteria**
+- [x] The exact formatting logic that turns a packed chunk into its real prompt text
+  (`"[N] Title (url, feed date)\n{text}"`) lives in one place, reused by both the real
+  token-counting during packing and the real prompt construction at generation time — not
+  two copies that can drift apart → `vg09.answer._format_source()` moved to
+  `vg09.retrieval.format_source()` (public); `vg09.answer.build_user_message()` imports and
+  reuses it
+- [x] `pack_to_budget()` measures `count_qwen_tokens()` against that real formatted string
+  for each candidate, not `c.text` alone → `PACKING_PLACEHOLDER_SOURCE_NUMBER = 99`
+  (2-digit, matching the real range seen in production — up to 45 packed chunks — so the
+  placeholder's own token cost is a close, very slightly conservative stand-in for whatever
+  the real final number turns out to be)
+- [x] `docs/DESIGN.md`'s § Context budget is corrected → stated plainly:
+  `CHUNK_BUDGET_TOKENS`'s top-level arithmetic (`16000-173-40-2542=13245`) did **not** need
+  to change — the reservation formula was always correct, only the per-chunk measurement
+  was wrong. What needed re-deriving: the "max top-k" ceiling, corrected from
+  `13245 // 400 = 33` to **`13245 // 488 = 27`**, where 488 is a real measured worst-case
+  chunk (`scripts/t038_measure_wrapper_overhead.py` against the production store: 405 bare
+  tokens + 83 real wrapper tokens, the longest real title in the store)
+- [x] A new KB entry records the finding → **KB-018**: the packing budget has under-counted
+  the real prompt sent to the model since T-008 (real overhead measured at 41-83
+  tokens/chunk), and F07 (T-031) was the first real question to actually tip over it
+- [x] Existing unit tests updated (`make_candidate()`/`make_doc_candidate()` fixtures and
+  inline integration-test metadata gained real `title`/`url`/`feed_date`) and a new test
+  (`test_measures_the_real_formatted_source_not_bare_text`) directly asserts
+  `pack_to_budget()` measures the formatted string, not bare `c.text` — plus a direct
+  `FormatSourceTests` class for the moved function. 113/113 tests pass
+- [x] Real re-verification: all 15 real questions re-run through T-031's harness after the
+  fix (`data/eval_results/2026-09-20-2043-t031-harness.md`) → **15/15 `done_reason==
+  "stop"`, zero empty answers, zero `length` truncations.** Max real `prompt_eval_count`:
+  13005 (F03, **81%** of 16000) — comfortably under the 90% (14400) threshold. Full
+  per-question numbers in Notes
+- [x] The real 300-second `ReadTimeout` checked against real elapsed call times from the
+  re-verification run → real elapsed `generate_answer()` times ranged **7.7s-18.4s** across
+  all 15 questions, ~16x margin under 300s even at the slowest. **Recommendation: leave it
+  at 300s** — the one real `ReadTimeout` seen (T-031's first attempt, F03) does not look
+  like an undersized timeout given this run's real numbers; far more consistent with a
+  transient hiccup (GPU/network) than genuine near-300s generation time. Not changed
+
+**Out of scope:** re-deriving `NUM_PREDICT`/the reasoning+answer reservation itself (T-028's
+own settled measurement, unaffected by this bug); the two comparison tickets (T-032/T-033)
+— they resume now that this has landed.
+
+**Depends on:** T-022 (owns `pack_to_budget()`), T-023 (owns `_format_source()`), T-031
+(found this for real).
+**Notes:** Real per-question `prompt_eval_count` / elapsed time from the post-fix
+re-verification run, `today=2026-09-17` (D-012):
+
+| Fråga | prompt_eval_count | % of num_ctx | elapsed | done_reason |
+|---|---|---|---|---|
+| F01 | 12826 | 80% | 16.4s | stop |
+| F02 | 12870 | 80% | 13.5s | stop |
+| F03 | 13005 | 81% | 17.4s | stop |
+| F04 | 7936 | 50% | 10.6s | stop |
+| F05 | 9634 | 60% | 10.4s | stop |
+| F06 | 12701 | 79% | 15.5s | stop |
+| F07 | 12748 | 80% | 18.4s | stop |
+| F08 | 12794 | 80% | 8.4s | stop |
+| F09 | 12824 | 80% | 7.7s | stop |
+| F10 | 7455 | 47% | 9.8s | stop |
+| F11 | 11216 | 70% | 15.6s | stop |
+| F12 | 12860 | 80% | 12.0s | stop |
+| F13 | 9699 | 61% | 11.2s | stop |
+| F14 | 12906 | 81% | 13.6s | stop |
+| F15 | 7782 | 49% | 10.1s | stop |
+
+F07 specifically (the question that came back completely empty before this fix): real
+answer is now a full, well-formed 3-paragraph response citing 5 real sources, chunks
+packed dropped from 44 (buggy, over-budget) to 37 (correct, within the real 13245 budget).
+
+---
+
 ### T-037 — Open Phase 3: PLAN updates and the Phase 3 ticket set
 
 **Status:** done
@@ -335,6 +429,8 @@ num_ctx` warning (95-97% of 16000) via the existing hard-rule check, consistent 
 same undercount. **Not fixed as part of T-031** — flagged for me to decide how to
 address (e.g. `count_qwen_tokens()` measuring the formatted source string instead of bare
 `c.text`, which would require re-deriving `CHUNK_BUDGET_TOKENS` again, T-008/T-028-style).
+**Fixed in T-038**, same session — see that ticket's own entry (KB-018) for the real root
+cause and the re-verification evidence.
 
 **Out of scope:** grading/scoring logic — I do this manually, by reading the
 output against the facit; the two comparison arms (T-032/T-033) — this ticket is the

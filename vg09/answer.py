@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import requests
 
 from vg09.llm import split_reasoning_and_answer
-from vg09.retrieval import CHAT_MODEL, NUM_CTX, Candidate
+from vg09.retrieval import CHAT_MODEL, NUM_CTX, Candidate, format_source
 
 OLLAMA = "http://localhost:11434"
 # T-028: raised from 2000 after a real truncation I found (done_reason=="length")
@@ -82,19 +82,17 @@ def number_sources(chunks: list[Candidate]) -> dict[int, Candidate]:
     return {n: c for n, c in enumerate(least_relevant_first, start=1)}
 
 
-def _format_source(c: Candidate, n: int) -> str:
-    m = c.metadata
-    return f"[{n}] {m['title']} ({m['url']}, feed date {m['feed_date']})\n{c.text}"
-
-
 def build_user_message(question: str, source_map: dict[int, Candidate]) -> str:
     """Empty `source_map` produces an honest "no sources" note rather than a
     special-cased response - the system prompt's own instruction ("say so plainly")
-    handles a query with nothing relevant retrieved."""
+    handles a query with nothing relevant retrieved. Formats each source via
+    `vg09.retrieval.format_source()` - T-038: the same function `pack_to_budget()` uses
+    to measure a candidate's real cost, so what got counted during packing and what
+    actually gets sent here can never drift apart."""
     if not source_map:
         sources_block = "(No sources were retrieved for this question.)"
     else:
-        sources_block = "\n\n".join(_format_source(c, n) for n, c in source_map.items())
+        sources_block = "\n\n".join(format_source(c, n) for n, c in source_map.items())
     return f"Sources:\n\n{sources_block}\n\nQuestion: {question}"
 
 

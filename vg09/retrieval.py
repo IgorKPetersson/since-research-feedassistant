@@ -38,15 +38,17 @@ MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's original "34 = 13789 // 400" ceiling is now 13245 // 400 = 33
-# (unchanged since T-028's 13261 - both fall in the same 13200-13599 band) - still a
-# worst-case ceiling (every chunk at the 400-token cap), not a target - packing here is
-# purely token-budget-driven, not chunk-count-driven, so a real candidate pool of
-# smaller-than-cap chunks can (and in scripts/t022_verify_retrieval.py's real run,
-# did: 45) pack more than the ceiling while still safely fitting the budget.
-# CANDIDATE_POOL_SIZE is generous headroom over that
-# worst-case ceiling so packing always has real candidates to skip past (an oversized
-# one, or a date-filtered-out one) without running dry before reaching a usable top-k.
+# docs/DESIGN.md's max-top-k ceiling: 13245 // 488 = 27 (T-038 - corrected from the
+# previous 13245 // 400 = 33, which silently assumed zero cost for the real
+# "[N] Title (url, feed date)\n" wrapper every packed chunk actually carries; 488 is the
+# real worst-case chunk-plus-wrapper cost measured against the production store,
+# scripts/t038_measure_wrapper_overhead.py) - still a worst-case ceiling, not a target -
+# packing here is purely token-budget-driven, not chunk-count-driven, so a real
+# candidate pool of smaller-than-cap chunks can (and in scripts/t022_verify_retrieval.py's
+# real run, did: 45, pre-T-038 fix) pack more than the ceiling while still safely fitting
+# the budget. CANDIDATE_POOL_SIZE is generous headroom over that worst-case ceiling so
+# packing always has real candidates to skip past (an oversized one, or a
+# date-filtered-out one) without running dry before reaching a usable top-k.
 CANDIDATE_POOL_SIZE = 60
 
 
@@ -93,6 +95,27 @@ def count_qwen_tokens(text: str) -> int:
         print(f"  !! close to num_ctx: count_qwen_tokens prompt_eval_count={count} "
               f"({100 * count / NUM_CTX:.0f}% of num_ctx={NUM_CTX})")
     return count
+
+
+def format_source(c: Candidate, n: int) -> str:
+    """The exact text a packed chunk becomes once placed in the real prompt
+    (`vg09.answer.build_user_message()`) - "[N] Title (url, feed date)\\n{text}". Used
+    both to measure a candidate's real token cost during packing (T-038) and to build
+    the real prompt itself, from the same source, so packing-time measurement and
+    generation-time content can never drift apart the way they did before T-038 (packing
+    measured bare `c.text` alone; the real prompt included this wrapper, uncounted)."""
+    m = c.metadata
+    return f"[{n}] {m['title']} ({m['url']}, feed date {m['feed_date']})\n{c.text}"
+
+
+# T-038: packing happens before vg09.answer.number_sources() assigns real citation
+# numbers (least-relevant-first, only after packing decides what's included) - a
+# placeholder is used for the packing-time measurement. Two digits, matching the real
+# range seen in production (T-031: up to 45 packed chunks) - biases the measurement
+# very slightly conservative rather than optimistic (KB-005's safe direction), since the
+# number itself costs ~1 token regardless of its exact value; the wrapper's title/url/
+# date text is what actually mattered.
+PACKING_PLACEHOLDER_SOURCE_NUMBER = 99
 
 
 def embed_question(question: str) -> list[float]:
@@ -189,7 +212,10 @@ def pack_to_budget(
     dropped_oversized: list[str] = []
     total = 0
     for c in candidates:
-        tokens = count_qwen_tokens(c.text)
+        # T-038: measure the real formatted source string that actually gets sent to
+        # the model (title/url/feed-date wrapper included), not bare c.text alone -
+        # the bare-text measurement silently undercounted the real prompt since T-008.
+        tokens = count_qwen_tokens(format_source(c, PACKING_PLACEHOLDER_SOURCE_NUMBER))
         if tokens > budget_tokens:
             dropped_oversized.append(c.id)
             continue
