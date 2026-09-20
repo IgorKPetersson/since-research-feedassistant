@@ -4,10 +4,10 @@ Phases are gated. **Each phase ends at a checkpoint where the agent stops and I
 reviews.** Do not start phase N+1 without explicit go-ahead.
 
 Current phase: **Phase 2** (started 2026-09-19, by my explicit go-ahead). All of Phase
-2's tickets (T-011, T-021–T-025, plus T-027 from a real mid-phase finding) are now `done`
-and its checklist below is ticked — the checkpoint is reached, but the phase is **not yet
-declared complete**: this file's own rule requires `grill-me` at every checkpoint first,
-which hasn't run. Phase 3 has not started either way — waits for explicit go-ahead.
+2's tickets (T-011, T-021–T-025, plus T-027 and T-028 from real mid-phase findings) are now
+`done` and its checklist below is ticked — the checkpoint is reached, but the phase is
+**not yet declared complete**: this file's own rule requires `grill-me` at every checkpoint
+first, which hasn't run. Phase 3 has not started either way — waits for explicit go-ahead.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`

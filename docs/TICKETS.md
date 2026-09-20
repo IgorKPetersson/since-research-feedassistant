@@ -1261,9 +1261,7 @@ right outcome, not a miss). Two real, honest results, not both wins:
 
 ### T-028 — Reasoning can eat the whole generation cap; citations with more than one number in a bracket aren't resolved
 
-**Status:** in-progress (citations fix done; NUM_PREDICT raised and re-verified for the
-truncation itself; the "does the chunk budget still suffice" re-check across all 15 real
-questions is running as of this note - see Notes for how to finish it)
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-028-truncation-and-multi-citations` (citations fix,
 merged), `t/T-028-raise-num-predict` (this branch)  ·  **Phase:** 2
 
@@ -1296,14 +1294,20 @@ per number after the first.
   exact same real question, re-run 3 more times with the new cap, `done_reason=="stop"` all
   three times (1903/1800/1608 real total reasoning+answer tokens - comfortably under 2542
   where the old 2000 cap had already failed once in 3 tries)
-- [ ] **Pending (in progress):** confirm the smaller resulting chunk budget (13261, down from
-  13803) doesn't cost real recall - re-run all 15 of T-014's real questions' full pipeline
-  under both the old and new budget and compare packed chunk counts, and re-confirm the
-  top-5-vs-facit headline (11/14, T-027) using the **same anchor T-027 used**
-  (`today=2026-09-17`, not D-011's later eval-pinned `2026-09-16` - that's a different,
-  already-settled question and must not be conflated with this one). First pass caught this
-  exact mixup (wrongly showed 10/14) before being corrected mid-run - if resuming this, use
-  `today=2026-09-17` throughout
+- [x] Confirm the smaller resulting chunk budget (13261, down from 13803) doesn't cost real
+  recall - re-run all 15 of T-014's real questions' full pipeline under both the old and new
+  budget and compare packed chunk counts, and re-confirm the top-5-vs-facit headline (11/14,
+  T-027) using the **same anchor T-027 used** (`today=2026-09-17`, not D-011's later
+  eval-pinned `2026-09-16`) → `scripts/t028_verify_chunk_budget_impact.py`, real run against
+  the real store/Ollama. Packed chunk count dropped by 1-2 chunks on 5/15 questions (F01
+  47→45, F03 45→43, F06 44→42, F07 46→44, F08 46→45 - all broad/unfiltered or ranking
+  questions with large candidate pools); the other 10 (all date-filtered, smaller pools) were
+  unaffected. **Top-5 - what's actually shown/prioritized - was unchanged by the budget cut
+  on all 15 of 15 questions**, confirmed directly (not assumed) by comparing each question's
+  top-5 packed-chunk ids against the new budget's packed list. T-027's own two named
+  checkpoints reproduced exactly at the same anchor: F15's `YTG0rdHPTDE` still in top-5 (HIT,
+  as T-027 found), F06's `2609.08149` still absent from top-5 (MISS, as T-027 found). The
+  11/14 headline holds - the budget cut costs no measured recall
 - [x] `vg09.citations.build_citations()` resolves every number in a bracket containing more
   than one, comma-separated (`"[17, 18]"`, `"[17,18]"`, `"[17, 18, 19]"`) - each number
   resolved independently against `source_map`, exactly as if it were its own single-number
@@ -1365,18 +1369,17 @@ ticket's.
   multi-number citation (`"[7, 11]"`), confirmed to resolve correctly (both numbers pointed
   to the same real document, correctly deduplicated to one citation) - a live confirmation of
   this same ticket's citation fix, not constructed.
-- **Chunk-budget sufficiency check: incomplete, stopped mid-run for me (tokens
-  running low).** First attempt used the wrong anchor (`today=2026-09-16`, D-011's later
-  eval-pinned value) and produced a misleading 10/14 headline - **not a real regression**,
-  just comparing against the wrong baseline (T-027's original 11/14 was measured at
-  `today=2026-09-17`). Caught before trusting it; a corrected re-run using `today=2026-09-17`
-  throughout was started but not confirmed finished before this session ended. **To finish:**
-  re-run `scripts/`-equivalent logic (see the two measurement scripts referenced in T-027's
-  own Notes for the pattern) comparing `pack_to_budget(..., budget_tokens=13803)` vs.
-  `pack_to_budget(..., budget_tokens=13261)` for all 15 real questions at `today=2026-09-17`,
-  and separately re-confirm the top-5-vs-facit headline at that same anchor. Do **not** use
-  `today=2026-09-16` for this specific check - that anchor answers a different, already-
-  settled question (D-011).
+- **Chunk-budget sufficiency check: finished in a later session.** First attempt used the
+  wrong anchor (`today=2026-09-16`, D-011's later eval-pinned value) and produced a
+  misleading 10/14 headline - **not a real regression**, just comparing against the wrong
+  baseline (T-027's original 11/14 was measured at `today=2026-09-17`). Caught before
+  trusting it. The corrected re-run, `scripts/t028_verify_chunk_budget_impact.py`
+  (`today=2026-09-17` throughout, matching T-027's own anchor), found: packed chunk count
+  dropped by 1-2 on 5/15 questions (all broad/unfiltered or ranking questions with large
+  candidate pools - F01, F03, F06, F07, F08), unaffected on the other 10 (date-filtered,
+  smaller pools); **top-5 was unchanged on all 15 of 15 questions**, confirmed directly; and
+  T-027's own two named checkpoints (F15 HIT, F06 MISS) reproduced exactly. The 11/14
+  headline holds - see this ticket's acceptance criteria above for the full result.
 
 ---
 
