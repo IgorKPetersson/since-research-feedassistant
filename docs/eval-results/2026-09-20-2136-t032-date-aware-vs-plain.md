@@ -1014,7 +1014,8 @@ of the hardest and unsolved math problems in the world."*
 - (fullständig lista: 14 videor totalt matchar "openai"/"open ai"/"open aai" i transkriptet
   inom fönstret, se `data/raw/youtube/` för alla)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: B hämtade innehåll från 08-21, 08-28 och 09-02 och angav det som senaste två veckorna.
 
 ---
 
