@@ -32,7 +32,20 @@ OLLAMA = "http://localhost:11434"
 # without inflating the chunk budget more than three data points can justify) = 2542.
 # docs/DESIGN.md's budget math and CHUNK_BUDGET_TOKENS updated to match (13261, down
 # from 13803 - this reservation now costs 542 more tokens against the chunk budget).
-NUM_PREDICT = 2542
+#
+# T-039: raised again, 2542 -> 4000, after T-032's real run still hit "length" on 4 of 30
+# calls. T-028's three samples of one question badly understated the tail: a 32-run probe
+# across five questions measured reasoning at 1054-2864 tokens and reasoning+answer at up
+# to 3118, with 5 of 32 runs above 2542 (docs/DESIGN.md, KB-019). 4000 leaves 882 tokens
+# over that worst total and costs 1458 tokens of chunk budget (CHUNK_BUDGET_TOKENS 11787).
+# Still a heuristic built on a finite sample - which is why generate_answer() also retries.
+NUM_PREDICT = 4000
+
+# T-039/D-014: one automatic second attempt when the first answer is cut off. The cut is
+# sampling variance in how long the model reasons, not something about the prompt, so an
+# identical second call usually lands under the cap. Not more than one: a question whose
+# reasoning genuinely never fits should surface as incomplete, not loop.
+MAX_RETRIES = 1
 
 # T-008's representative system prompt (scripts/t008_context_budget.py), with two
 # changes since. T-024: the citation instruction asked for [Title, YYYY-MM-DD] inline,
@@ -63,6 +76,9 @@ class AnswerResult:
     answer: str
     done_reason: str
     incomplete: bool  # True iff done_reason == "length" - a genuinely cut-off answer
+    # (of the final attempt - a cut-off first attempt that a retry completed is not
+    # incomplete)
+    retries: int  # T-039: 0, or 1 if the first attempt was cut off and was repeated
     prompt_eval_count: int
     source_map: dict[int, Candidate]  # T-024: the exact number -> chunk mapping shown
     # in the prompt, so the model's own positional citations ("source [27]") can be
@@ -96,23 +112,17 @@ def build_user_message(question: str, source_map: dict[int, Candidate]) -> str:
     return f"Sources:\n\n{sources_block}\n\nQuestion: {question}"
 
 
-def generate_answer(question: str, chunks: list[Candidate]) -> AnswerResult:
-    """The real `/api/chat` call. `think=True` always - never `False` (T-011/KB-007:
-    `False` merges reasoning into the answer text with no way to cleanly split it back
-    out). Checks `done_reason` (a real "length" result is flagged as incomplete, not
-    silently presented as finished) and `prompt_eval_count` against `num_ctx`
-    (CLAUDE.md's hard rule) on every real call. Returns the number -> chunk mapping
-    used in the prompt (T-024), so the model's own positional citations can be
-    resolved afterward."""
-    source_map = number_sources(chunks)
+def _chat_once(messages: list[dict]) -> tuple[str, str, str, int]:
+    """One real `/api/chat` call -> (reasoning, answer, done_reason, prompt_eval_count).
+    `think=True` always - never `False` (T-011/KB-007: `False` merges reasoning into
+    the answer text with no way to cleanly split it back out). Checks `prompt_eval_count`
+    against `num_ctx` (CLAUDE.md's hard rule) on every call, so a retry gets the same
+    check as the first attempt."""
     http_resp = requests.post(
         f"{OLLAMA}/api/chat",
         json={
             "model": CHAT_MODEL,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": build_user_message(question, source_map)},
-            ],
+            "messages": messages,
             "stream": False,
             "think": True,
             "options": {"num_ctx": NUM_CTX, "num_predict": NUM_PREDICT},
@@ -133,13 +143,36 @@ def generate_answer(question: str, chunks: list[Candidate]) -> AnswerResult:
               f"({100 * prompt_eval_count / NUM_CTX:.0f}% of num_ctx={NUM_CTX})")
 
     reasoning, answer = split_reasoning_and_answer(resp)
-    done_reason = resp.get("done_reason", "")
+    return reasoning, answer, resp.get("done_reason", ""), prompt_eval_count
+
+
+def generate_answer(question: str, chunks: list[Candidate]) -> AnswerResult:
+    """The real answer-generation call. A `done_reason == "length"` first attempt is
+    repeated up to `MAX_RETRIES` times (T-039/D-014); if the last attempt is still cut
+    off it is returned flagged as incomplete, not silently presented as finished, and
+    `retries` records that a second attempt was made either way. Returns the number ->
+    chunk mapping used in the prompt (T-024), so the model's own positional citations
+    can be resolved afterward."""
+    source_map = number_sources(chunks)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": build_user_message(question, source_map)},
+    ]
+
+    retries = 0
+    reasoning, answer, done_reason, prompt_eval_count = _chat_once(messages)
+    while done_reason == "length" and retries < MAX_RETRIES:
+        retries += 1
+        print(f"  !! done_reason=length after {NUM_PREDICT} tokens - retrying "
+              f"({retries}/{MAX_RETRIES})")
+        reasoning, answer, done_reason, prompt_eval_count = _chat_once(messages)
 
     return AnswerResult(
         reasoning=reasoning,
         answer=answer,
         done_reason=done_reason,
         incomplete=(done_reason == "length"),
+        retries=retries,
         prompt_eval_count=prompt_eval_count,
         source_map=source_map,
     )

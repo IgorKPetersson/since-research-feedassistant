@@ -14,6 +14,77 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-039 — Raise `NUM_PREDICT` to 4000 and retry once on `done_reason == "length"`
+
+**Status:** review
+**Size:** M  ·  **Branch:** `t/T-039-raise-num-predict-and-retry-on-truncation`  ·  **Phase:** 3
+
+**Goal:** A question whose reasoning happens to run long no longer comes back with an empty
+answer: the reservation covers the reasoning tail actually measured, and the rare answer
+that is still cut off gets one automatic second attempt before the user ever sees it.
+
+**Why:** T-032's real run hit `done_reason=="length"` on 4 of 30 calls (F06-A, F07-A, F11-B,
+F14-A), each with an empty answer, despite T-028's raise to 2542 and T-038's packing fix.
+A read-only probe (32 real runs, high cap, streamed so reasoning and answer tokens are
+counted separately) found the cause: sampling variance in reasoning length, on top of a
+T-028 cap that was sized from only 3 samples of one question (worst 1842). Real reasoning
+ranged 1054-2864 tokens; totals reached 3118; 5/32 runs exceeded 2542. I approved
+the fix (2026-09-22): raise the cap, and retry once on `length`.
+
+**Acceptance criteria**
+- [x] `vg09.answer.NUM_PREDICT == 4000` and `vg09.retrieval.CHUNK_BUDGET_TOKENS == 11787`
+  (`16000-173-40-4000`); a unit test asserts `CHUNK_BUDGET_TOKENS + 173 + 40 + NUM_PREDICT
+  == NUM_CTX`, so the two constants can't drift apart again → `ReservationArithmeticTests`
+- [x] `generate_answer()` calls Ollama at most twice: a `stop` answer makes exactly one call
+  and `retries == 0`; a `length` first answer triggers exactly one more call; if that one
+  is `stop` the result is that answer with `retries == 1, incomplete == False`; if it is
+  also `length` the result is the second response with `retries == 1, incomplete == True`.
+  Each call independently keeps CLAUDE.md's `num_ctx` / `prompt_eval_count` checks. Unit
+  tests cover all three paths (mocked, no live Ollama) → `RetryOnLengthTests`; 120/120
+  pass. **Unverified live: the retry never fired in a real run (see below), so it has only
+  been exercised against mocks**
+- [x] The chat UI shows a notice when `retries > 0` (in addition to, not instead of, the
+  existing "ofullständigt" warning when the retry was also cut off) → `st.info` in
+  `app.py`. **Unverified: not run in a live Streamlit session (only `py_compile`d), and
+  there is no automated UI test in this project**
+- [x] T-031's and T-032's scripts print the retry count per call and T-032's output file
+  header states totals (calls, retries made, calls still `length` after retry); no other
+  part of the file format changes → per-arm `**omförsök:** N` field added to the existing
+  header line, plus one totals line in the file header
+- [x] `docs/DESIGN.md` § Reasoning + answer reservation records the 32-sample measurement
+  (highest total 3118) and why T-028's 3 samples were not enough; budget math, max top-k
+  (`11787 // 488 = 24`) and the `done_reason` section are updated to match. New KB entry
+  and decision record the finding and the retry policy → KB-019, D-014
+- [x] Real check, same anchor for both budgets: for all 15 real questions the first 5
+  packed chunks under 11787 equal the first 5 deduped candidates (T-028's check, redone
+  with T-038's real formatted-source measurement), plus how many chunks each budget packs
+  → top-5 identical for 15/15; 9 questions lose 3-5 chunks (35 total), 6 unchanged; the
+  smaller packed set is always a prefix of the larger
+  (`docs/eval-results/2026-09-22-t039-chunk-budget-impact.txt`)
+- [x] `docs/eval-results/2026-09-20-2136-t032-date-aware-vs-plain.md` is byte-identical to
+  before this ticket (`git diff` empty); T-032's 15×2 is re-run into a new file of the same
+  format; the number of `length` results and of retries made are reported. Full unit suite
+  passes. **Needs real Ollama + the production store; these two are the only criteria not
+  checkable in a plain dev environment.** → `docs/eval-results/2026-09-22-0027-t032-
+  date-aware-vs-plain.md`: **30/30 `stop`, 0 `length`, 0 retries made.** Max
+  `prompt_eval_count` 11662 (73%), max elapsed 23.2s. Ungraded, committed as such (as T-032
+  did); grading is my step
+
+**Out of scope:** more than one retry; changing the reasoning itself (shorter reasoning,
+`think` budget); making the cap adaptive per question type; grading the new run (my own
+step, as in T-032); T-033.
+
+**Depends on:** T-028 (the number being replaced), T-038 (packing measurement), T-032 (the
+run being repeated).
+**Notes:** Probe: 4 truncated arms × 5 samples + 4 non-truncated controls × 3 samples.
+Reasoning tokens per sample — F06-A 1795-2685, F07-A 1773-2864, F11-B 1632-2177, F14-A
+1054-1640, controls 1076-1841. Truncation is not explained by prompt size or chunk count
+(F14-A/F11-B have the largest prompts and the lowest reasoning); open-ended
+synthesis questions reason longer than yes/no ones. Raw samples committed under
+`docs/eval-results/`. Budget cost of the raise: 1458 tokens fewer for retrieved chunks.
+
+---
+
 ### T-038 — Fix the packing-budget undercount T-031 found: measure the real formatted source string, not bare chunk text
 
 **Status:** done

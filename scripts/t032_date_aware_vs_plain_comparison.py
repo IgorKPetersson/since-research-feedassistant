@@ -33,6 +33,10 @@ from vg09.store import latest_feed_date
 
 OUTPUT_DIR = Path("docs/eval-results")
 
+# T-039: (retries made, still cut off after the last attempt) for every arm run, so the
+# output header and the console can state totals without re-parsing the rendered text.
+ARM_STATS: list[tuple[int, bool]] = []
+
 
 def render_arm(label: str, question: str, date_range, ranking: bool) -> str:
     retrieval = retrieve(question, date_range=date_range, ranking=ranking)
@@ -40,10 +44,12 @@ def render_arm(label: str, question: str, date_range, ranking: bool) -> str:
     result = generate_answer(question, retrieval.chunks)
     elapsed = time.monotonic() - start
     citations = build_citations(result.answer, result.source_map)
+    ARM_STATS.append((result.retries, result.incomplete))
 
     pct = 100 * result.prompt_eval_count / 16000
     print(f"    [{label}] prompt_eval_count={result.prompt_eval_count} ({pct:.0f}%)  "
-          f"elapsed={elapsed:.1f}s  done_reason={result.done_reason}")
+          f"elapsed={elapsed:.1f}s  done_reason={result.done_reason}  "
+          f"retries={result.retries}")
 
     lines = [f"### {label}", ""]
     lines.append(f"**Tolkat läge:** {describe_mode(date_range, ranking)}")
@@ -51,7 +57,8 @@ def render_arm(label: str, question: str, date_range, ranking: bool) -> str:
                  f"**Chunks paketerade:** {len(retrieval.chunks)}  ·  "
                  f"**prompt_eval_count:** {result.prompt_eval_count} ({pct:.0f}% av num_ctx)  ·  "
                  f"**svarstid:** {elapsed:.1f}s  ·  "
-                 f"**done_reason:** {result.done_reason}"
+                 f"**done_reason:** {result.done_reason}  ·  "
+                 f"**omförsök:** {result.retries}"
                  + (" ⚠ OFULLSTÄNDIGT" if result.incomplete else ""))
     lines.append("")
     lines.append("**Svar:**")
@@ -109,6 +116,18 @@ def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"{datetime.now():%Y-%m-%d-%H%M}-t032-date-aware-vs-plain.md"
 
+    sections = []
+    for i, n in enumerate(questions, start=1):
+        print(f"[{i}/{len(questions)}] Fråga {n:02d}...")
+        sections.append(render_question(n, questions[n]["question"], questions[n]["facit"]))
+
+    calls = len(ARM_STATS)
+    retries_made = sum(r for r, _ in ARM_STATS)
+    still_cut = sum(1 for _, incomplete in ARM_STATS if incomplete)
+    totals = (f"Körningar: {calls}  ·  omförsök gjorda: {retries_made} "
+              f"({sum(1 for r, _ in ARM_STATS if r)} körningar)  ·  fortfarande avklippta "
+              f"efter omförsök: {still_cut}")
+
     header = [
         "# T-032 comparison — date-aware retrieval vs plain similarity search",
         "",
@@ -119,17 +138,15 @@ def main() -> None:
         "(exakt som produktionen); **Läge B** kör obegränsad ren likhetssökning, inget "
         "datumfilter alls. Ingen modellbedömning, ingen automatisk poängsättning.",
         "",
+        f"**{totals}**",
+        "",
         "---",
         "",
     ]
 
-    sections = []
-    for i, n in enumerate(questions, start=1):
-        print(f"[{i}/{len(questions)}] Fråga {n:02d}...")
-        sections.append(render_question(n, questions[n]["question"], questions[n]["facit"]))
-
     out_path.write_text("\n".join(header) + "\n".join(sections), encoding="utf-8")
-    print(f"\nSkrev {len(questions)} frågor (2 lägen var) till {out_path}")
+    print(f"\n{totals}")
+    print(f"Skrev {len(questions)} frågor (2 lägen var) till {out_path}")
 
 
 if __name__ == "__main__":

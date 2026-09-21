@@ -12,8 +12,15 @@ from unittest.mock import MagicMock, patch
 
 import requests
 
-from vg09.answer import NUM_PREDICT, SYSTEM_PROMPT, build_user_message, generate_answer, number_sources
-from vg09.retrieval import Candidate
+from vg09.answer import (
+    MAX_RETRIES,
+    NUM_PREDICT,
+    SYSTEM_PROMPT,
+    build_user_message,
+    generate_answer,
+    number_sources,
+)
+from vg09.retrieval import CHUNK_BUDGET_TOKENS, NUM_CTX, Candidate
 
 
 def make_chunk(title: str, text: str, feed_date: str = "2026-09-16") -> Candidate:
@@ -101,9 +108,9 @@ class GenerateAnswerTests(unittest.TestCase):
         self.assertTrue(mock_post.call_args.kwargs["json"]["think"])
 
     def test_num_predict_matches_the_module_constant(self):
-        """T-028: raised from 2000 to 2542 after a real truncation - asserted against
-        the constant, not a hardcoded number, so this test can't silently go stale the
-        next time the reservation is re-measured."""
+        """T-028/T-039: raised from 2000 to 2542, then to 4000, after real truncations -
+        asserted against the constant, not a hardcoded number, so this test can't
+        silently go stale the next time the reservation is re-measured."""
         _, mock_post = self._run()
         self.assertEqual(mock_post.call_args.kwargs["json"]["options"]["num_predict"], NUM_PREDICT)
 
@@ -120,6 +127,11 @@ class GenerateAnswerTests(unittest.TestCase):
         result, _ = self._run(done_reason="length")
         self.assertTrue(result.incomplete)
         self.assertEqual(result.done_reason, "length")
+
+    def test_stop_makes_exactly_one_call_and_no_retry(self):
+        result, mock_post = self._run(done_reason="stop")
+        self.assertEqual(mock_post.call_count, 1)
+        self.assertEqual(result.retries, 0)
 
     def test_reasoning_and_answer_come_back_split(self):
         result, _ = self._run(content="The final answer.", thinking="Thinking it through.")
@@ -159,6 +171,68 @@ class GenerateAnswerTests(unittest.TestCase):
             with self.assertRaises(requests.exceptions.HTTPError):
                 generate_answer("what happened?", [])
         mock_resp.json.assert_not_called()
+
+
+class RetryOnLengthTests(unittest.TestCase):
+    """T-039/D-014: a cut-off first attempt is repeated once."""
+
+    def _run_sequence(self, *responses):
+        mocks = []
+        for kwargs in responses:
+            m = MagicMock()
+            m.json.return_value = fake_response(**kwargs)
+            mocks.append(m)
+        with patch("vg09.answer.requests.post", side_effect=mocks) as mock_post:
+            result = generate_answer("what happened?", [])
+        return result, mock_post
+
+    def test_length_then_stop_returns_the_second_answer_as_complete(self):
+        result, mock_post = self._run_sequence(
+            dict(done_reason="length", content="", thinking="long reasoning"),
+            dict(done_reason="stop", content="Second try answer.", thinking="short"),
+        )
+        self.assertEqual(mock_post.call_count, 2)
+        self.assertEqual(result.retries, 1)
+        self.assertFalse(result.incomplete)
+        self.assertEqual(result.done_reason, "stop")
+        self.assertEqual(result.answer, "Second try answer.")
+
+    def test_length_twice_returns_the_second_response_flagged_incomplete(self):
+        result, mock_post = self._run_sequence(
+            dict(done_reason="length", content="", thinking="first"),
+            dict(done_reason="length", content="cut of", thinking="second"),
+        )
+        self.assertEqual(mock_post.call_count, 2)  # never a third
+        self.assertEqual(result.retries, 1)
+        self.assertTrue(result.incomplete)
+        self.assertEqual(result.reasoning, "second")
+
+    def test_both_attempts_send_the_identical_request(self):
+        _, mock_post = self._run_sequence(
+            dict(done_reason="length"), dict(done_reason="stop"),
+        )
+        first, second = (c.kwargs["json"] for c in mock_post.call_args_list)
+        self.assertEqual(first, second)
+        self.assertEqual(second["options"], {"num_ctx": NUM_CTX, "num_predict": NUM_PREDICT})
+
+    def test_retry_gets_the_prompt_eval_count_of_its_own_call(self):
+        result, _ = self._run_sequence(
+            dict(done_reason="length", prompt_eval_count=111),
+            dict(done_reason="stop", prompt_eval_count=222),
+        )
+        self.assertEqual(result.prompt_eval_count, 222)
+
+    def test_only_one_retry_is_configured(self):
+        self.assertEqual(MAX_RETRIES, 1)
+
+
+class ReservationArithmeticTests(unittest.TestCase):
+    def test_chunk_budget_is_what_num_ctx_leaves_after_the_other_reservations(self):
+        """docs/DESIGN.md § Remaining budget for retrieved chunks. 173 = the system
+        prompt, 40 = the reserved question size (both measured, see DESIGN.md); a change
+        to NUM_PREDICT that forgets CHUNK_BUDGET_TOKENS (or vice versa) fails here
+        instead of silently overrunning num_ctx - the T-038 class of bug."""
+        self.assertEqual(CHUNK_BUDGET_TOKENS + 173 + 40 + NUM_PREDICT, NUM_CTX)
 
 
 if __name__ == "__main__":

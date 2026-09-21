@@ -86,7 +86,8 @@ def render_question(n: int, question: str, facit: str) -> str:
 
     pct = 100 * result.prompt_eval_count / 16000
     print(f"    prompt_eval_count={result.prompt_eval_count} ({pct:.0f}% of num_ctx)  "
-          f"generate_answer elapsed={elapsed:.1f}s  done_reason={result.done_reason}")
+          f"generate_answer elapsed={elapsed:.1f}s  done_reason={result.done_reason}  "
+          f"retries={result.retries}")
 
     lines = [f"## Fråga {n:02d}", "", f"**Fråga:** {question}", ""]
     lines.append(f"**Tolkat läge:** {describe_mode(date_range, ranking)}")
@@ -94,7 +95,8 @@ def render_question(n: int, question: str, facit: str) -> str:
                  f"**Chunks paketerade:** {len(retrieval.chunks)}  ·  "
                  f"**prompt_eval_count:** {result.prompt_eval_count} ({pct:.0f}% av num_ctx)  ·  "
                  f"**svarstid:** {elapsed:.1f}s  ·  "
-                 f"**done_reason:** {result.done_reason}"
+                 f"**done_reason:** {result.done_reason}  ·  "
+                 f"**omförsök:** {result.retries}"
                  + (" ⚠ OFULLSTÄNDIGT" if result.incomplete else ""))
     lines.append("")
     lines.append("**Svar (modellens riktiga, genererade svar):**")

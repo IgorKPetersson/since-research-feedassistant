@@ -602,6 +602,42 @@ usability intent per my own stated reasoning above).
 
 ---
 
+## D-014 — Answer generation reserves 4000 tokens and retries once when the answer is cut off
+**Status:** accepted
+
+**Decision:** `vg09.answer.NUM_PREDICT` is 4000 (was 2542, T-028), and `generate_answer()`
+repeats an identical call once (`MAX_RETRIES = 1`) when the first response ends with
+`done_reason == "length"`. `AnswerResult.retries` records whether a retry happened. If the
+retry is also cut off, that second response is returned flagged incomplete, as before;
+there is never a third attempt. The chat UI shows a notice whenever a retry happened, and
+the evaluation scripts log the retry count per call. `CHUNK_BUDGET_TOKENS` follows from the
+reservation: `16000 - 173 - 40 - 4000 = 11787` (was 13245).
+
+**Why:** T-032's real run truncated 4 of 30 calls with empty answers. T-039's 32-run probe
+(KB-019) showed reasoning length varies widely between samples of the same prompt, with
+totals up to 3118 tokens — beyond T-028's cap, which was sized from three samples of one
+question. A higher cap makes truncation rare; the retry handles the remainder because the
+cause is sampling variance, not something about the prompt, so an identical second call
+usually completes. I approved both on 2026-09-22.
+
+**Rejected:** Raising the cap alone — 4000 is a margin over a finite sample, not a proven
+bound, and an empty answer is the worst failure this pipeline has. Retrying more than once
+— a question that does not complete in two attempts should say so, not spend a minute
+looping. Reducing the model's reasoning (a shorter-reasoning prompt or `think` budget) —
+T-028 already considered this and I chose to raise the cap instead; not revisited.
+Compensating with a smaller system prompt or question reservation — those are measured
+minimums, not slack.
+
+**Cost:** 1458 fewer tokens for retrieved chunks (max top-k 27 → 24 in the worst case);
+`scripts/t039_verify_chunk_budget_impact.py` checks the effect on real packing. A retry
+doubles that call's latency (roughly 15-35 s more on the RTX 4090).
+
+**Would change our mind:** Real usage where retries are frequent (the retry rate is
+logged in the evaluation output), which would mean the cap is still too low; or a change
+to the model or its sampling settings, which invalidates KB-019's measurements.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

@@ -66,6 +66,12 @@ if ask and question.strip():
         st.error("Ollama svarar inte – är den igång och är modellen nedladdad?")
         st.stop()
 
+    # T-039: shown whenever a second attempt was made, whether or not it succeeded -
+    # the user should know the answer took a second try, and (below) whether even that
+    # one was cut off.
+    if result.retries:
+        st.info("Första försöket avbröts av längdgränsen, så frågan kördes om en gång.")
+
     if result.incomplete:
         st.warning("Svaret är ofullständigt — avbröts av längdgränsen innan det var klart.")
 

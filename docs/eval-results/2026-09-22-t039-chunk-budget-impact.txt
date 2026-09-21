@@ -1,0 +1,21 @@
+Anchor (D-012): today=2026-09-17  ·  budgets: old=13245  new=11787
+
+Fråga | packed old -> new | tokens old -> new | top-5 identical | new is prefix of old
+F01   |  38 -> 34        | 12997 -> 11529     | True            | True
+F02   |  35 -> 32        | 13018 -> 11741     | True            | True
+F03   |  36 -> 32        | 13152 -> 11589     | True            | True
+F04   |  22 -> 22        |  7950 -> 7950      | True            | True
+F05   |  26 -> 26        |  9691 -> 9691      | True            | True
+F06   |  35 -> 32        | 12858 -> 11750     | True            | True
+F07   |  37 -> 33        | 12918 -> 11502     | True            | True
+F08   |  37 -> 32        | 13064 -> 11500     | True            | True
+F09   |  34 -> 30        | 12957 -> 11493     | True            | True
+F10   |  22 -> 22        |  7487 -> 7487      | True            | True
+F11   |  31 -> 31        | 11329 -> 11329     | True            | True
+F12   |  35 -> 31        | 13030 -> 11559     | True            | True
+F13   |  26 -> 26        |  9756 -> 9756      | True            | True
+F14   |  34 -> 30        | 13019 -> 11454     | True            | True
+F15   |  22 -> 22        |  7800 -> 7800      | True            | True
+
+Top-5 identical under the new budget for all 15 questions and the new packed set is always a prefix of the old one: True
+Chunks dropped by the budget cut, summed over the 15 questions: 35

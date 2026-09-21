@@ -98,17 +98,72 @@ budget more than three real data points can justify) `= 2542`. Set as `num_predi
 (`vg09.answer.NUM_PREDICT`) on every real call — an actual hard ceiling, not just a budget
 line item.
 
+**Superseded by T-039: raised to 4000 tokens, plus one automatic retry.** T-028's three
+samples were of *one* question, and the worst of them (1842) was treated as if it bounded
+the whole tail. It didn't: T-032's real 15×2 run still hit `done_reason=="length"` on 4 of 30
+calls (F06-A, F07-A, F11-B, F14-A), each with an empty answer — the reasoning alone had used
+the whole cap. A read-only probe then re-ran those four arms 5× each and four
+non-truncated arms 3× each (32 real runs, same retrieval, prompt and `num_ctx`; `num_predict`
+raised to 8000 and the response streamed, so reasoning tokens and answer tokens were counted
+separately, exactly, instead of inferred; `scripts/t039_reasoning_length_probe.py`, raw
+samples in `docs/eval-results/2026-09-22-t039-reasoning-probe.jsonl`):
+
+| Arm (packed chunks) | Reasoning tokens, per sample | Reasoning + answer | Runs over 2542 |
+|---|---|---|---|
+| F06-A (35) | 1795, 1821, 2056, 2145, 2685 | 2040–2873 | 1 of 5 |
+| F07-A (37) | 1773, 2350, 2669, 2772, 2864 | 2083–3118 | 4 of 5 |
+| F11-B (36) | 1632, 1662, 1753, 1936, 2177 | 1858–2413 | 0 of 5 |
+| F14-A (34) | 1054, 1156, 1158, 1332, 1640 | 1311–2060 | 0 of 5 |
+| 4 controls (22–38) | 1076–1841 (median 1249) | 1184–2107 | 0 of 12 |
+
+Highest total across all 32 runs: **3118**. 5 of 32 runs (all in the four arms that had
+truncated) exceeded 2542; in F06-A and F07-A, 4 of 10 runs exceeded it with reasoning alone.
+Every run ended `done_reason=="stop"` at this cap. What this does and does not show:
+
+- *Sampling variance is real and large*: the same prompt gave 1795–2685 reasoning tokens
+  (F06-A), and F14-A's original truncated run and its identical-prompt B arm (same 34
+  chunks, same 12906 prompt tokens) disagreed. F06-A and F07-A also completed cleanly in
+  T-031 with byte-identical context.
+- *It is not the prompt size or chunk count*: F14-A and F11-B had the largest prompts and
+  among the lowest reasoning in the probe.
+- *The question moves the average, not reliably*: the four controls (F01, F04, F05, F15)
+  reasoned a median 1249 tokens against 1808 in the four truncated arms, and F07 ("what
+  does the research say about text-to-video in the last month") reasoned longest (median
+  2669) — but F14-A, also truncated originally, had the lowest reasoning in the probe
+  (median 1158) and F15, a broad control, reached 1841. A tendency at best, not a rule
+  that could be used to predict which questions need more room.
+- *T-028's number was not wrong arithmetic, it was too few samples*: `1842 + 400 + 300`
+  was derived correctly from what was measured; three samples of one question could not
+  contain a tail that five questions × 3–5 samples then showed reaching 2864.
+
+**New reservation: 4000 tokens** (`vg09.answer.NUM_PREDICT`) — 882 over the highest
+reasoning+answer total measured (3118), which is a heuristic over a finite sample, not a
+proven bound. That is why it is paired with **one automatic retry**
+(`vg09.answer.MAX_RETRIES`, D-014) when the first answer still ends `"length"`; see
+*Detect and surface `done_reason == "length"`* below. The cost is real: the reservation
+comes out of the chunk budget one-for-one, 1458 tokens.
+
+**Effect of the smaller chunk budget, checked for real** (`scripts/t039_verify_chunk_budget_impact.py`,
+output in `docs/eval-results/2026-09-22-t039-chunk-budget-impact.txt`; same real
+`pack_to_budget()` with T-038's formatted-source measurement run at both budgets in one
+process, anchor 2026-09-17, all 15 real questions): the first 5 packed chunks are
+**identical under 11787 and 13245 for all 15 questions**, and the smaller packed set is
+always a strict prefix of the larger — the budget cut only ever removes chunks from the
+bottom of the ranking. 9 of the 15 questions lose 3–5 chunks (35 in total, e.g. F01 38 →
+34, F08 37 → 32); the other 6 (F04, F05, F10, F11, F13, F15 — already under the new budget
+at their old packed size) are unchanged.
+
 ### Remaining budget for retrieved chunks
 
 ```
 16000 (num_ctx)
  -  173 (system prompt, T-030's English-answer-instruction wording)
  -   40 (question, reserved)
- - 2542 (reasoning + answer, T-028's measured reservation)
- = 13245 tokens available for retrieved chunks
+ - 4000 (reasoning + answer, T-039's measured reservation)
+ = 11787 tokens available for retrieved chunks
 ```
 
-(171/13789/2000/13803/157/13261 in earlier tickets' own historical records, e.g.
+(171/13789/2000/13803/157/13261/2542/13245 in earlier tickets' own historical records, e.g.
 T-008/T-022/T-024/T-028's acceptance-criteria evidence, describe the numbers as they stood
 when those tickets closed — not rewritten after the fact; this section and
 `vg09.retrieval.CHUNK_BUDGET_TOKENS`/`vg09.answer.NUM_PREDICT` are the current, live
@@ -169,7 +224,9 @@ This is why a real question (T-031's F07, 44 packed chunks) could reach a real
 bound — silently eating into the reasoning+answer reservation and leaving the real answer
 empty. See KB-018.
 
-**`CHUNK_BUDGET_TOKENS`'s own reservation formula did not need to change** — `16000-173-40-
+**`CHUNK_BUDGET_TOKENS`'s own reservation formula did not need to change** (T-038; the
+numbers in this paragraph are T-038's, since superseded by T-039's `4000` / `11787` —
+`16000-173-40-4000=11787`) — `16000-173-40-
 2542=13245` was always the correct answer to "how many tokens are left over for whatever
 gets packed"; the bug was in what packing *thought* a chunk cost, not in this arithmetic.
 `vg09.retrieval.pack_to_budget()` now measures each candidate's real formatted cost
@@ -177,7 +234,9 @@ directly (`count_qwen_tokens(format_source(c, ...))`), so it naturally packs few
 per question and the real total sent to the model correctly stays within 13245 — no
 separate "recomputed budget constant" was needed once the measurement itself was fixed.
 
-**Max top-k: 27** = `13245 // 488`, floored — **corrected from the previous 33**
+**Max top-k: 24** = `11787 // 488`, floored (T-039; T-038's figure below was 27 at the
+old 13245 budget). The T-038 derivation, still valid apart from the budget:
+**27** = `13245 // 488`, floored — **corrected from the previous 33**
 (`13245 // 400`, which assumed zero wrapper overhead). 488 is the real worst-case chunk
 cost actually observed in the production store (`scripts/t038_measure_wrapper_overhead.py`):
 405 (a real chunk's own document text, itself already over the nominal 400 cap) + 83 (that
@@ -267,7 +326,7 @@ prompt the way raw-string "system last" ordering could. Keeping the system promp
 would be.
 
 **Detect and surface `done_reason == "length"`.** The reasoning+answer cap
-(`vg09.answer.NUM_PREDICT`, 2542 since T-028) is a real ceiling, not just a budget estimate —
+(`vg09.answer.NUM_PREDICT`, 4000 since T-039, 2542 from T-028 before that) is a real ceiling, not just a budget estimate —
 it *can* cut a genuinely longer answer off mid-thought, and did for real before T-028's raise
 (a `done_reason=="length"` I found in the live chat UI, T-025). Every answer-generation
 call must check the response's `done_reason`: `"stop"` means a real, complete answer (matches
@@ -275,6 +334,14 @@ how T-008's own original measurements were validated — all real samples ended 
 the smaller scale they were tested at); `"length"` means the model was still generating when the
 cap hit. A `"length"` result must be flagged to the user/UI as incomplete — never displayed
 as if it were a finished answer with nothing missing.
+
+**One automatic retry (T-039/D-014).** The cut-off is sampling variance in reasoning length
+(see the 32-run measurement above), so `generate_answer()` repeats an identical call once
+when the first ends `"length"`. `AnswerResult.retries` says whether that happened; the UI
+shows a notice whenever it did, and the evaluation output logs the count per call and in
+total. If the retry is also `"length"`, that second response is returned flagged incomplete
+exactly as before — never a third attempt. Each attempt independently checks
+`prompt_eval_count` against `num_ctx`.
 
 ## Core model
 

@@ -1,6 +1,7 @@
 """T-022: similarity search with an optional date-range filter or recency sort,
 packed to the current chunk budget (`CHUNK_BUDGET_TOKENS`, docs/DESIGN.md §
-"Context budget" - originally T-008's 13789, then T-028's 13261, now T-030's 13245).
+"Context budget" - originally T-008's 13789, then T-028's 13261, T-030's 13245, now
+T-039's 11787).
 
 Two independent mechanisms (docs/DESIGN.md § "Filtering by date and sorting by date are
 two different mechanisms"):
@@ -31,15 +32,16 @@ NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUD
 # docs/DESIGN.md § "Remaining budget for retrieved chunks":
 # 16000 (num_ctx) - 173 (system prompt, T-030 - the English-answer instruction added
 # 16 tokens over T-024's 157) - 40 (question) - 2542
-# (reasoning+answer, T-028 - raised from 2000 after a real truncation) = 13245
-CHUNK_BUDGET_TOKENS = 13245
+# (reasoning+answer, T-039 - raised from T-028's 2542 after T-032's real run still
+# truncated 4 of 30 calls) = 11787
+CHUNK_BUDGET_TOKENS = 11787
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's max-top-k ceiling: 13245 // 488 = 27 (T-038 - corrected from the
-# previous 13245 // 400 = 33, which silently assumed zero cost for the real
+# docs/DESIGN.md's max-top-k ceiling: 11787 // 488 = 24 (T-039 - was 27 at 13245; T-038
+# corrected the earlier 13245 // 400 = 33, which silently assumed zero cost for the real
 # "[N] Title (url, feed date)\n" wrapper every packed chunk actually carries; 488 is the
 # real worst-case chunk-plus-wrapper cost measured against the production store,
 # scripts/t038_measure_wrapper_overhead.py) - still a worst-case ceiling, not a target -
