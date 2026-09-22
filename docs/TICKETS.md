@@ -14,6 +14,72 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-040 — Resolve range-shaped bracket references (`[1-20]`, `[21-22]`) in citations; don't explode a near-total-source range into one citation per source
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-040-range-citations`  ·  **Phase:** 3
+
+**Goal:** a real answer that cites a numeric range (`[1-20]`, `[21-22]`) resolves those
+numbers the same way a comma-separated bracket already does, instead of silently falling
+into `unlinked_references` and dropping a real cited source — without treating a range that
+merely enumerates most or all of the offered sources as if it were evidence for a specific
+claim.
+
+**Why:** found for real while grading T-032's output (2026-09-22), not hypothetical. F10-A's
+real answer wrote `[1-20]` and `[21-22]` — `vg09.citations.build_citations()`'s comma-split
+(`match.group(1).split(",")`) sees `"1-20"` as a single non-digit token, so the whole bracket
+is reported unlinked; the YouTube video cited only via `[21-22]` never appears in the
+citation list at all, only in the "Hänvisningar ... som inte kunde kopplas" note. T-028 fixed
+exactly this failure mode for commas ("a multi-number bracket doesn't even reach
+`unlinked_references`, it's dropped from consideration entirely") but never covered ranges.
+Separately, F12-A wrote `[1-31]` to support "Palantir is not mentioned" — the same
+descriptive-enumeration shape T-024's own ticket already flagged as a known limitation on
+real F12 output ("I've reviewed all 38 sources [1] to [38]" — a range describing all sources,
+not evidence for a claim, "worth watching in Phase 3 if false-positive citations turn out to
+be common on negative answers specifically"). That predicted risk is now real: naively
+resolving every number in a near-total-source range would turn one descriptive sentence into
+up to 31 false citations — worse than today's unlinked-and-flagged behavior, not better.
+
+**Acceptance criteria**
+- [ ] `build_citations()` recognizes a bare numeric range inside a bracket (`"1-20"`,
+  `"21-22"`, mixed with commas, e.g. `"1-3, 7-9"`) and resolves each number in the range
+  against `source_map`, exactly as the existing comma-separated case does — each resolved
+  number becomes a citation (deduped by `doc_id`), each unresolved number is reported
+  individually in `unlinked_references`, matching T-028's existing per-number behavior
+- [ ] A real range well under the full source count (F10's shape: `[1-20]` and `[21-22]`
+  against a source map sized to match the real run) resolves normally into individual
+  citations — unit test built from the real F10-A bracket text
+- [ ] A range that covers nearly all of the sources actually offered (the real F12 shape:
+  `[1-31]` against a 31-source map, i.e. effectively the whole set) does **not** resolve into
+  one citation per number — it's treated as a single unlinked/flagged reference instead, per
+  the T-024/F12 precedent above; unit test asserts this doesn't produce 31 citations. The
+  exact threshold for "nearly all" (a fraction of `len(source_map)`, an absolute count, or
+  something else) is a real design decision — not decided here, see Notes
+- [ ] An out-of-range number inside an otherwise-valid range is unlinked individually, not
+  dropped and not failing the whole range (mirrors T-028's existing out-of-range-within-
+  comma-list behavior)
+- [ ] Existing non-numeric-range brackets (T-024's original `[Title, YYYY-MM-DD]` case) and
+  existing comma-separated brackets (T-028) are unaffected — full existing
+  `tests/test_citations.py` suite still passes unchanged, alongside the new range tests
+- [ ] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
+  included
+
+**Out of scope:** retroactively fixing `docs/eval-results/2026-09-22-0027-t032-date-aware-
+vs-plain.md` (already committed, ungraded output stays as it was actually produced); any
+other bracket shape the model might still invent beyond numeric ranges/comma-lists; the
+retrieval/packing pipeline upstream of citation resolution.
+
+**Depends on:** T-024 (citation resolution), T-028 (the comma-list precedent this extends).
+**Notes:** the exact threshold/policy for "this range is a descriptive enumeration, not a
+citation" is a real design decision, not just an implementation detail — flagged per
+`CLAUDE.md`'s stop-and-ask rule, needs my sign-off on the policy before or during
+implementation, not decided silently. Found while grading
+`docs/eval-results/2026-09-22-0027-t032-date-aware-vs-plain.md` (F10 Bedömning note: "A
+skrev intervall [1-20] och [21-22] som inte kopplades, så videon saknas i källistan."; F12
+Bedömning note: "A använde intervallet [1-31], samma citeringsbugg som F10.").
+
+---
+
 ### T-039 — Raise `NUM_PREDICT` to 4000 and retry once on `done_reason == "length"`
 
 **Status:** review
