@@ -123,8 +123,16 @@ the fix (2026-09-22): raise the cap, and retry once on `length`.
   also `length` the result is the second response with `retries == 1, incomplete == True`.
   Each call independently keeps CLAUDE.md's `num_ctx` / `prompt_eval_count` checks. Unit
   tests cover all three paths (mocked, no live Ollama) → `RetryOnLengthTests`; 120/120
-  pass. **Unverified live: the retry never fired in a real run (see below), so it has only
-  been exercised against mocks**
+  pass. **Verified live (2026-09-22, pre-merge check):** `scripts/t039_verify_retry_live_
+  probe.py` monkeypatches `vg09.answer.NUM_PREDICT` down to 500 in-process only
+  (`vg09/answer.py` on disk untouched, restored to 4000 before the script exits) and runs
+  3 real questions (F01/F06/F11) through the real `generate_answer()` against the real
+  store/Ollama. All 3 real runs: first attempt `done_reason=="length"`, a real second
+  Ollama call was made, `retries==1`, and - since the retry was *also* cut off at the low
+  cap - `incomplete==True` with the retry's own (empty, cap fully consumed by reasoning)
+  answer returned, not silently presented as complete. All four checks (a-d) passed on
+  all 3 real questions - the retry path the mocks already covered now also fires and
+  behaves correctly for real, closing this gap
 - [x] The chat UI shows a notice when `retries > 0` (in addition to, not instead of, the
   existing "ofullständigt" warning when the retry was also cut off) → `st.info` in
   `app.py`. **Unverified: not run in a live Streamlit session (only `py_compile`d), and
