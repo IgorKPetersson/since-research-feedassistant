@@ -87,7 +87,7 @@ Tre HF-papers om recursive self-improvement (RSI) delar det senaste feed date i 
 - 2026-09-16 — ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement
   (`2609.14857`) — https://huggingface.co/papers/2609.14857
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
 
 ---
 
@@ -188,7 +188,8 @@ samma fönster:
 - 2026-09-15 — LLaDA-UI: Bringing Block-wise Diffusion to Vision-Language GUI Agents
   (`2609.13287`) — https://huggingface.co/papers/2609.13287
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: B har tre rätta papers men lägger till Meta Muse och Musepark 1.3 (personliga assistenter, inte GUI-agenter). Till skillnad från första körningen låg B:s papers inom fönstret den här gången.
 
 ---
 
@@ -254,7 +255,7 @@ scenminne/objektspårning) — inget hårdvaruinslag alls.
   Memory and Fine-Grained Motion Control (`2609.17521`) —
   https://huggingface.co/papers/2609.17521
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
 
 ---
 
@@ -335,7 +336,8 @@ senaste":
 - 2026-09-07 — τ^τ-Bench: An Environment for End-To-End, Realistic Agent Construction
   (`2609.04611`) — https://huggingface.co/papers/2609.04611
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: Samma som körning 1. Facit missade två YouTube-videor inom fönstret (SWEThyRHMgQ, joKb_QMmglM). B anger 09-01 som senaste veckan.
 
 ---
 
@@ -388,7 +390,7 @@ Harness** (2609.08183), feed date **2026-09-09** — inom fönstret 2026-09-03�
 - 2026-09-09 — NeoHorse-1: Towards Recursive Self-Improvement via Agentic Post-Training with
   Routing Harness (`2609.08183`) — https://huggingface.co/papers/2609.08183
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
 
 ---
 
@@ -448,7 +450,8 @@ agents).
 - 2026-09-10 — SWE-Bench Pro Verified: A Reliable Benchmark for Software Engineering Agents
   (`2609.08149`) — https://huggingface.co/papers/2609.08149
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: I körning 1 gav A tomt svar här (length). Nu fungerar båda.
 
 ---
 
@@ -544,7 +547,8 @@ inte noll:
 - 2026-08-27 — FIRM-Video: Check Before You Score for Reliable Text-to-Video Reward Modeling
   (`2608.21839`) — https://huggingface.co/papers/2608.21839
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: I körning 1 gav A tomt svar här. Nu håller A sig inom fönstret; B anger papers från juli (VideoCoCo, FilmBench) som senaste månaden.
 
 ---
 
@@ -599,7 +603,7 @@ namngivet metod/system, "LEGO-RL") — **inte** om LEGO-leksaker/klossar.
 - 2026-08-19 — LEGO-RL: Harness-Native Reinforcement Learning for Coding Agents
   (`2608.17393`) — https://huggingface.co/papers/2608.17393
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
 
 ---
 
@@ -655,7 +659,7 @@ i hela datasetet — inte bara de senaste veckorna, utan över hela `data/raw/hf
 
 **Förväntade källor:** (inga — frånvaro är det korrekta svaret)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
 
 ---
 
@@ -759,7 +763,8 @@ PhysStream (se Fråga 03), samt YouTube-videon "He Built The Ultimate Spy Tool
 - YouTube: He Built The Ultimate Spy Tool (Free and Open-Source) (`S2VJU5DQqlU`) —
   https://www.youtube.com/watch?v=S2VJU5DQqlU
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: A skrev intervall [1-20] och [21-22] som inte kopplades, så videon saknas i källistan. Ny citeringsbugg.
 
 ---
 
@@ -836,7 +841,8 @@ spridning av övriga LLM-/agent-ämnen.
 [2026-09-10, 2026-09-16] (137 dokument vid frysningstillfället; ingen fast lista krävs för
 godkänt svar, se bedömningskriterier ovan).
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: B inkluderar 09-04 och 08-27. I körning 1 gav B tomt svar här.
 
 ---
 
@@ -896,7 +902,8 @@ annan stavning av namnet ("Palantir", "Pallantir" etc.) förekommer i någon vid
   https://www.youtube.com/watch?v=S2VJU5DQqlU&t=1
   (även vid `&t=315`)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  X Båda fel
+Notering: B hittade "Palunteer" och kallade det troligen Palantir, men svarade ändå nej. A använde intervallet [1-31], samma citeringsbugg som F10.
 
 ---
 
@@ -992,7 +999,8 @@ of the hardest and unsolved math problems in the world."*
 - (fullständig lista: 14 videor totalt matchar "openai"/"open ai"/"open aai" i transkriptet
   inom fönstret, se `data/raw/youtube/` för alla)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: B hämtade 08-21, 08-28, 08-30 och 09-02 som senaste två veckorna. Samma mönster som körning 1.
 
 ---
 
@@ -1110,7 +1118,8 @@ YouTube (videor):
 - 2026-09-16 — He Built The Ultimate Spy Tool (Free and Open-Source) (`S2VJU5DQqlU`) —
   https://www.youtube.com/watch?v=S2VJU5DQqlU
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  X Båda fel
+Notering: Båda bara YouTube, ingen HF-källa. Kimi K3 och Proprietary-to-Open-Source saknas igen. Det semantiska gapet från Phase 2.
 
 ---
 
@@ -1228,6 +1237,6 @@ YouTube (videor om agenter inom fönstret, urval):
 - 2026-09-12 — GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)
   (`joKb_QMmglM`) — https://www.youtube.com/watch?v=joKb_QMmglM
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
 
 ---
