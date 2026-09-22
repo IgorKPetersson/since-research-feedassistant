@@ -437,8 +437,9 @@ depends on it) per my explicit instruction. `vg09` (the import path) and
 
 ### T-034 — README, Apache-2 LICENSE, and a real fresh-clone test
 
-**Status:** todo
-**Size:** M  ·  **Branch:** `t/T-034-readme-license-fresh-clone`  ·  **Phase:** 3
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-035-project-rename` (T-034 built on T-035's branch since it
+depends on the rename landing first — see T-035's own Notes)  ·  **Phase:** 3
 
 **Goal:** anyone can clone the public repo, follow only the README, and reach a first real
 answer from the chat UI — proven by actually doing it, not assumed because the code exists.
@@ -448,19 +449,52 @@ answer from the chat UI — proven by actually doing it, not assumed because the
 exit criteria requires "a fresh-clone test following the README only." Neither exists yet.
 
 **Acceptance criteria**
-- [ ] `README.md` covers: what the project does (one paragraph, from `docs/GOAL.md`),
+- [x] `README.md` covers: what the project does (one paragraph, from `docs/GOAL.md`),
   prerequisites (Ollama, the specific models pulled, Python version), install steps, how to
   run ingest (backfill + catch-up), how to run the chat UI (`streamlit run app.py`), and
-  where the evaluation results live (T-031/T-032/T-033's output, once they exist)
-- [ ] `LICENSE` at the repo root is the real, unmodified Apache-2.0 license text
-- [ ] A real fresh clone (a separate directory, not the existing working copy) is tested
+  where the evaluation results live → written for someone who finds the repo on GitHub with
+  no prior context, per my explicit instruction; also covers GPU/VRAM (RTX 4090 tested),
+  the Swedish-UI/English-answer nuance (D-013), and known limitations (below)
+- [x] `LICENSE` at the repo root is the real, unmodified Apache-2.0 license text → fetched
+  from `https://www.apache.org/licenses/LICENSE-2.0.txt`, byte-identical (11358 bytes),
+  including the Appendix's bracketed placeholder boilerplate, unmodified
+- [x] A real fresh clone (a separate directory, not the existing working copy) is tested
   end to end: clone → follow only what the README says, nothing outside it → reach a first
-  real answer in the chat UI. Run for real, not assumed
-- [ ] Any step the fresh-clone test finds missing, wrong, or assumed (e.g. an
-  undocumented environment variable, an unpulled Ollama model) is fixed in the README
-  itself before this ticket closes, not worked around silently in the test run
-- [ ] `docs/GOAL.md`'s Definition of done README/LICENSE criterion can be pointed to
-  directly as met
+  real answer in the chat UI. Run for real, not assumed → **done in full, for real, real
+  numbers below**
+- [x] Any step the fresh-clone test finds missing, wrong, or assumed is fixed in the README
+  itself before this ticket closes → **nothing needed fixing** — every documented command
+  ran exactly as written, no undocumented step, no silent workaround
+- [x] `docs/GOAL.md`'s Definition of done README/LICENSE criterion can be pointed to
+  directly as met → it is, by this ticket
+
+**Real fresh-clone run (2026-09-22), against `t/T-035-project-rename`'s tip
+(includes T-035's rename), in an isolated scratch directory — never the real working
+copy or its `data/`:**
+1. `git clone --branch t/T-035-project-rename <repo> <scratch>/fresh-clone-test`
+2. `python -m venv .venv` → Python 3.12.10, matching the README's stated requirement
+3. `pip install -r requirements.txt` → clean install, no errors, no version conflicts
+4. `python scripts/t015_hf_backfill.py` → real HF Daily Papers API, **1208 papers, 56
+   days fetched, 0 skipped** (correct for a first run), new watermark `2026-09-20`
+5. `python scripts/t017_youtube_backfill.py` → real yt-dlp/YouTube/local Whisper, all 4
+   channels reached, **37 attempts: 5 real captions, 30 Whisper fallback (captions
+   blocked, D-009), 2 title+description fallback, 6 already-done**, watermark
+   `2026-09-22` — the real caption-block-then-Whisper-then-fallback chain this project
+   has documented since D-009/D-010 exercised itself for real, unprompted, exactly as
+   designed
+6. `python scripts/t012_build_store.py` → real `bge-m3` embedding calls,
+   **1251 documents, 2039 chunks, `collection.count()==2039`**, 253.4s
+7. `streamlit run app.py` → real browser (Playwright), page title renders
+   "research-feed-assistant" (confirming T-035's rename end to end, not just in source)
+8. Asked the real question "Vad har hänt med AI-agenter den senaste veckan?" → **a real,
+   complete English answer** (D-013 - Swedish question, English answer, confirmed) citing
+   6 real sources (4 HF papers with feed date + arXiv date, 2 YouTube videos with
+   timestamped links), no empty/incomplete/error state. Screenshot evidence kept outside
+   the repo (scratchpad, not committed - it's a one-off manual verification artifact, not
+   project data)
+
+Confirms `docs/GOAL.md`'s success criterion ("A fresh clone reaches a first answer by
+following the README only") and Definition of done #1 for real, not by inspection.
 
 **Out of scope:** CI/CD (no pipeline decided yet, per `CLAUDE.md`'s "still undecided"
 stack notes); packaging/publishing to PyPI or similar; the evaluation results themselves
@@ -469,7 +503,14 @@ finished first.
 
 **Depends on:** T-035 (so the README is written under the project's real name from the
 start, not written against "VG-09" and then edited).
-**Notes:** —
+**Notes:** `docs/GOAL.md`'s known limitations list was adapted, not copied verbatim, for
+one item: D-005 already ties `bge-m3`'s multilingual embedding to GOAL's own Swedish-
+retrieval caveat ("relevant to docs/GOAL.md's known limitation that Swedish questions may
+retrieve worse than English ones") — the README states the limitation accurately given
+that decision (multilingual embedding, verified for real, T-006) rather than repeating
+GOAL.md's pre-D-005 phrasing unchanged. `docs/GOAL.md` itself was not edited - flagging
+this discrepancy for whoever next revisits that doc, per `CLAUDE.md`'s rule to flag rather
+than silently adapt when reality has moved past a reference document.
 
 ---
 

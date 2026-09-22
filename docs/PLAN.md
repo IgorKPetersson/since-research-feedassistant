@@ -125,11 +125,15 @@ Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead
   committed — **T-031** (harness, D-012's anchor explicit, human-gradable output — grading
   is manual, never a model), **T-032** (date-aware vs plain, `docs/GOAL.md`'s central
   claim), **T-033** (`qwen3:30b-a3b` vs `qwen3:8b`, D-005's VRAM-differentiated pair)
-- [ ] README, Apache-2 `LICENSE`, and a fresh-clone test following the README only —
+- [x] README, Apache-2 `LICENSE`, and a fresh-clone test following the README only —
   **T-034**, depends on **T-035** (project rename, "VG-09" → "research-feed-assistant" —
   scoped to user-facing naming only; the `vg09` package/import path and the Chroma
   `COLLECTION_NAME` stored-data identifier are explicitly out of scope, flagged for a
-  separate decision)
+  separate decision). Both done 2026-09-22: rename landed (`CLAUDE.md`, `app.py`), README +
+  Apache-2.0 `LICENSE` written, and a real fresh-clone test (isolated scratch clone, real
+  HF+YouTube backfill including the Whisper fallback path, real `bge-m3` embedding, real
+  browser question) reached a real answer with real citations end to end — nothing in the
+  README needed fixing
 - [ ] Report and presentation — run `defense-prep` — **no ticket yet**, not included in
   this round's ticket-writing instruction (2026-09-20)
 
