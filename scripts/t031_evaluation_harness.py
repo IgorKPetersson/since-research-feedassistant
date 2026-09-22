@@ -117,6 +117,12 @@ def render_question(n: int, question: str, facit: str) -> str:
             "_Hänvisningar i svaret som inte kunde kopplas till en källa: "
             + ", ".join(citations.unlinked_references) + "_"
         )
+    if citations.descriptive_ranges:
+        lines.append("")
+        lines.append(
+            "_Beskrivande intervall (t.ex. \"alla N källor\") - inte expanderade till "
+            "källhänvisningar, D-015: " + ", ".join(citations.descriptive_ranges) + "_"
+        )
     lines.append("")
     lines.append("**Facit (docs/eval-questions.md, oförändrat):**")
     lines.append("")

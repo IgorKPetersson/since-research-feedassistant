@@ -473,10 +473,15 @@ for exactly that; `vg09.answer.number_sources()` is the single place source numb
 (the same mapping builds the prompt and resolves citations afterward, via
 `vg09.citations.build_citations()`), so a number always means the same chunk on both ends. A
 bracketed reference that can't be resolved — an out-of-range number, or any other bracket
-shape — is collected as unlinked, never silently dropped. **Known limitation, not fixed:**
-this can't distinguish a real evidence citation from a bracketed number the model used
-descriptively (e.g. "reviewed sources `[1]` to `[38]`") — confirmed for real on a negative
-answer, `docs/PLAN.md`'s risk register.
+shape — is collected as unlinked, never silently dropped. **Partially fixed (T-040/D-015):**
+a numeric *range* (`[1-20]`) is now distinguished from a real multi-source citation by
+count — at most 5 numbers resolves like a comma list, more than that is collected separately
+as a descriptive enumeration (`CitationResult.descriptive_ranges`), not expanded into false
+citations and not reported as unlinked either. **Residual limitation, not fixed:** this is a
+count heuristic, not real understanding — a *short* bracket the model used descriptively
+(e.g. "sources `[1]` and `[2]`" meaning "the first two", not evidence for a claim) still
+can't be told apart from a genuine citation; only the long-range shape T-024's real F12 run
+and T-032's real F10/F12 grading actually produced is covered.
 
 ## What we deliberately don't build
 

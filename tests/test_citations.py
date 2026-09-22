@@ -156,5 +156,116 @@ class BuildCitationsTests(unittest.TestCase):
         self.assertEqual(result.unlinked_references, ["[Title 1, 2026-09-09]"])
 
 
+class RangeCitationTests(unittest.TestCase):
+    """T-040/D-015: numeric ranges in a bracket ("[1-20]", "[21-22]"). D-015's real
+    data: T-032's F10-A wrote a real short-range citation ([21-22], 2 sources) that
+    T-028's comma-only splitting couldn't resolve, alongside a long range ([1-20])
+    describing "all 20 sources today" rather than citing evidence; F12-A wrote a
+    similar long range ([1-31]) on a "not mentioned" answer - the exact false-positive
+    shape T-024's own ticket predicted. The three tests below are built directly from
+    those real bracket/source-count shapes."""
+
+    def _source_map(self, n: int) -> dict[int, object]:
+        return {i: make_chunk(f"doc{i}", f"Title {i}") for i in range(1, n + 1)}
+
+    def test_real_shape_short_range_resolves_like_a_comma_list(self):
+        """F10-A's real [21-22] - 2 numbers, a genuine two-source citation - must
+        resolve exactly as a comma-separated bracket would, not fall into
+        unlinked_references the way it did before this fix."""
+        source_map = self._source_map(22)
+        result = build_citations("A YouTube video covered this [21-22].", source_map)
+        self.assertEqual({c.doc_id for c in result.citations}, {"doc21", "doc22"})
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, [])
+
+    def test_real_shape_range_covering_the_days_papers_is_descriptive(self):
+        """F10-A's real [1-20] - "all 20 papers and videos listed... [1-20]" - is a
+        descriptive enumeration of everything offered that day, not a citation for a
+        specific claim; must not expand into 20 citations."""
+        source_map = self._source_map(20)
+        result = build_citations(
+            "All 20 papers and videos listed in the sources were published today [1-20].",
+            source_map,
+        )
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, ["[1-20]"])
+
+    def test_real_shape_reviewed_all_sources_range_is_descriptive_not_31_citations(self):
+        """F12-A's real [1-31] - "I've carefully reviewed all 38 sources (from [1] to
+        [38])"-shaped answer, here at the real F12 scale (31 offered sources) - must
+        not silently become 31 false-positive citations on a correct "not mentioned"
+        answer (T-024's own predicted risk, now real)."""
+        source_map = self._source_map(31)
+        result = build_citations(
+            "No, Palantir has not been mentioned in any of the provided sources [1-31].",
+            source_map,
+        )
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, ["[1-31]"])
+
+    def test_threshold_boundary_exactly_five_resolves_six_is_descriptive(self):
+        source_map = self._source_map(6)
+        at_threshold = build_citations("[1-5]", source_map)
+        self.assertEqual(len(at_threshold.citations), 5)
+        self.assertEqual(at_threshold.descriptive_ranges, [])
+
+        over_threshold = build_citations("[1-6]", source_map)
+        self.assertEqual(over_threshold.citations, [])
+        self.assertEqual(over_threshold.descriptive_ranges, ["[1-6]"])
+
+    def test_out_of_range_number_within_a_short_range_is_unlinked_individually(self):
+        """Mirrors T-028's existing out-of-range-within-comma-list behavior: the
+        numbers that do resolve still become citations, only the missing one is
+        reported, and the range itself is not treated as descriptive just because one
+        number in it doesn't exist."""
+        source_map = {1: make_chunk("doc1", "A"), 2: make_chunk("doc2", "B")}
+        result = build_citations("Claim [1-3].", source_map)
+        self.assertEqual({c.doc_id for c in result.citations}, {"doc1", "doc2"})
+        self.assertEqual(result.unlinked_references, ["[3]"])
+        self.assertEqual(result.descriptive_ranges, [])
+
+    def test_reversed_range_is_unlinked_not_treated_as_a_citation_shape(self):
+        source_map = self._source_map(5)
+        result = build_citations("See [5-1].", source_map)
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, ["[5-1]"])
+        self.assertEqual(result.descriptive_ranges, [])
+
+    def test_range_mixed_with_a_comma_number_all_short_resolves_normally(self):
+        source_map = self._source_map(3)
+        result = build_citations("[1, 2-3]", source_map)
+        self.assertEqual({c.doc_id for c in result.citations}, {"doc1", "doc2", "doc3"})
+        self.assertEqual(result.descriptive_ranges, [])
+
+    def test_range_mixed_with_a_comma_number_long_range_makes_whole_bracket_descriptive(self):
+        """A long range dominates the bracket even when paired with an otherwise-valid
+        short piece - the bracket as a whole isn't a real per-source citation."""
+        source_map = self._source_map(10)
+        result = build_citations("[1, 2-10]", source_map)
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, ["[1, 2-10]"])
+
+    def test_descriptive_ranges_are_deduplicated(self):
+        source_map = self._source_map(20)
+        result = build_citations("[1-20] ... later, [1-20] again.", source_map)
+        self.assertEqual(result.descriptive_ranges, ["[1-20]"])
+
+    def test_existing_behavior_unaffected_comma_list_and_non_numeric_bracket(self):
+        """T-028's comma-list resolution and T-024's non-numeric-bracket handling are
+        unaffected by range support - full regression check in one place."""
+        source_map = {
+            17: make_chunk("doc17", "A"), 18: make_chunk("doc18", "B"), 99: make_chunk("doc99", "C"),
+        }
+        comma = build_citations("Several advances happened [17, 18] this week.", source_map)
+        self.assertEqual({c.doc_id for c in comma.citations}, {"doc17", "doc18"})
+
+        non_numeric = build_citations("As shown in [Title 1, 2026-09-09].", {1: make_chunk("doc1", "T")})
+        self.assertEqual(non_numeric.citations, [])
+        self.assertEqual(non_numeric.unlinked_references, ["[Title 1, 2026-09-09]"])
+
+
 if __name__ == "__main__":
     unittest.main()

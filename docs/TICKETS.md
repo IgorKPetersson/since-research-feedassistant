@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-040 — Resolve range-shaped bracket references (`[1-20]`, `[21-22]`) in citations; don't explode a near-total-source range into one citation per source
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-040-range-citations`  ·  **Phase:** 3
 
 **Goal:** a real answer that cites a numeric range (`[1-20]`, `[21-22]`) resolves those
@@ -41,42 +41,58 @@ resolving every number in a near-total-source range would turn one descriptive s
 up to 31 false citations — worse than today's unlinked-and-flagged behavior, not better.
 
 **Acceptance criteria**
-- [ ] `build_citations()` recognizes a bare numeric range inside a bracket (`"1-20"`,
-  `"21-22"`, mixed with commas, e.g. `"1-3, 7-9"`) and resolves each number in the range
-  against `source_map`, exactly as the existing comma-separated case does — each resolved
-  number becomes a citation (deduped by `doc_id`), each unresolved number is reported
-  individually in `unlinked_references`, matching T-028's existing per-number behavior
-- [ ] A real range well under the full source count (F10's shape: `[1-20]` and `[21-22]`
-  against a source map sized to match the real run) resolves normally into individual
-  citations — unit test built from the real F10-A bracket text
-- [ ] A range that covers nearly all of the sources actually offered (the real F12 shape:
-  `[1-31]` against a 31-source map, i.e. effectively the whole set) does **not** resolve into
-  one citation per number — it's treated as a single unlinked/flagged reference instead, per
-  the T-024/F12 precedent above; unit test asserts this doesn't produce 31 citations. The
-  exact threshold for "nearly all" (a fraction of `len(source_map)`, an absolute count, or
-  something else) is a real design decision — not decided here, see Notes
-- [ ] An out-of-range number inside an otherwise-valid range is unlinked individually, not
-  dropped and not failing the whole range (mirrors T-028's existing out-of-range-within-
-  comma-list behavior)
-- [ ] Existing non-numeric-range brackets (T-024's original `[Title, YYYY-MM-DD]` case) and
+- [x] `build_citations()` recognizes a bare numeric range inside a bracket (`"1-20"`,
+  `"21-22"`, mixed with commas, e.g. `"1, 2-3"`) and, when the range is short enough (see
+  below), resolves each number in it against `source_map` exactly as the existing
+  comma-separated case does — each resolved number becomes a citation (deduped by
+  `doc_id`), each unresolved number is reported individually in `unlinked_references`,
+  matching T-028's existing per-number behavior → `vg09.citations.expand_part()`
+- [x] A real range well under the threshold (F10-A's real `[21-22]`, 2 numbers) resolves
+  normally into individual citations — unit test built from the real F10-A bracket text
+  → `RangeCitationTests::test_real_shape_short_range_resolves_like_a_comma_list`
+- [x] A long range (the real F10-A shape `[1-20]`, and the real F12-A shape `[1-31]`) does
+  **not** resolve into one citation per number, and is **not** added to
+  `unlinked_references` either — it's collected into a new
+  `CitationResult.descriptive_ranges`, per **D-015** (my decision, 2026-09-22): a range
+  of at most `RANGE_DESCRIPTIVE_THRESHOLD = 5` numbers is a real citation, more is
+  descriptive → `RangeCitationTests::test_real_shape_range_covering_the_days_papers_is_
+  descriptive`, `test_real_shape_reviewed_all_sources_range_is_descriptive_not_31_citations`,
+  plus a boundary test (5 resolves, 6 is descriptive)
+- [x] An out-of-range number inside an otherwise-valid short range is unlinked
+  individually, not dropped and not failing the whole range (mirrors T-028's existing
+  out-of-range-within-comma-list behavior) →
+  `test_out_of_range_number_within_a_short_range_is_unlinked_individually`
+- [x] Existing non-numeric-range brackets (T-024's original `[Title, YYYY-MM-DD]` case) and
   existing comma-separated brackets (T-028) are unaffected — full existing
-  `tests/test_citations.py` suite still passes unchanged, alongside the new range tests
-- [ ] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
-  included
+  `tests/test_citations.py` suite passes unchanged, plus the new range tests →
+  `test_existing_behavior_unaffected_comma_list_and_non_numeric_bracket`, plus a reversed-
+  range test (`[5-1]`) confirming a malformed range still falls back to unlinked, not a
+  crash
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
+  included → **130/130 pass** (10 new)
 
 **Out of scope:** retroactively fixing `docs/eval-results/2026-09-22-0027-t032-date-aware-
-vs-plain.md` (already committed, ungraded output stays as it was actually produced); any
-other bracket shape the model might still invent beyond numeric ranges/comma-lists; the
+vs-plain.md` (already committed, ungraded-in-this-sense output stays as it was actually
+produced); any other bracket shape the model might still invent beyond numeric
+ranges/comma-lists (D-015's own residual-limitation note in `docs/DESIGN.md`); the
 retrieval/packing pipeline upstream of citation resolution.
 
 **Depends on:** T-024 (citation resolution), T-028 (the comma-list precedent this extends).
-**Notes:** the exact threshold/policy for "this range is a descriptive enumeration, not a
-citation" is a real design decision, not just an implementation detail — flagged per
-`CLAUDE.md`'s stop-and-ask rule, needs my sign-off on the policy before or during
-implementation, not decided silently. Found while grading
+**Notes:** the threshold/policy question this ticket originally left open was decided by me
+on 2026-09-22 and recorded as **D-015**: ranges of at most 5 numbers link as normal
+citations, longer ranges are descriptive — not expanded, not shown as unlinked, logged
+separately. `CitationResult.descriptive_ranges` is rendered in both evaluation scripts
+(`scripts/t031_evaluation_harness.py`, `scripts/t032_date_aware_vs_plain_comparison.py`,
+"_Beskrivande intervall..._") and, beyond what D-015's instruction named, also in the
+production chat UI (`app.py`, same caption pattern as `unlinked_references`) — added there
+too so a descriptive range doesn't silently vanish from the one screen an actual user sees,
+consistent with T-024/T-025's own "never silently dropped" principle; flagged here in case
+that was over-reach beyond what was asked. Found while grading
 `docs/eval-results/2026-09-22-0027-t032-date-aware-vs-plain.md` (F10 Bedömning note: "A
 skrev intervall [1-20] och [21-22] som inte kopplades, så videon saknas i källistan."; F12
-Bedömning note: "A använde intervallet [1-31], samma citeringsbugg som F10.").
+Bedömning note: "A använde intervallet [1-31], samma citeringsbugg som F10."). Not re-run
+against the real T-032 comparison file — the committed grading stays exactly as I
+graded it; this fix only changes future runs.
 
 ---
 

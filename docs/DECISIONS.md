@@ -638,6 +638,57 @@ to the model or its sampling settings, which invalidates KB-019's measurements.
 
 ---
 
+## D-015 — A numeric range in a citation bracket resolves as a citation at up to 5 numbers; longer ranges are a descriptive enumeration, not evidence
+**Status:** accepted
+
+**Decision:** `vg09.citations.build_citations()` (T-040) now parses a numeric range inside
+a bracket (`"1-20"`, `"21-22"`) the same way it already parsed a comma-separated list
+(T-028): each number in the range is checked against `source_map` individually - **but only
+when the range holds at most `RANGE_DESCRIPTIVE_THRESHOLD = 5` numbers**. A range longer
+than that is not expanded into one citation per number at all - it's collected into a new
+`CitationResult.descriptive_ranges` list instead, deduplicated, first-seen order. It is
+**not** added to `unlinked_references` either: it was never a failed citation attempt, so
+reporting it as one would be as misleading as expanding it. A bracket mixing a short piece
+with a long range (`"[1, 5-31]"`) is treated as descriptive as a whole - a bracket
+dominated by "reviewed all sources" isn't meaningfully still citing its smaller piece.
+
+**Why:** real data from grading T-032's re-run (2026-09-22) gave three concrete shapes to
+draw the line between: F10-A's `[21-22]` (2 numbers) is a genuine two-source citation that
+T-028's comma-only splitting couldn't resolve, silently dropping a real cited video into
+`unlinked_references`; F10-A's `[1-20]` ("All 20 papers and videos listed... were published
+on September 16 [1-20]") and F12-A's `[1-31]` ("Palantir has not been mentioned in any of
+the provided sources [1-31]") are both the model describing the whole set of sources it was
+given, not citing evidence for a specific claim - exactly the false-positive shape T-024's
+own ticket predicted from a real F12 run ("reviewed all 38 sources (from `[1]` to `[38]`)")
+and `docs/PLAN.md`'s risk register flagged as worth watching in Phase 3. A count-based
+threshold is checkable directly against these three real numbers (2, 20, 31) without
+needing to parse or understand the surrounding sentence.
+
+**Rejected:** Expanding every range regardless of length - directly reproduces T-024's
+predicted false-positive-citation risk, now provably real (F12-A would have produced 31
+fabricated citations on a correct "not mentioned" answer). Leaving ranges unlinked, as
+before this decision - silently drops real citations like F10-A's `[21-22]`, the same class
+of silent data loss T-028 already fixed for commas. A semantic check (does the sentence
+around the bracket sound like a citation or a description?) - I explicitly picked a
+count threshold instead; no NLP step exists in this pipeline to make a semantic check
+reliable, and a fixed threshold is trivially testable while a semantic heuristic is not.
+
+**Cost:** `RANGE_DESCRIPTIVE_THRESHOLD = 5` is a judgment call fitted to three real data
+points (2 real, 20 and 31 descriptive), not derived from a larger sample - a future real
+range of, say, 6-10 numbers that genuinely is a multi-source citation would be misclassified
+as descriptive and under-cited (safer direction: reported nowhere as a false positive, but
+also not surfaced as a citation). `CitationResult.descriptive_ranges` is a new field
+production (`app.py`) and both evaluation scripts (T-031/T-032) now render explicitly, so
+nothing that used to be visible (as unlinked) silently disappears.
+
+**Would change our mind:** A real range of 6+ numbers that turns out to be a genuine
+multi-source citation, not a description - would mean the threshold is too low. A
+descriptive range of 5 or fewer numbers that gets expanded into false citations - would mean
+the threshold is too high, or that a count alone can't carry this distinction and a
+different signal (e.g. the sentence's own wording) is needed after all.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

@@ -11,16 +11,36 @@ this module resolves those numbers back to real chunks via the same mapping the
 prompt was built from (`AnswerResult.source_map`). A bracketed reference that can't be
 resolved this way - an out-of-range number, or any other bracket format the model
 might still produce - is reported, never silently dropped.
+
+T-040/D-015: a bracket can also hold a numeric *range* ("[1-20]", "[21-22]"), which
+T-028's comma-only splitting never covered - a range fell straight into
+`unlinked_references` as one unparsed blob, silently dropping any real citation that
+happened to be part of it. D-015's real-data finding: a short range is a genuine
+multi-source citation (`[21-22]`, T-032's F10-A) and resolves like a comma list; a
+long range is the model describing "all N sources", not citing evidence for a claim
+(`[1-31]`, T-032's F12-A - the exact shape T-024's own ticket predicted). D-015 draws
+the line at `RANGE_DESCRIPTIVE_THRESHOLD` numbers: at or under it, every number in the
+range resolves individually, exactly like a comma-separated bracket; over it, the
+whole bracket is a descriptive range - not expanded into per-source citations, and not
+reported as unlinked either, since it was never a citation attempt to begin with. It's
+collected separately (`CitationResult.descriptive_ranges`) so it stays visible rather
+than disappearing silently.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vg09.retrieval import Candidate
 
 _BRACKET_RE = re.compile(r"\[([^\]]+)\]")
+_RANGE_RE = re.compile(r"^(\d+)-(\d+)$")
+
+# D-015: a range with this many numbers or fewer is a real multi-source citation and
+# resolves like a comma list; more than this is treated as a descriptive enumeration
+# ("reviewed sources [1] to [31]"), not evidence for a claim.
+RANGE_DESCRIPTIVE_THRESHOLD = 5
 
 
 @dataclass
@@ -39,6 +59,10 @@ class CitationResult:
     unlinked_references: list[str]  # raw bracket text ("[27]", "[Title, 2026-09-09]", ...)
     # that could not be resolved to a real chunk - deduplicated, first-seen order,
     # never silently hidden
+    descriptive_ranges: list[str] = field(default_factory=list)  # raw bracket text of a
+    # long numeric range ("[1-31]") judged descriptive rather than a citation (D-015) -
+    # deduplicated, first-seen order; not in unlinked_references (it was never a failed
+    # citation attempt) and not expanded into per-source citations either
 
 
 def _citation_from_chunk(c: Candidate) -> Citation:
@@ -56,10 +80,11 @@ def _citation_from_chunk(c: Candidate) -> Citation:
 def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationResult:
     """Scans the answer text (not the reasoning - the reasoning is never shown to the
     user, T-011) for bracketed references. A reference resolves only if its content is
-    a bare integer that's a real key in `source_map` - anything else (a non-numeric
-    bracket, or a number outside the range actually offered) is unlinked, not guessed
-    at. When the same document is cited more than once (the same number twice, or two
-    different numbers that happen to be chunks of the same document), only the first
+    a bare integer (or, T-040/D-015, part of a short numeric range) that's a real key
+    in `source_map` - anything else (a non-numeric bracket, a number outside the range
+    actually offered, or a long range judged descriptive) is unlinked or descriptive,
+    not guessed at. When the same document is cited more than once (the same number
+    twice, or two different numbers that happen to be chunks of the same document), only the first
     occurrence becomes a citation - one entry per document, not per chunk or per
     citation mark.
 
@@ -68,33 +93,72 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
     Each number in that bracket is resolved independently, exactly as if it had been
     its own bracket - a bracket where some numbers resolve and others don't reports
     only the failing ones as unlinked, the rest still become real citations. A bracket
-    that *isn't* a comma-separated list of bare numbers (T-024's original non-numeric
-    case, e.g. the never-reliably-followed "[Title, YYYY-MM-DD]" shape) is still
-    reported as one whole unlinked reference, unchanged - comma-splitting only applies
-    once every piece is confirmed to be a bare number, so a citation-shaped bracket
-    that merely happens to contain a comma elsewhere isn't torn apart by mistake."""
+    that *isn't* a comma-separated list of bare numbers or numeric ranges (T-024's
+    original non-numeric case, e.g. the never-reliably-followed "[Title, YYYY-MM-DD]"
+    shape) is still reported as one whole unlinked reference, unchanged - splitting
+    only applies once every comma-separated piece is confirmed to be a bare number or a
+    valid range, so a citation-shaped bracket that merely happens to contain a comma
+    elsewhere isn't torn apart by mistake.
+
+    T-040/D-015, real finding: a comma-separated piece can also be a numeric range
+    ("[1-20]", "[21-22]"). A short range (at most `RANGE_DESCRIPTIVE_THRESHOLD`
+    numbers) is a real multi-source citation and expands exactly like a comma list -
+    each number resolved independently. A longer range is the model describing "all N
+    sources" rather than citing evidence, so it is not expanded into one citation per
+    number (which would fabricate citations for a sentence that was never citing
+    anything) - it is collected whole into `CitationResult.descriptive_ranges` instead,
+    still visible, just not treated as either a citation or a failed one. Any range
+    part in the bracket being long enough makes the *whole* bracket descriptive, even
+    if mixed with other short pieces - a bracket dominated by a "reviewed all sources"
+    range isn't meaningfully still a citation for its other, smaller piece."""
     citations: list[Citation] = []
     seen_doc_ids: set[str] = set()
     unlinked: list[str] = []
     seen_unlinked: set[str] = set()
+    descriptive_ranges: list[str] = []
+    seen_descriptive: set[str] = set()
 
     def add_unlinked(raw: str) -> None:
         if raw not in seen_unlinked:
             seen_unlinked.add(raw)
             unlinked.append(raw)
 
+    def add_descriptive(raw: str) -> None:
+        if raw not in seen_descriptive:
+            seen_descriptive.add(raw)
+            descriptive_ranges.append(raw)
+
+    def expand_part(part: str) -> list[int] | None:
+        """A bare number expands to itself; a valid "start-end" range (start <= end)
+        expands to every number in it; anything else - including a reversed range -
+        is not a citation shape at all, and returns None so the whole bracket falls
+        back to being reported as one unlinked reference."""
+        if part.isdigit():
+            return [int(part)]
+        m = _RANGE_RE.match(part)
+        if m:
+            start, end = int(m.group(1)), int(m.group(2))
+            if start <= end:
+                return list(range(start, end + 1))
+        return None
+
     for match in _BRACKET_RE.finditer(answer):
         raw = match.group(0)
         parts = [p.strip() for p in match.group(1).split(",")]
+        expansions = [expand_part(p) for p in parts]
 
-        if not all(p.isdigit() for p in parts):
+        if any(e is None for e in expansions):
             add_unlinked(raw)
             continue
 
-        for part in parts:
-            chunk = source_map.get(int(part))
+        if any(len(e) > RANGE_DESCRIPTIVE_THRESHOLD for e in expansions):
+            add_descriptive(raw)
+            continue
+
+        for number in (n for e in expansions for n in e):
+            chunk = source_map.get(number)
             if chunk is None:
-                add_unlinked(f"[{part}]")
+                add_unlinked(f"[{number}]")
                 continue
 
             doc_id = chunk.metadata["doc_id"]
@@ -103,4 +167,8 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
             seen_doc_ids.add(doc_id)
             citations.append(_citation_from_chunk(chunk))
 
-    return CitationResult(citations=citations, unlinked_references=unlinked)
+    return CitationResult(
+        citations=citations,
+        unlinked_references=unlinked,
+        descriptive_ranges=descriptive_ranges,
+    )

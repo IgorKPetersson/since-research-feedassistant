@@ -94,5 +94,10 @@ if ask and question.strip():
             "Hänvisningar i svaret som inte gick att koppla till en källa: "
             + ", ".join(citations.unlinked_references)
         )
+    if citations.descriptive_ranges:
+        st.caption(
+            "Beskrivande intervall (t.ex. \"alla N källor\") - inte källhänvisningar: "
+            + ", ".join(citations.descriptive_ranges)
+        )
 elif ask:
     st.warning("Skriv en fråga först.")
