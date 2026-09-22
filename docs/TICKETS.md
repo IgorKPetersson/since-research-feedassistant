@@ -325,7 +325,7 @@ of the old "Deferred to Phase 3, T-020's triage" placeholder text.
 
 ### T-036 — Test coverage for the two deferred risk-register items: `store.py` and `youtube_backfill.py`
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-036-store-and-backfill-tests`  ·  **Phase:** 3
 
 **Goal:** the two test-coverage gaps Phase 1's `grill-me` review found and deferred to
@@ -341,28 +341,46 @@ ingest pipeline, verified only by real production runs" (T-019's own self-flagge
 Phase 3 is the last chance to close this before the project is published.
 
 **Acceptance criteria**
-- [ ] A test asserts `vg09.store.embed_batch()`'s real request body always includes
+- [x] A test asserts `vg09.store.embed_batch()`'s real request body always includes
   `model="bge-m3"` and an explicit `num_ctx` — mocked at the `requests.post` boundary,
-  matching this project's existing test pattern (`tests/test_store.py` already exists for
-  `is_empty()`/`latest_feed_date()`)
-- [ ] A mocked test covers `youtube_backfill.py`'s resumability: a video already present in
-  `data/raw/` (via `document.exists()`) is skipped, not re-fetched, on a second run
-- [ ] A mocked test covers its pacing: the pause-between-videos call happens between
+  matching this project's existing test pattern → `EmbedBatchTests`
+  (`tests/test_store.py`); also covers the return value passing embeddings through
+  unmodified, and (beyond this criterion's literal ask, matching T-029's already-
+  established pattern for the project's other two Ollama call sites) that a non-2xx
+  response raises via `raise_for_status()` before `.json()` is ever read
+- [x] A mocked test covers `youtube_backfill.py`'s resumability: a video already present in
+  `data/raw/` (via `document.exists()`) is skipped, not re-fetched, on a second run →
+  `ResumabilityTests` (`tests/test_youtube_backfill.py`), including a two-run test
+  (fetched on run 1, confirmed skipped — `normalize` not called — on run 2)
+- [x] A mocked test covers its pacing: the pause-between-videos call happens between
   consecutive video attempts, asserted against a mocked sleep/pause function — no real
-  wall-clock wait in the automated suite
-- [ ] A mocked test covers watermark-write-on-completion: the watermark is written only
+  wall-clock wait in the automated suite → `PacingTests`; asserts the actual interleaved
+  call order (`process:vidA, pause, process:vidB, pause`), that the duration is drawn from
+  the module's own `random.uniform(*SHORT_PAUSE_SECONDS)` call (not a guessed literal),
+  and that an already-done video costs no pause at all (never reaches `_process_video()`)
+- [x] A mocked test covers watermark-write-on-completion: the watermark is written only
   after the full backfill window completes successfully, and stays unwritten if the run is
-  interrupted partway (matching D-006/D-010's already-described design)
-- [ ] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
-  included, no live network or GPU calls added to the automated suite
+  interrupted partway → `WatermarkWriteTests`; also covers the real distinction this
+  module's own code draws between a handled per-channel listing failure (watermark still
+  advances - a real, caught case) and an uncaught exception from `normalize()` genuinely
+  interrupting the run (watermark stays unwritten)
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
+  included, no live network or GPU calls added to the automated suite → **144/144 pass**
+  (13 new: 4 in `EmbedBatchTests`, 9 in `test_youtube_backfill.py`)
+
+**No real defect found** — both modules already behaved exactly as their own code comments
+and this ticket's risk-register origin described; every new test passed against the
+existing, unmodified implementation. Neither `vg09/store.py` nor `vg09/youtube_backfill.py`
+was changed.
 
 **Out of scope:** fixing any real defect these tests might surface — if one turns up, it
 gets its own ticket, not a silent fix bundled into this one (unless genuinely trivial and
-directly caused by writing the test itself, noted if so).
+directly caused by writing the test itself, noted if so). **N/A — none found.**
 
 **Depends on:** —
 **Notes:** Both risk-register rows cite the Phase 1 `grill-me` review (2026-09-19) as their
-origin; see `docs/PLAN.md`'s risk register for the exact original wording.
+origin; both rows in `docs/PLAN.md`'s risk register marked resolved by this ticket
+(2026-09-22), original wording kept struck through rather than deleted.
 
 ---
 
