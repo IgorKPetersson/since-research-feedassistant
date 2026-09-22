@@ -46,7 +46,9 @@ up to 31 false citations — worse than today's unlinked-and-flagged behavior, n
   below), resolves each number in it against `source_map` exactly as the existing
   comma-separated case does — each resolved number becomes a citation (deduped by
   `doc_id`), each unresolved number is reported individually in `unlinked_references`,
-  matching T-028's existing per-number behavior → `vg09.citations.expand_part()`
+  matching T-028's existing per-number behavior → `vg09.citations.part_bounds()`
+  (renamed from `expand_part()`, see this ticket's own follow-up below: it now returns
+  bounds, never a materialized list, so the size check runs before any range is built)
 - [x] A real range well under the threshold (F10-A's real `[21-22]`, 2 numbers) resolves
   normally into individual citations — unit test built from the real F10-A bracket text
   → `RangeCitationTests::test_real_shape_short_range_resolves_like_a_comma_list`
@@ -69,7 +71,21 @@ up to 31 false citations — worse than today's unlinked-and-flagged behavior, n
   range test (`[5-1]`) confirming a malformed range still falls back to unlinked, not a
   crash
 - [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
-  included → **130/130 pass** (10 new)
+  included → **131/131 pass** (11 new, one added by the follow-up fix below)
+
+**Follow-up fix (same ticket), pre-merge `deep-review` finding (2026-09-22):** the
+original `expand_part()` called `list(range(start, end + 1))` for every range piece
+*before* the descriptive-size check ran, so a single pathological or hallucinated
+bracket in real model output (e.g. `[1-500000000]`) would materialize a huge list -
+verified at ~7.4s and large transient memory for that exact bracket - before being
+discarded as descriptive, on a code path that runs on every real rendered answer over
+untrusted model text. Fixed: renamed to `part_bounds()`, now returns the inclusive
+`(start, end)` bounds only - `end - start + 1` is checked against
+`RANGE_DESCRIPTIVE_THRESHOLD` before any `range()`/`list()` call happens at all; numbers
+are only actually built once every piece in the bracket is confirmed at or under the
+threshold (at most 5 per piece). New test asserts both the classification and a <0.5s
+wall-clock bound for the same `[1-500000000]` bracket that previously took ~7.4s.
+131/131 tests pass.
 
 **Out of scope:** retroactively fixing `docs/eval-results/2026-09-22-0027-t032-date-aware-
 vs-plain.md` (already committed, ungraded-in-this-sense output stays as it was actually

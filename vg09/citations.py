@@ -128,34 +128,49 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
             seen_descriptive.add(raw)
             descriptive_ranges.append(raw)
 
-    def expand_part(part: str) -> list[int] | None:
-        """A bare number expands to itself; a valid "start-end" range (start <= end)
-        expands to every number in it; anything else - including a reversed range -
-        is not a citation shape at all, and returns None so the whole bracket falls
-        back to being reported as one unlinked reference."""
+    def part_bounds(part: str) -> tuple[int, int] | None:
+        """Returns the inclusive (start, end) integer bounds a bracket piece stands
+        for, without ever materializing them into a list. A bare number "n" is
+        (n, n); a valid "start-end" range (start <= end) is (start, end); anything
+        else - including a reversed range - is not a citation shape at all, and
+        returns None so the whole bracket falls back to being reported as one
+        unlinked reference.
+
+        Deliberately returns bounds, not numbers: a deep-review finding (2026-09-22)
+        caught the previous version calling `list(range(start, end + 1))` before the
+        descriptive-range size check ran, so a single pathological or hallucinated
+        bracket (e.g. "[1-500000000]") in real model output would materialize a huge
+        list before being discarded. `end - start + 1` is checked against
+        `RANGE_DESCRIPTIVE_THRESHOLD` in the caller *before* any range is ever built -
+        this function's job is only to say how big a piece would be, cheaply."""
         if part.isdigit():
-            return [int(part)]
+            n = int(part)
+            return (n, n)
         m = _RANGE_RE.match(part)
         if m:
             start, end = int(m.group(1)), int(m.group(2))
             if start <= end:
-                return list(range(start, end + 1))
+                return (start, end)
         return None
 
     for match in _BRACKET_RE.finditer(answer):
         raw = match.group(0)
         parts = [p.strip() for p in match.group(1).split(",")]
-        expansions = [expand_part(p) for p in parts]
+        bounds = [part_bounds(p) for p in parts]
 
-        if any(e is None for e in expansions):
+        if any(b is None for b in bounds):
             add_unlinked(raw)
             continue
 
-        if any(len(e) > RANGE_DESCRIPTIVE_THRESHOLD for e in expansions):
+        if any(end - start + 1 > RANGE_DESCRIPTIVE_THRESHOLD for start, end in bounds):
             add_descriptive(raw)
             continue
 
-        for number in (n for e in expansions for n in e):
+        # Every piece is confirmed valid and no larger than the threshold (checked
+        # above, without materializing anything) - only now is it cheap and safe to
+        # actually build each piece's numbers, at most RANGE_DESCRIPTIVE_THRESHOLD
+        # per piece.
+        for number in (n for start, end in bounds for n in range(start, end + 1)):
             chunk = source_map.get(number)
             if chunk is None:
                 add_unlinked(f"[{number}]")

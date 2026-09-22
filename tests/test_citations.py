@@ -248,6 +248,24 @@ class RangeCitationTests(unittest.TestCase):
         self.assertEqual(result.unlinked_references, [])
         self.assertEqual(result.descriptive_ranges, ["[1, 2-10]"])
 
+    def test_pathological_huge_range_is_descriptive_immediately_not_materialized(self):
+        """deep-review finding (2026-09-22): a hallucinated or malformed huge range in
+        real model output must be classified as descriptive from its bounds alone -
+        never by actually building a list of its numbers first. Asserts both the
+        classification and that it happens with no measurable delay (previously ~7s
+        for this exact bracket, materializing 500 million ints)."""
+        import time
+
+        source_map = self._source_map(2)
+        start = time.monotonic()
+        result = build_citations("See [1-500000000].", source_map)
+        elapsed = time.monotonic() - start
+
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, ["[1-500000000]"])
+        self.assertLess(elapsed, 0.5, f"took {elapsed:.2f}s - range size was materialized")
+
     def test_descriptive_ranges_are_deduplicated(self):
         source_map = self._source_map(20)
         result = build_citations("[1-20] ... later, [1-20] again.", source_map)
