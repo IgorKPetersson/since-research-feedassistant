@@ -20,8 +20,8 @@ from vg09.retrieval import retrieve
 from vg09.store import is_empty, latest_feed_date
 from vg09.ui_helpers import describe_retrieval_mode, escape_markdown_link_text
 
-st.set_page_config(page_title="VG-09", page_icon=":material/search:")
-st.title("VG-09 — forskningsflödesassistent")
+st.set_page_config(page_title="research-feed-assistant", page_icon=":material/search:")
+st.title("research-feed-assistant — forskningsflödesassistent")
 
 if is_empty():
     st.info("Ingen data ännu, kör ingest.")

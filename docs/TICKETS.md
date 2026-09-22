@@ -368,7 +368,7 @@ origin; see `docs/PLAN.md`'s risk register for the exact original wording.
 
 ### T-035 — Rename the project from "VG-09" to "research-feed-assistant" (user-facing naming only)
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-035-project-rename`  ·  **Phase:** 3
 
 **Goal:** the project's real, current name — "research-feed-assistant" — replaces the
@@ -380,19 +380,28 @@ every import in the codebase.
 and elsewhere, but the project is about to be published as OSS under its real name.
 
 **Acceptance criteria**
-- [ ] Every occurrence of "VG-09" in `CLAUDE.md` (the "What this is" section, examples,
+- [x] Every occurrence of "VG-09" in `CLAUDE.md` (the "What this is" section, examples,
   branch/PR naming illustrations, etc.) is replaced with "research-feed-assistant" or the
-  appropriate grammatical form
-- [ ] `app.py`'s UI-facing strings (`st.set_page_config(page_title=...)`,
-  `st.title(...)`) say "research-feed-assistant", not "VG-09"
-- [ ] A repo-wide search for "VG-09" is run and every *currently-live, forward-looking*
-  occurrence is updated; historical records (past session notes under `docs/sessions/`,
-  already-closed ticket text describing what was true at the time, git history) are
-  deliberately left unchanged, since rewriting history to match a later rename would
-  misrepresent what those records actually said at the time — this ticket records exactly
-  which files were touched and which were deliberately left alone, and why
-- [ ] Existing tests pass unchanged — a pure display-string rename shouldn't touch any
-  test assertion that isn't itself asserting the old name
+  appropriate grammatical form → only one real occurrence existed: the title line
+  (`# CLAUDE.md — VG-09`); the "What this is"/stack sections never named the project by
+  this codename in the first place
+- [x] `app.py`'s UI-facing strings (`st.set_page_config(page_title=...)`,
+  `st.title(...)`) say "research-feed-assistant", not "VG-09" → both updated
+- [x] A repo-wide search for "VG-09" is run (`grep -rn "VG-09"`, excluding `.venv`/
+  `__pycache__`) and every *currently-live, forward-looking* occurrence is updated;
+  historical records are deliberately left unchanged — full accounting:
+  - **Changed:** `CLAUDE.md:1` (title), `app.py:23-24` (page title/heading)
+  - **Left alone, real external path (matches this ticket's own out-of-scope list):**
+    `docs/eval-questions.md:26` and `docs/sessions/2026-09-19-...md:20`, both referencing
+    the real frozen-archive directory `C:\AIProjects\VG-09-frozen\`; `scripts/
+    t020_freeze_dataset.py`'s `ARCHIVE_DIR` (already named out of scope below)
+  - **Left alone, historical/planning text describing the rename itself, not live
+    branding:** `docs/PLAN.md:129`, and every "VG-09" inside `docs/TICKETS.md` (this
+    ticket's own body text, T-025's completed acceptance-criterion quoting a past
+    placeholder string, T-013's note referencing the same frozen-archive path) —
+    rewriting these would misrepresent what was actually true when they were written
+- [x] Existing tests pass unchanged — a pure display-string rename shouldn't touch any
+  test assertion that isn't itself asserting the old name → 131/131 pass, unchanged
 
 **Out of scope, flagged explicitly rather than silently decided:**
 - The Python package itself, `vg09/` (all 41 files that `import vg09`/`from vg09...`) —
@@ -419,7 +428,10 @@ and elsewhere, but the project is about to be published as OSS under its real na
 **Notes:** Scoped deliberately narrow (display strings and current-facing docs only) after
 finding, while writing this ticket, that a full rename touches a real stored-data
 identifier and 41 importing files — exactly the kind of thing `CLAUDE.md` says to flag and
-stop on rather than fold into a routine rename.
+stop on rather than fold into a routine rename. Executed 2026-09-22, ahead of T-034 (which
+depends on it) per my explicit instruction. `vg09` (the import path) and
+`COLLECTION_NAME`/`t020_freeze_dataset.py`'s `ARCHIVE_DIR` remain exactly as flagged above
+— still open, unresolved decisions, not silently revisited here.
 
 ---
 

@@ -1,4 +1,4 @@
-# CLAUDE.md — VG-09
+# CLAUDE.md — research-feed-assistant
 
 Read this first, every session. It is the contract for how we work together on this repo.
 
