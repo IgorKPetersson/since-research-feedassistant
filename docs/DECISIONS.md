@@ -701,6 +701,41 @@ different signal (e.g. the sentence's own wording) is needed after all.
 
 ---
 
+## D-016 — UI-facing text switches from Swedish to English
+**Status:** accepted
+
+**Decision:** Every UI-facing string in `app.py` (labels, buttons, captions, notices,
+the status bar and pipeline strip T-042 adds) is written in English. Applies to
+pre-existing labels this ticket touches too, not just new ones - no mixed-language UI.
+`vg09.ui_helpers.describe_retrieval_mode()`'s output text is English as of this decision
+(its logic - which mode fired, and why - is unchanged, D-016 is a text-only decision).
+
+**Why:** asked directly of me during T-042 (the UI redesign), per that ticket's
+own explicit instruction to stop and ask rather than assume. D-013 already settled that
+*answers* are always English regardless of the question's language, reasoned from this
+project shipping as public Apache-2 OSS meant to be usable internationally - the same
+reasoning applies to the UI chrome around those answers. Leaving the UI in Swedish while
+every answer is English was already an inconsistency D-013's own Cost section flagged as
+residual and unresolved.
+
+**Rejected:** Keeping Swedish - was the status quo default (every existing `app.py`
+label), rejected once asked directly, for the same reason D-013 gave: this is public OSS,
+not a single Swedish-speaking user's private tool. A mixed UI (old labels Swedish, new
+T-042 labels English) - rejected explicitly; inconsistency-by-accretion is worse than
+either single-language choice.
+
+**Cost:** Every existing Swedish string in `app.py` needed translating as part of T-042,
+not just the new UI sections - a larger diff than a UI-only redesign would otherwise need,
+but bundled into the same ticket rather than deferred, since a half-translated UI would be
+worse than either full state. Nothing else in the repo (docs, tickets, code comments) is
+affected - this decision is scoped to what a user of the running app actually sees.
+
+**Would change our mind:** If the project's real userbase turns out to be exclusively or
+overwhelmingly Swedish-speaking and this creates real friction - the same clause D-013
+already names, not met by anything currently known.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

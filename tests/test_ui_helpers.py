@@ -1,17 +1,41 @@
-"""Unit tests for vg09.ui_helpers (T-025, T-029)."""
+"""Unit tests for vg09.ui_helpers (T-025, T-029, T-042)."""
 
 from __future__ import annotations
 
 import unittest
 from datetime import date
 
-from vg09.ui_helpers import describe_retrieval_mode, escape_markdown_link_text
+from vg09.citations import Citation
+from vg09.retrieval import Candidate
+from vg09.ui_helpers import (
+    build_retrieval_ranks,
+    citation_source_type,
+    describe_retrieval_mode,
+    escape_markdown_link_text,
+    render_citation_chips,
+    short_mode_label,
+    text_source_label,
+)
 
 # T-029: a real title, not synthetic - copied verbatim from
 # data/raw/youtube/2026-09-16/S2VJU5DQqlU.json's "title" field (data/raw/ is
 # gitignored per D-004, so the test embeds the real string rather than reading it
 # live - same pattern test_llm.py/test_chunking.py use for other real-shaped data).
 REAL_PARENTHETICAL_TITLE = "He Built The Ultimate Spy Tool (Free and Open-Source)"
+
+
+def make_chunk(doc_id: str, url: str, feed_date_ordinal: int = 0) -> Candidate:
+    return Candidate(
+        id=f"{doc_id}:0", text="chunk text",
+        metadata={"doc_id": doc_id, "url": url, "feed_date_ordinal": feed_date_ordinal},
+    )
+
+
+def make_citation(doc_id: str, url: str, text_source: str | None = None) -> Citation:
+    return Citation(
+        doc_id=doc_id, title=f"Title {doc_id}", feed_date="2026-09-16", url=url,
+        is_fallback=(text_source == "title_description"), text_source=text_source,
+    )
 
 
 class EscapeMarkdownLinkTextTests(unittest.TestCase):
@@ -39,27 +63,154 @@ class EscapeMarkdownLinkTextTests(unittest.TestCase):
 
 
 class DescribeRetrievalModeTests(unittest.TestCase):
+    """T-042/D-016: English text - was Swedish before this ticket."""
+
     def test_manual_override_wins_even_with_an_interpreted_window_present(self):
         override = (date(2020, 1, 1), date(2020, 1, 31))
         interpreted = (date(2026, 9, 10), date(2026, 9, 16))
         result = describe_retrieval_mode(interpreted, ranking=False, manual_override=override)
-        self.assertIn("manuellt", result)
+        self.assertIn("manually", result)
         self.assertIn("2020-01-01", result)
 
     def test_interpreted_window_shown_when_no_override(self):
         interpreted = (date(2026, 9, 10), date(2026, 9, 16))
         result = describe_retrieval_mode(interpreted, ranking=False, manual_override=None)
-        self.assertIn("tolkat", result)
+        self.assertIn("interpreted", result)
         self.assertIn("2026-09-10", result)
         self.assertIn("2026-09-16", result)
 
     def test_ranking_mode_shown_when_no_window_and_no_override(self):
         result = describe_retrieval_mode(None, ranking=True, manual_override=None)
-        self.assertIn("rankning", result)
+        self.assertIn("most recent", result)
 
     def test_unfiltered_when_nothing_fired(self):
         result = describe_retrieval_mode(None, ranking=False, manual_override=None)
-        self.assertIn("Inget datumfilter", result)
+        self.assertIn("No date filter", result)
+
+
+class ShortModeLabelTests(unittest.TestCase):
+    def test_manual_override_wins(self):
+        result = short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), True,
+                                   (date(2020, 1, 1), date(2020, 1, 31)))
+        self.assertEqual(result, "Manual")
+
+    def test_date_range_without_override(self):
+        result = short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), False, None)
+        self.assertEqual(result, "Filtered")
+
+    def test_ranking_without_a_window(self):
+        self.assertEqual(short_mode_label(None, True, None), "Ranking")
+
+    def test_nothing_fired(self):
+        self.assertEqual(short_mode_label(None, False, None), "None")
+
+    def test_every_label_is_short_enough_not_to_truncate_in_a_narrow_metric_column(self):
+        """Found live, T-042's own real verification: st.metric's value truncates
+        with an ellipsis at the pipeline strip's 5-equal-column width - "Unfiltered"
+        became "Unfilt…". <= 8 characters was the real, measured safe bound."""
+        cases = [
+            short_mode_label(None, False, None),
+            short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), False, None),
+            short_mode_label(None, True, None),
+            short_mode_label(None, False, (date(2020, 1, 1), date(2020, 1, 31))),
+        ]
+        for label in cases:
+            self.assertLessEqual(len(label), 8, label)
+
+
+class CitationSourceTypeTests(unittest.TestCase):
+    def test_huggingface_url_is_a_paper(self):
+        self.assertEqual(citation_source_type("https://huggingface.co/papers/2609.12345"), "paper")
+
+    def test_youtube_url_is_a_video(self):
+        self.assertEqual(
+            citation_source_type("https://www.youtube.com/watch?v=abc123&t=90"), "video"
+        )
+
+    def test_unrecognized_url_is_unknown_not_guessed(self):
+        self.assertEqual(citation_source_type("https://example.com/whatever"), "unknown")
+
+
+class TextSourceLabelTests(unittest.TestCase):
+    def test_none_stays_none_hf_papers_have_no_text_source(self):
+        self.assertIsNone(text_source_label(None))
+
+    def test_captions_whisper_and_title_description_are_distinct(self):
+        self.assertEqual(text_source_label("captions"), "captions")
+        self.assertEqual(text_source_label("whisper"), "whisper")
+        self.assertEqual(text_source_label("title_description"), "title + description")
+
+
+class BuildRetrievalRanksTests(unittest.TestCase):
+    def test_first_occurrence_of_each_doc_id_is_its_rank(self):
+        chunks = [make_chunk("docA", "u"), make_chunk("docB", "u"), make_chunk("docA", "u")]
+        ranks = build_retrieval_ranks(chunks)
+        self.assertEqual(ranks, {"docA": 1, "docB": 2})
+
+    def test_empty_chunks_gives_an_empty_map(self):
+        self.assertEqual(build_retrieval_ranks([]), {})
+
+
+class RenderCitationChipsTests(unittest.TestCase):
+    def test_a_resolved_single_number_becomes_one_chip_linking_to_its_card(self):
+        chunk = make_chunk("doc1", "https://huggingface.co/papers/1")
+        citation = make_citation("doc1", "https://huggingface.co/papers/1")
+        result = render_citation_chips(
+            "NeoHorse is mentioned in [1].", {1: chunk}, [citation],
+            unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertIn('href="#cite-1"', result)
+        self.assertIn("chip-paper", result)
+        self.assertIn(">1<", result)
+        self.assertNotIn("[1]", result)
+
+    def test_video_citation_gets_the_video_chip_class(self):
+        chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc")
+        citation = make_citation("vid1", "https://www.youtube.com/watch?v=abc")
+        result = render_citation_chips(
+            "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertIn("chip-video", result)
+
+    def test_comma_bracket_becomes_one_chip_per_number(self):
+        c1, c2 = make_chunk("doc1", "https://huggingface.co/papers/1"), \
+            make_chunk("doc2", "https://huggingface.co/papers/2")
+        citations = [make_citation("doc1", c1.metadata["url"]), make_citation("doc2", c2.metadata["url"])]
+        result = render_citation_chips(
+            "[17, 18]", {17: c1, 18: c2}, citations, unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertIn('href="#cite-1"', result)
+        self.assertIn('href="#cite-2"', result)
+
+    def test_unlinked_bracket_is_left_as_plain_text_not_a_chip(self):
+        result = render_citation_chips(
+            "See [99] for details.", {}, [], unlinked_references=["[99]"], descriptive_ranges=[],
+        )
+        self.assertEqual(result, "See [99] for details.")
+        self.assertNotIn("citation-chip", result)
+
+    def test_descriptive_range_is_left_as_plain_text_not_a_chip(self):
+        result = render_citation_chips(
+            "All 20 sources [1-20].", {}, [], unlinked_references=[], descriptive_ranges=["[1-20]"],
+        )
+        self.assertEqual(result, "All 20 sources [1-20].")
+        self.assertNotIn("citation-chip", result)
+
+    def test_two_numbers_citing_the_same_document_link_to_the_same_card(self):
+        chunk_a = make_chunk("doc1", "https://huggingface.co/papers/1")
+        chunk_b = make_chunk("doc1", "https://huggingface.co/papers/1")  # a second chunk, same doc
+        citation = make_citation("doc1", "https://huggingface.co/papers/1")
+        result = render_citation_chips(
+            "First [1], then again [2].", {1: chunk_a, 2: chunk_b}, [citation],
+            unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertEqual(result.count('href="#cite-1"'), 2)
+
+    def test_no_brackets_at_all_is_unchanged(self):
+        result = render_citation_chips(
+            "No citations here.", {}, [], unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertEqual(result, "No citations here.")
 
 
 if __name__ == "__main__":

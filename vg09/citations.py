@@ -63,6 +63,11 @@ class Citation:
     url: str
     is_fallback: bool  # True iff built from a title_description fallback document (D-006)
     arxiv_published_at: str | None = None  # papers only
+    text_source: str | None = None  # T-042: "captions" | "whisper" | "title_description"
+    # | None (HF papers) - the real three-tier value is_fallback alone collapses into
+    # two (fallback vs not); the chat UI's source-card badge needs the real distinction.
+    # Display-only addition - is_fallback's own meaning and every existing caller of it
+    # is unchanged
 
 
 @dataclass
@@ -86,6 +91,7 @@ def _citation_from_chunk(c: Candidate) -> Citation:
         url=m["url"],
         is_fallback=(m.get("text_source") == "title_description"),
         arxiv_published_at=m.get("arxiv_published_at"),
+        text_source=m.get("text_source"),
     )
 
 

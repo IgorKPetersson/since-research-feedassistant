@@ -14,6 +14,116 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-042 — Redesign the Streamlit UI: status bar, live pipeline strip, citation chips, source cards
+
+**Status:** done
+**Size:** L (four largely-independent UI sections plus a language switch, but layout/
+presentation only — no retrieval, answer or citation logic changes; see Notes for why
+kept as one ticket)  ·  **Branch:** `t/T-042-ui-redesign`  ·  **Phase:** 3
+
+**Goal:** the chat UI shows me what the pipeline actually did — real corpus size
+and freshness, the retrieval pipeline filling in stage by stage as it runs, inline
+citations that link to real source cards below — instead of a bare answer and a bullet
+list, using only data the pipeline already produces.
+
+**Why:** my explicit instruction (2026-09-23). Layout and presentation only, by
+explicit scope: `vg09.date_range`, `vg09.retrieval`, `vg09.answer`, `vg09.citations`'
+actual behavior is unchanged - this ticket surfaces more of what they already compute,
+it does not change what they compute.
+
+**Acceptance criteria**
+- [x] **Status bar:** real corpus counts (papers, videos, chunks) and freshness ("caught
+  up through `<latest feed_date>`"), read from the real store/watermarks, never
+  hardcoded → new `vg09.store.corpus_stats()`, tested (`CorpusStatsTests`). Plus 3
+  example-question buttons, one per `docs/GOAL.md` question type, each filling the
+  question field on click (`st.button(on_click=...)` + `st.session_state`, confirmed
+  live - clicking "Did X come up" correctly filled the real question text). **Real run:
+  Papers 1184, Videos 41, Chunks 1971, Caught up through 2026-09-17** - the real
+  production store, not fixtures
+- [x] **Pipeline strip:** filled in progressively while a query runs, via `st.empty()`
+  placeholders updated per stage - not one spinner. Shows mode, candidates, after dedup,
+  packed, response time, context-budget bar. Confirmed progressive *live*, not just by
+  reading the code: a mid-flight snapshot during a real run showed `Mode: None` already
+  resolved while Candidates/After dedup/Packed/Time still read "…", proving the page
+  updates stage by stage as real data becomes available, not all at once. Real runs:
+  `Candidates 60 → After dedup 49 → Packed 32 → Time 13.9s`, `Context budget: 11484 /
+  16000 tokens (72%)` → new `vg09.retrieval.RetrievalResult.candidates_after_dedup`
+  (additive field, tested against real dedup scenarios in `test_retrieval.py`)
+- [x] **Citation chips:** inline `[N]` markers become clickable, source-type-colored
+  chips linking to the matching source card - confirmed live: a real answer's `[1]`,
+  `[11]`, `[28]` rendered as blue chips linking to `#cite-1`/`#cite-2`/`#cite-3`, and two
+  numbers citing the same document (`[14]`/`[15]` → the same video) both linked to the
+  same card. Built from `render_citation_chips()` (`vg09.ui_helpers`, 7 tests) - reuses
+  `build_citations()`'s own unlinked/descriptive classification rather than re-deciding
+  it, only extracts which numbers to link
+- [x] **Source cards** replace the bullet list: source-type badge, title, feed date,
+  arXiv date, timestamped video links, `text_source` badge, retrieval rank - confirmed
+  live with real cards (`PAPER` badge + `arXiv 2026-09-08` + `retrieval rank #32`;
+  `VIDEO` badge + `whisper`/`captions` badge + real timestamped `&t=` link). Needed one
+  additive field T-042 added to `vg09.citations.Citation` (`text_source: str | None`) -
+  `is_fallback` alone collapses captions/whisper/title_description into two states, the
+  card needs the real three-tier distinction; `is_fallback`'s own meaning and every
+  existing caller is unchanged
+- [x] Kept unchanged: the retry notice, the incomplete-answer warning, the collapsed
+  reasoning expander, the manual date-range override, and the empty state → same
+  conditions, same triggers, text translated (D-016) but logic untouched
+- [x] Design constraints followed: flat (no gradients, no box-shadow), legible in both
+  light and dark Streamlit theme, no emoji → confirmed live in both themes (Streamlit's
+  own theme toggle, real screenshots each). Chips/badges use fixed, deliberately
+  theme-independent swatch colors (not CSS-variable-derived) so they read the same
+  regardless of active theme - simpler and more robust than computing theme-adaptive
+  colors, verified legible in both real screenshots
+- [x] UI-facing text is English throughout (D-016) → every existing Swedish string in
+  `app.py`/`vg09.ui_helpers.describe_retrieval_mode()` translated, not just new text
+- [x] New pure logic has unit tests, mocked at the same boundaries this project's
+  existing tests already use - no live network/GPU calls added → 21 new tests across
+  `test_store.py`/`test_retrieval.py`/`test_ui_helpers.py`
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes → **168/168**
+  (21 new)
+- [x] A real, live verification: the app launched for real, real questions asked through
+  the real browser UI (Playwright) against the real production store/Ollama,
+  screenshotted in both light and dark theme - not assumed from reading the code. **Two
+  real, live-only-discoverable bugs found and fixed in the same session, before
+  committing:** (1) `st.metric`'s value truncates with an ellipsis in a narrow column -
+  "Unfiltered" rendered as "Unfilt…" and the freshness date as "2026-09-…" - fixed by
+  shortening the mode labels to ≤8 characters (tested,
+  `test_every_label_is_short_enough_not_to_truncate...`) and moving the freshness value
+  out of a 4th equal-width metric column into a plain caption with room to render in
+  full. (2) A running Streamlit dev server does not reliably pick up edits to imported
+  local modules (only `app.py`'s own top-level changes) - the fix above was invisible
+  until the server process was stopped and restarted fresh; confirmed by seeing the OLD
+  "Unfiltered" text still render after the file was already saved, then the NEW "None"
+  after a clean restart - not a code bug, but a real verification-process gotcha worth
+  knowing for next time
+
+**Out of scope:** any change to what a question resolves to, what gets retrieved, how an
+answer is generated, or how a citation is resolved — `vg09.date_range`, `vg09.retrieval`'s
+actual candidate/dedup/pack behavior, `vg09.answer`, `vg09.citations`'s classification
+rules are all unchanged. Conversation history, accounts, multi-user (`docs/GOAL.md`'s
+own non-goals, untouched by a layout ticket). Renaming `vg09.ui_helpers.
+describe_retrieval_mode()`'s Swedish output is in scope (it's UI-facing text), but its
+logic (which mode fired, and why) is not.
+
+**Depends on:** T-025 (the UI this redesigns), T-024 (citations), T-027 (dedup, the count
+this surfaces).
+**Notes:** Kept as one ticket despite four largely-independent sections because they
+share one real constraint worth checking together, not four separate times: every new
+number displayed must come from data the pipeline already produces, verified against a
+real run, not estimated or recomputed for display purposes. The language-switch
+acceptance criterion was added mid-ticket: switch from Swedish to English for consistency with
+D-013 (answers are always English) and this being public OSS, recorded as **D-016**.
+
+**Real, unplanned finding surfaced by this ticket's own live verification, not fixed
+here (out of scope - `vg09.date_range` logic untouched):** `vg09.date_range`'s
+relative-time extraction only matches Swedish phrases. One of T-042's own new English
+example questions ("Has Anthropic been mentioned in the last two weeks?") demonstrated
+this directly - it resolved to `Mode: None` (unfiltered), not a date-filtered window.
+Not new behavior, but newly visible now that the UI's own example questions are English
+(D-016) rather than Swedish. Added to `docs/PLAN.md`'s risk register rather than fixed
+silently or hidden by picking different example wording.
+
+---
+
 ### T-041 — Grill-me follow-ups: stale DESIGN.md numbers, comma-list descriptive citations, missing probe truncation check
 
 **Status:** done

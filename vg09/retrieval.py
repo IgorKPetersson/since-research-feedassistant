@@ -69,6 +69,9 @@ class RetrievalResult:
     date_range_used: tuple[date, date] | None = None
     ranking_used: bool = False
     candidates_considered: int = 0
+    candidates_after_dedup: int = 0  # T-042: surfaces dedup_by_doc()'s own already-
+    # computed output count, for the UI's pipeline strip - not a new pipeline stage,
+    # just exposing one that already ran
 
 
 def count_qwen_tokens(text: str) -> int:
@@ -252,4 +255,5 @@ def retrieve(
         date_range_used=date_range,
         ranking_used=ranking,
         candidates_considered=len(candidates),
+        candidates_after_dedup=len(deduped),
     )

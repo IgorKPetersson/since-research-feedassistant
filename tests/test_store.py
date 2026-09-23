@@ -15,7 +15,7 @@ import unittest
 from datetime import date
 from unittest.mock import MagicMock, patch
 
-from vg09.store import EMBED_MODEL, EMBED_NUM_CTX, embed_batch, is_empty, latest_feed_date
+from vg09.store import EMBED_MODEL, EMBED_NUM_CTX, corpus_stats, embed_batch, is_empty, latest_feed_date
 
 
 class LatestFeedDateTests(unittest.TestCase):
@@ -56,6 +56,36 @@ class IsEmptyTests(unittest.TestCase):
         collection.count.return_value = 1971
         with patch("vg09.store.get_collection", return_value=collection):
             self.assertFalse(is_empty())
+
+
+class CorpusStatsTests(unittest.TestCase):
+    """T-042: real corpus counts for the chat UI's status bar."""
+
+    def test_counts_distinct_documents_per_source_and_total_chunks(self):
+        collection = MagicMock()
+        collection.count.return_value = 5
+        collection.get.return_value = {
+            "metadatas": [
+                {"source": "hf", "doc_id": "paper1"},
+                {"source": "hf", "doc_id": "paper1"},  # a second chunk of the same paper
+                {"source": "hf", "doc_id": "paper2"},
+                {"source": "youtube", "doc_id": "vid1"},
+                {"source": "youtube", "doc_id": "vid1"},  # a second chunk of the same video
+            ]
+        }
+        with patch("vg09.store.get_collection", return_value=collection):
+            result = corpus_stats()
+
+        self.assertEqual(result, {"hf_documents": 2, "youtube_documents": 1, "chunks": 5})
+
+    def test_empty_store_returns_all_zeros_without_a_metadata_scan(self):
+        collection = MagicMock()
+        collection.count.return_value = 0
+        with patch("vg09.store.get_collection", return_value=collection):
+            result = corpus_stats()
+
+        self.assertEqual(result, {"hf_documents": 0, "youtube_documents": 0, "chunks": 0})
+        collection.get.assert_not_called()
 
 
 class EmbedBatchTests(unittest.TestCase):

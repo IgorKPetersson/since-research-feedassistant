@@ -139,3 +139,30 @@ def latest_feed_date() -> date | None:
     result = collection.get(include=["metadatas"])
     max_ordinal = max(m["feed_date_ordinal"] for m in result["metadatas"])
     return date.fromordinal(max_ordinal)
+
+
+def corpus_stats() -> dict:
+    """T-042: real counts for the chat UI's status bar - distinct documents per source
+    (papers, videos) and total chunk count, never hardcoded. Same full-metadata-scan
+    approach as `latest_feed_date()`, same real-scale caveat - one `collection.get()`
+    call, not per-source queries, so this stays one real Chroma call regardless of how
+    many sources exist."""
+    collection = get_collection()
+    total_chunks = collection.count()
+    if total_chunks == 0:
+        return {"hf_documents": 0, "youtube_documents": 0, "chunks": 0}
+    result = collection.get(include=["metadatas"])
+    hf_docs: set[str] = set()
+    youtube_docs: set[str] = set()
+    for m in result["metadatas"]:
+        source = m.get("source")
+        doc_id = m.get("doc_id")
+        if source == "hf":
+            hf_docs.add(doc_id)
+        elif source == "youtube":
+            youtube_docs.add(doc_id)
+    return {
+        "hf_documents": len(hf_docs),
+        "youtube_documents": len(youtube_docs),
+        "chunks": total_chunks,
+    }

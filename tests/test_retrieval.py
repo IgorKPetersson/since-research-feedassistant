@@ -275,6 +275,7 @@ class RetrieveIntegrationTests(unittest.TestCase):
         self.assertTrue(result.ranking_used)
         self.assertIsNone(result.date_range_used)
         self.assertEqual(result.candidates_considered, 2)
+        self.assertEqual(result.candidates_after_dedup, 2)  # T-042: two different docs, no dedup
 
     def test_full_pipeline_dedup_prevents_one_doc_from_filling_the_pack(self):
         """T-027's real scenario: one video (many chunks) plus one paper (one chunk).
@@ -303,6 +304,8 @@ class RetrieveIntegrationTests(unittest.TestCase):
             result = retrieve("fråga", date_range=None, ranking=False)
 
         self.assertEqual([c.id for c in result.chunks], ["video:0", "video:1", "paper:0"])
+        # T-042: 4 candidates in, dedup drops the video's 3rd chunk (MAX_CHUNKS_PER_DOC=2)
+        self.assertEqual(result.candidates_after_dedup, 3)
 
 
 if __name__ == "__main__":
