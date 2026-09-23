@@ -20,7 +20,7 @@ from vg09.answer import (
     generate_answer,
     number_sources,
 )
-from vg09.retrieval import CHUNK_BUDGET_TOKENS, NUM_CTX, Candidate
+from vg09.retrieval import CHAT_MODEL, CHUNK_BUDGET_TOKENS, NUM_CTX, Candidate
 
 
 def make_chunk(title: str, text: str, feed_date: str = "2026-09-16") -> Candidate:
@@ -89,11 +89,14 @@ class SystemPromptTests(unittest.TestCase):
 
 
 class GenerateAnswerTests(unittest.TestCase):
-    def _run(self, chunks=None, **response_overrides):
+    def _run(self, chunks=None, model=None, **response_overrides):
         mock_resp = MagicMock()
         mock_resp.json.return_value = fake_response(**response_overrides)
         with patch("vg09.answer.requests.post", return_value=mock_resp) as mock_post:
-            result = generate_answer("what happened?", chunks or [])
+            if model is None:
+                result = generate_answer("what happened?", chunks or [])
+            else:
+                result = generate_answer("what happened?", chunks or [], model=model)
         return result, mock_post
 
     def test_system_prompt_sent_as_its_own_message(self):
@@ -117,6 +120,20 @@ class GenerateAnswerTests(unittest.TestCase):
     def test_num_ctx_is_16000(self):
         _, mock_post = self._run()
         self.assertEqual(mock_post.call_args.kwargs["json"]["options"]["num_ctx"], 16000)
+
+    def test_model_defaults_to_the_chat_model_constant(self):
+        """T-033: the default is unchanged from before this parameter existed -
+        app.py and every other existing caller is unaffected by not passing it."""
+        _, mock_post = self._run()
+        self.assertEqual(mock_post.call_args.kwargs["json"]["model"], CHAT_MODEL)
+
+    def test_explicit_model_overrides_the_default(self):
+        """T-033: scripts/t033_model_size_comparison.py's whole reason to exist -
+        the same call path, a different real model name, same explicit num_ctx
+        either way (no silently smaller/default window for the smaller model)."""
+        _, mock_post = self._run(model="qwen3:8b")
+        self.assertEqual(mock_post.call_args.kwargs["json"]["model"], "qwen3:8b")
+        self.assertEqual(mock_post.call_args.kwargs["json"]["options"]["num_ctx"], NUM_CTX)
 
     def test_stop_is_a_complete_answer(self):
         result, _ = self._run(done_reason="stop")

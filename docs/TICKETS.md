@@ -604,7 +604,7 @@ than silently adapt when reality has moved past a reference document.
 
 ### T-033 — Comparison 2: `qwen3:30b-a3b` vs `qwen3:8b` on the same 15 real questions
 
-**Status:** todo
+**Status:** review — real run done, committed ungraded; grading is my own step
 **Size:** M  ·  **Branch:** `t/T-033-model-size-comparison`  ·  **Phase:** 3
 
 **Goal:** the same 15 real questions, same retrieved context, run through both models in
@@ -616,29 +616,52 @@ larger-VRAM model earns its cost over the smaller one.
 (VRAM-differentiated, not "small vs large" model size) and named this as the eventual test.
 
 **Acceptance criteria**
-- [ ] `vg09.answer.generate_answer()` accepts an explicit model name as a parameter rather
+- [x] `vg09.answer.generate_answer()` accepts an explicit model name as a parameter rather
   than always using the hardcoded `CHAT_MODEL` constant — a minimal, backward-compatible
   signature change (default value stays `qwen3:30b-a3b`, so `app.py` and every existing
-  test/caller is unaffected)
-- [ ] Reuses T-031's harness and output format: each of the 15 questions is run through
+  test/caller is unaffected) → `generate_answer(question, chunks, model=CHAT_MODEL)`,
+  threaded through `_chat_once()`; all 24 pre-existing `test_answer.py` tests pass
+  unchanged (none pass `model=`), plus 2 new (`test_model_defaults_to_the_chat_model_
+  constant`, `test_explicit_model_overrides_the_default`)
+- [x] Reuses T-031's harness and output format: each of the 15 questions is run through
   **both** models with the **same retrieved chunks held identical** between the two runs,
-  so only the model varies, not the retrieved context
-- [ ] Output shows both models' answers and citations per question, clearly labeled by
-  model name, in the same human-gradable format T-031 established
-- [ ] Both models are called with the same explicit `num_ctx=16000` and the same
+  so only the model varies, not the retrieved context → `scripts/t033_model_size_
+  comparison.py`; retrieval runs exactly once per question, both `generate_answer()` calls
+  share the same `retrieval.chunks` object. Confirmed for real, not just by code
+  inspection: every one of the 15 real questions shows the identical `prompt_eval_count`
+  for Modell A and Modell B (e.g. F01: 11389 both)
+- [x] Output shows both models' answers and citations per question, clearly labeled by
+  model name, in the same human-gradable format T-031 established → "Modell A"/"Modell B"
+  sections per question, facit shown once beneath both, same `☐ A bättre ☐ B bättre
+  ☐ Likvärdiga ☐ Båda fel` line T-032 uses
+- [x] Both models are called with the same explicit `num_ctx=16000` and the same
   `prompt_eval_count`-vs-`num_ctx` truncation-risk check (`CLAUDE.md`'s hard rule) — `qwen3:
   8b` doesn't get a silently different/default context window just because it's the
-  smaller model
-- [ ] Real run against the production store/Ollama completes all 15 questions × 2 models
+  smaller model → same `_chat_once()` for both, `num_ctx` never varies by `model`; asserted
+  directly in `test_explicit_model_overrides_the_default`
+- [x] Real run against the production store/Ollama completes all 15 questions × 2 models
   with no unhandled exception; if switching between the two loaded models mid-run costs
   real reload time (KB-003's original finding about this model pair), that cost is measured
-  and reported, not assumed away
+  and reported, not assumed away → **30/30 real calls completed, `stop`, 0 retries.**
+  Every question alternates model, so every call is a real switch - real elapsed times
+  (reload-inclusive) reported per model: `qwen3:30b-a3b` min 8.2s/max 18.5s/avg 12.4s;
+  `qwen3:8b` min 9.5s/max 33.0s/avg 16.8s. The smaller-VRAM model was slower on average,
+  not faster - consistent with D-005's own point that `qwen3:30b-a3b` is MoE (~3B active
+  params/token) while `qwen3:8b` is dense (all 8B active every token), so "smaller VRAM"
+  does not mean "less compute per token." **Real, unplanned bug found and fixed same
+  session:** the script's console `print()` of the reload-time summary crashed
+  (`UnicodeEncodeError`) on a `→` character the Windows console's cp1252 encoding can't
+  represent - happened *after* the real output file was already written (confirmed intact,
+  all 15 questions, correct real data), so no data was lost; fixed by using `->` instead
 
-**Out of scope:** the retrieval-mode comparison (T-032); changing which model production
-(`app.py`) actually uses — it stays on `qwen3:30b-a3b`, D-005's chosen default.
+**Out of scope:** the retrieval-mode comparison (T-032, already done); changing which model
+production (`app.py`) actually uses — it stays on `qwen3:30b-a3b`, D-005's chosen default.
 
 **Depends on:** T-031 (the harness), D-005 (the model pair).
-**Notes:** —
+**Notes:** Output:
+`docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`, real run, committed
+ungraded (same pattern T-031/T-032 established) - grading (`☐ A bättre ☐ B bättre
+☐ Likvärdiga ☐ Båda fel` per question) is my own manual step, not done here.
 
 ---
 
