@@ -16,20 +16,18 @@ were otherwise done.
 Current phase: **Phase 3** (started 2026-09-20, by my explicit go-ahead). Its ticket set
 was written as **T-031**–**T-036**, per this file's own "turn checkboxes into tickets when
 a phase starts" rule below; **T-039**–**T-041** were added mid-phase (real findings from
-running the earlier tickets, not planned upfront). Status as of 2026-09-23: **T-037**
-(this ticket set itself), **T-031** (harness), **T-038** (packing-budget fix), **T-032**
-(date-aware vs plain comparison - real run, graded: A bättre 8, B bättre 0, Likvärdiga 5,
-Båda fel 2), **T-039** (`NUM_PREDICT`/retry, live-verified), **T-040** (range citations,
-D-015), **T-034**/**T-035** (README, Apache-2 `LICENSE`, project rename, a real fresh-clone
-test), **T-036** (test coverage for `store.py`/`youtube_backfill.py`) and **T-041**
-(three `/grill-me` findings from a whole-of-Phase-3 review) are all `done`. **T-033**
-(model-size comparison) has its real run committed
-(`docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`, 30/30 real calls,
-0 retries) but not yet graded - my own manual step, same as T-032's grading was,
-not automated. `docs/PLAN.md`'s own third Phase 3 checklist item, "Report and presentation
-— run `defense-prep`," still has **no ticket yet** and is explicitly my own
-remaining work, not delegated. **Phase 3 is not being declared complete here** - the report
-and presentation remain, by explicit instruction.
+running the earlier tickets, not planned upfront). Status as of 2026-09-23: **T-031**
+through **T-041** are all `done`, both real comparisons run and graded by me -
+**T-032** (date-aware vs plain: A bättre 8, B bättre 0, Likvärdiga 5, Båda fel 2) and
+**T-033** (`qwen3:30b-a3b` vs `qwen3:8b`: A bättre 4, B bättre 0, Likvärdiga 9, Båda fel 2 -
+notable: the smaller model was slower on average despite fewer active parameters, dense vs
+MoE per D-005; where it lost, it consistently enumerated rather than ranked/narrowed; it
+drifted into Chinese mid-answer once despite D-013's English-answer instruction; F12/F14
+were missed by both models in both comparisons - a retrieval gap, not a model-size effect).
+`docs/PLAN.md`'s own third Phase 3 checklist item, "Report and presentation — run
+`defense-prep`," still has **no ticket yet** and is explicitly my own remaining
+work, not delegated. **Phase 3 is not being declared complete here** - the report and
+presentation remain, by explicit instruction.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
@@ -127,14 +125,14 @@ Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead
 
 ## Phase 3 — Prove and publish (week 3)
 
-- [ ] Evaluation script: date-aware vs plain retrieval, large vs small model. Results table
+- [x] Evaluation script: date-aware vs plain retrieval, large vs small model. Results table
   committed — **T-031** (harness, D-012's anchor explicit, human-gradable output — grading
   is manual, never a model), **T-032** (date-aware vs plain, `docs/GOAL.md`'s central
-  claim) `done`, graded. **T-033** (`qwen3:30b-a3b` vs `qwen3:8b`, D-005's VRAM-
-  differentiated pair): real run committed 2026-09-23
-  (`docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`, 30/30 calls, 0
-  retries), **ungraded** — box stays unchecked until I grade it, same convention
-  T-032 used
+  claim) `done`, graded (A better 8, B better 0, equivalent 5, both wrong 2). **T-033**
+  (`qwen3:30b-a3b` vs `qwen3:8b`, D-005's VRAM-differentiated pair) `done`, graded
+  2026-09-23 (A better 4, B better 0, equivalent 9, both wrong 2) —
+  `docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`. Both comparisons now
+  real, run, and graded
 - [x] README, Apache-2 `LICENSE`, and a fresh-clone test following the README only —
   **T-034**, depends on **T-035** (project rename, "VG-09" → "research-feed-assistant" —
   scoped to user-facing naming only; the `vg09` package/import path and the Chroma

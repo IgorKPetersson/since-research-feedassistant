@@ -604,7 +604,9 @@ than silently adapt when reality has moved past a reference document.
 
 ### T-033 — Comparison 2: `qwen3:30b-a3b` vs `qwen3:8b` on the same 15 real questions
 
-**Status:** review — real run done, committed ungraded; grading is my own step
+**Status:** done — real run complete, graded by me 2026-09-23: A better 4, B
+better 0, equivalent 9, both wrong 2 (`docs/eval-results/2026-09-23-1516-t033-model-
+size-comparison.md`)
 **Size:** M  ·  **Branch:** `t/T-033-model-size-comparison`  ·  **Phase:** 3
 
 **Goal:** the same 15 real questions, same retrieved context, run through both models in
@@ -659,9 +661,15 @@ production (`app.py`) actually uses — it stays on `qwen3:30b-a3b`, D-005's cho
 
 **Depends on:** T-031 (the harness), D-005 (the model pair).
 **Notes:** Output:
-`docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`, real run, committed
-ungraded (same pattern T-031/T-032 established) - grading (`☐ A bättre ☐ B bättre
-☐ Likvärdiga ☐ Båda fel` per question) is my own manual step, not done here.
+`docs/eval-results/2026-09-23-1516-t033-model-size-comparison.md`, real run, committed,
+then graded by me 2026-09-23 (A better 4, B better 0, equivalent 9, both wrong 2).
+Notable from the grading itself: `qwen3:8b` was equivalent in 9/15 but slower on average
+(16.8s vs 12.4s) despite fewer active parameters (dense vs `qwen3:30b-a3b`'s MoE, D-005);
+where it lost (F03/F04/F06) the pattern repeats - it enumerates everything topically
+similar rather than ranking or narrowing to what the question asked; F13 saw it drift
+into Chinese mid-answer despite D-013's explicit English-answer instruction; F12 and F14
+were missed by both models, matching both arms of T-032 - a retrieval gap, not a
+model-size effect.
 
 ---
 
