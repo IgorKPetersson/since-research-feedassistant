@@ -19,12 +19,22 @@ happened to be part of it. D-015's real-data finding: a short range is a genuine
 multi-source citation (`[21-22]`, T-032's F10-A) and resolves like a comma list; a
 long range is the model describing "all N sources", not citing evidence for a claim
 (`[1-31]`, T-032's F12-A - the exact shape T-024's own ticket predicted). D-015 draws
-the line at `RANGE_DESCRIPTIVE_THRESHOLD` numbers: at or under it, every number in the
-range resolves individually, exactly like a comma-separated bracket; over it, the
-whole bracket is a descriptive range - not expanded into per-source citations, and not
-reported as unlinked either, since it was never a citation attempt to begin with. It's
-collected separately (`CitationResult.descriptive_ranges`) so it stays visible rather
-than disappearing silently.
+the line at `DESCRIPTIVE_BRACKET_THRESHOLD` numbers named in the bracket, counting
+every piece together - at or under it, every number resolves individually, exactly
+like a comma-separated bracket; over it, the whole bracket is descriptive - not
+expanded into per-source citations, and not reported as unlinked either, since it was
+never a citation attempt to begin with. It's collected separately
+(`CitationResult.descriptive_ranges`) so it stays visible rather than disappearing
+silently.
+
+T-041, real finding: the first version of this rule only checked a *single piece's own*
+span against the threshold - a range like "1-31" (one piece, span 31) was caught, but a
+model spelling the identical "all N sources" claim out as 31 individual comma-separated
+numbers ("[1,2,3,...,31]") was not, since each bare number has span 1 on its own. The
+rule now sums every piece's span across the whole bracket - a range and a comma-list
+enumeration of the same size are classified identically, matching D-015's original
+intent ("more than N numbers named in one bracket is descriptive"), not just its first,
+incomplete implementation.
 """
 
 from __future__ import annotations
@@ -37,10 +47,12 @@ from vg09.retrieval import Candidate
 _BRACKET_RE = re.compile(r"\[([^\]]+)\]")
 _RANGE_RE = re.compile(r"^(\d+)-(\d+)$")
 
-# D-015: a range with this many numbers or fewer is a real multi-source citation and
-# resolves like a comma list; more than this is treated as a descriptive enumeration
-# ("reviewed sources [1] to [31]"), not evidence for a claim.
-RANGE_DESCRIPTIVE_THRESHOLD = 5
+# D-015/T-041: a bracket naming this many numbers or fewer (summed across every
+# comma-separated piece, range or bare) is a real multi-source citation and resolves
+# like a comma list; more than this is treated as a descriptive enumeration ("reviewed
+# sources [1] to [31]", or the same claim spelled out as "[1,2,3,...,31]"), not
+# evidence for a claim.
+DESCRIPTIVE_BRACKET_THRESHOLD = 5
 
 
 @dataclass
@@ -101,16 +113,22 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
     elsewhere isn't torn apart by mistake.
 
     T-040/D-015, real finding: a comma-separated piece can also be a numeric range
-    ("[1-20]", "[21-22]"). A short range (at most `RANGE_DESCRIPTIVE_THRESHOLD`
-    numbers) is a real multi-source citation and expands exactly like a comma list -
-    each number resolved independently. A longer range is the model describing "all N
+    ("[1-20]", "[21-22]"). A bracket naming at most `DESCRIPTIVE_BRACKET_THRESHOLD`
+    numbers in total (summed across every piece, range or bare) is a real multi-source
+    citation and expands exactly like a comma list - each number resolved
+    independently. A bracket naming more than that is the model describing "all N
     sources" rather than citing evidence, so it is not expanded into one citation per
     number (which would fabricate citations for a sentence that was never citing
     anything) - it is collected whole into `CitationResult.descriptive_ranges` instead,
-    still visible, just not treated as either a citation or a failed one. Any range
-    part in the bracket being long enough makes the *whole* bracket descriptive, even
-    if mixed with other short pieces - a bracket dominated by a "reviewed all sources"
-    range isn't meaningfully still a citation for its other, smaller piece."""
+    still visible, just not treated as either a citation or a failed one.
+
+    T-041, real finding: the threshold is checked against the *sum* of every piece's
+    span, not any single piece in isolation - a long range ("[1-31]") and the same claim
+    spelled out as 31 individual comma-separated bare numbers ("[1,2,...,31]") are both
+    over-threshold and both classified as descriptive, the same way. A bracket mixing a
+    short piece with a long range/enumeration is descriptive as a whole too - a bracket
+    dominated by a "reviewed all sources" claim isn't meaningfully still a citation for
+    its other, smaller piece."""
     citations: list[Citation] = []
     seen_doc_ids: set[str] = set()
     unlinked: list[str] = []
@@ -138,11 +156,12 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
 
         Deliberately returns bounds, not numbers: a deep-review finding (2026-09-22)
         caught the previous version calling `list(range(start, end + 1))` before the
-        descriptive-range size check ran, so a single pathological or hallucinated
+        descriptive-bracket size check ran, so a single pathological or hallucinated
         bracket (e.g. "[1-500000000]") in real model output would materialize a huge
-        list before being discarded. `end - start + 1` is checked against
-        `RANGE_DESCRIPTIVE_THRESHOLD` in the caller *before* any range is ever built -
-        this function's job is only to say how big a piece would be, cheaply."""
+        list before being discarded. Each piece's `end - start + 1` is summed across
+        the whole bracket and checked against `DESCRIPTIVE_BRACKET_THRESHOLD` in the
+        caller *before* any range is ever built - this function's job is only to say
+        how big a piece would be, cheaply."""
         if part.isdigit():
             n = int(part)
             return (n, n)
@@ -162,14 +181,15 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
             add_unlinked(raw)
             continue
 
-        if any(end - start + 1 > RANGE_DESCRIPTIVE_THRESHOLD for start, end in bounds):
+        # T-041: summed across every piece, not just checked per-piece - a range and
+        # a comma-list enumeration naming the same count of numbers are treated alike.
+        if sum(end - start + 1 for start, end in bounds) > DESCRIPTIVE_BRACKET_THRESHOLD:
             add_descriptive(raw)
             continue
 
-        # Every piece is confirmed valid and no larger than the threshold (checked
-        # above, without materializing anything) - only now is it cheap and safe to
-        # actually build each piece's numbers, at most RANGE_DESCRIPTIVE_THRESHOLD
-        # per piece.
+        # Every piece is confirmed valid and the bracket's total is no larger than the
+        # threshold (checked above, without materializing anything) - only now is it
+        # cheap and safe to actually build each piece's numbers.
         for number in (n for start, end in bounds for n in range(start, end + 1)):
             chunk = source_map.get(number)
             if chunk is None:

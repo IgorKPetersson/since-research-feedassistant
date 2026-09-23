@@ -638,19 +638,31 @@ to the model or its sampling settings, which invalidates KB-019's measurements.
 
 ---
 
-## D-015 — A numeric range in a citation bracket resolves as a citation at up to 5 numbers; longer ranges are a descriptive enumeration, not evidence
+## D-015 — A citation bracket naming at most 5 numbers resolves as a citation; more is a descriptive enumeration, not evidence
 **Status:** accepted
 
 **Decision:** `vg09.citations.build_citations()` (T-040) now parses a numeric range inside
 a bracket (`"1-20"`, `"21-22"`) the same way it already parsed a comma-separated list
-(T-028): each number in the range is checked against `source_map` individually - **but only
-when the range holds at most `RANGE_DESCRIPTIVE_THRESHOLD = 5` numbers**. A range longer
-than that is not expanded into one citation per number at all - it's collected into a new
-`CitationResult.descriptive_ranges` list instead, deduplicated, first-seen order. It is
-**not** added to `unlinked_references` either: it was never a failed citation attempt, so
-reporting it as one would be as misleading as expanding it. A bracket mixing a short piece
-with a long range (`"[1, 5-31]"`) is treated as descriptive as a whole - a bracket
-dominated by "reviewed all sources" isn't meaningfully still citing its smaller piece.
+(T-028): each number is checked against `source_map` individually - **but only when the
+bracket names at most `DESCRIPTIVE_BRACKET_THRESHOLD = 5` numbers in total, summed across
+every comma-separated piece** (a bare number contributes 1, a range contributes its own
+span). A bracket naming more than that is not expanded into one citation per number at all
+- it's collected into a new `CitationResult.descriptive_ranges` list instead, deduplicated,
+first-seen order. It is **not** added to `unlinked_references` either: it was never a
+failed citation attempt, so reporting it as one would be as misleading as expanding it. A
+bracket mixing a short piece with a long range (`"[1, 5-31]"`) is treated as descriptive as
+a whole - a bracket dominated by "reviewed all sources" isn't meaningfully still citing its
+smaller piece.
+
+**Follow-up (T-041, 2026-09-23):** the rule as originally implemented checked each piece's
+*own* span against the threshold, not the bracket's total - a range ("[1-31]", one piece,
+span 31) was caught, but the identical claim spelled out as 31 individual comma-separated
+bare numbers ("[1,2,3,...,31]") was not, since a bare number's own span is always 1. Found
+by a Phase 3 `/grill-me` review, not hypothetical, though not yet observed in real model
+output either. Fixed by summing every piece's span across the whole bracket before
+comparing to the threshold - the decision itself (the number 5, the reasoning below) is
+unchanged; only the counting method now matches what "at most 5 numbers named in one
+bracket" was always meant to say.
 
 **Why:** real data from grading T-032's re-run (2026-09-22) gave three concrete shapes to
 draw the line between: F10-A's `[21-22]` (2 numbers) is a genuine two-source citation that
@@ -673,13 +685,13 @@ around the bracket sound like a citation or a description?) - I explicitly picke
 count threshold instead; no NLP step exists in this pipeline to make a semantic check
 reliable, and a fixed threshold is trivially testable while a semantic heuristic is not.
 
-**Cost:** `RANGE_DESCRIPTIVE_THRESHOLD = 5` is a judgment call fitted to three real data
+**Cost:** `DESCRIPTIVE_BRACKET_THRESHOLD = 5` is a judgment call fitted to three real data
 points (2 real, 20 and 31 descriptive), not derived from a larger sample - a future real
-range of, say, 6-10 numbers that genuinely is a multi-source citation would be misclassified
-as descriptive and under-cited (safer direction: reported nowhere as a false positive, but
-also not surfaced as a citation). `CitationResult.descriptive_ranges` is a new field
-production (`app.py`) and both evaluation scripts (T-031/T-032) now render explicitly, so
-nothing that used to be visible (as unlinked) silently disappears.
+bracket naming, say, 6-10 numbers that genuinely is a multi-source citation would be
+misclassified as descriptive and under-cited (safer direction: reported nowhere as a false
+positive, but also not surfaced as a citation). `CitationResult.descriptive_ranges` is a new
+field production (`app.py`) and both evaluation scripts (T-031/T-032) now render explicitly,
+so nothing that used to be visible (as unlinked) silently disappears.
 
 **Would change our mind:** A real range of 6+ numbers that turns out to be a genuine
 multi-source citation, not a description - would mean the threshold is too low. A

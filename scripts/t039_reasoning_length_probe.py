@@ -76,6 +76,18 @@ def main(out: Path, cap_to_compare: int) -> None:
                         ans += 1
                     if d.get("done"):
                         last = d
+            # T-041: CLAUDE.md's hard rule - every real Ollama call checks its real
+            # prompt_eval_count against num_ctx and warns on truncation risk. This was
+            # the one real call site in the repo that skipped it, found by /grill-me.
+            pec = last.get("prompt_eval_count")
+            if pec is not None:
+                if pec >= NUM_CTX:
+                    print(f"  !! TRUNCATION RISK: t039_reasoning_length_probe "
+                          f"prompt_eval_count={pec} >= num_ctx={NUM_CTX}")
+                elif pec >= 0.9 * NUM_CTX:
+                    print(f"  !! close to num_ctx: t039_reasoning_length_probe "
+                          f"prompt_eval_count={pec} ({100 * pec / NUM_CTX:.0f}% of "
+                          f"num_ctx={NUM_CTX})")
             rec = dict(q=n, arm=arm, role=role, sample=s, chunks=len(r.chunks),
                        pec=last.get("prompt_eval_count"), think_chunks=think, answer_chunks=ans,
                        eval_count=last.get("eval_count"), done_reason=last.get("done_reason"),

@@ -14,6 +14,76 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-041 — Grill-me follow-ups: stale DESIGN.md numbers, comma-list descriptive citations, missing probe truncation check
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-041-grill-me-findings`  ·  **Phase:** 3
+
+**Goal:** three real gaps a Phase 3 `/grill-me` review found (2026-09-23) are closed:
+`docs/DESIGN.md` no longer contradicts the real, currently-shipped budget constants; a
+descriptive "all N sources" claim written as a comma-separated enumeration is caught the
+same way a numeric range already is; and the one real Ollama call site in the repo that
+skips `CLAUDE.md`'s `prompt_eval_count`-vs-`num_ctx` check gets it, like every other one.
+
+**Why:** found by `/grill-me` across the whole of Phase 3 (T-031-T-040), triaged by me
+2026-09-23, not hypothetical:
+1. `docs/DESIGN.md`'s "What happens if retrieved chunks don't fit" section states the
+   top-k ceiling as `27` and cites `vg09.retrieval.CHUNK_BUDGET_TOKENS` by name as
+   `13245`, unqualified - both are T-038's numbers, superseded by T-039's `24`/`11787`
+   and correctly marked superseded everywhere else in the same file, but missed here.
+2. D-015's range fix (T-040) only checks a comma-separated *piece's own span* against
+   `RANGE_DESCRIPTIVE_THRESHOLD` - a bare number always has span 1, so a model writing
+   `[1,2,3,...,31]` instead of `[1-31]` produces 31 real citations, unprotected, even
+   though it's the identical "describing the whole source list" failure mode T-040
+   exists to catch.
+3. `scripts/t039_reasoning_length_probe.py` makes a real `/api/chat` call with an
+   explicit `num_ctx` but never checks the real `prompt_eval_count` against it - the one
+   real Ollama call site in the repo that doesn't, per `CLAUDE.md`'s hard rule, which
+   names no scripts exception.
+
+**Acceptance criteria**
+- [x] `docs/DESIGN.md`'s "What happens if retrieved chunks don't fit" section states
+  `24` (not `27`) and `11787` (not `13245`) for `vg09.retrieval.CHUNK_BUDGET_TOKENS`,
+  matching the same superseded-number marking already used everywhere else in the file
+  → both numbers corrected in place, `11787` annotated `(T-039)` matching the file's
+  own convention
+- [x] `vg09.citations.build_citations()` treats "more than the threshold's worth of bare
+  numbers named in one bracket" as descriptive too, not just "one range piece whose own
+  span exceeds the threshold" - `[1,2,3,4,5,6]` (6 bare numbers, no dash) is classified
+  the same way `[1-6]` already is → the per-piece `any(... > threshold ...)` check
+  replaced with `sum(... for start, end in bounds) > threshold`; constant renamed
+  `RANGE_DESCRIPTIVE_THRESHOLD` → `DESCRIPTIVE_BRACKET_THRESHOLD` (no longer
+  range-specific). `docs/DECISIONS.md` D-015 updated with a **Follow-up (T-041)**
+  paragraph describing the corrected counting rule - the threshold value (5) and its
+  original reasoning are unchanged, only the earlier, incomplete implementation
+- [x] A unit test covers the real shape this ticket names (31 comma-separated bare
+  numbers, `[1,2,...,31]`) classifying as descriptive, matching the existing `[1-31]`
+  test built from the same real F12-A answer →
+  `RangeCitationTests::test_same_claim_spelled_out_as_31_comma_separated_bare_numbers_
+  is_also_descriptive`; full `test_citations.py` suite (30 tests) still passes
+  unchanged - the sum-based rule is a strict superset of the old per-piece check, so no
+  existing test needed touching
+- [x] `scripts/t039_reasoning_length_probe.py`'s real streamed call checks the real
+  `prompt_eval_count` against `NUM_CTX` and prints the same truncation-risk/close-to-
+  `num_ctx` warning every other real Ollama call site in the repo already does → added
+  right after the streamed response's final chunk (`done`), same wording/thresholds as
+  `vg09.answer._chat_once()`/`vg09.retrieval.count_qwen_tokens()`
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new test
+  included → **145/145 pass** (1 new)
+
+**Out of scope:** the `app.py` retry/incomplete UI branches still unverified in a live
+browser - I am verifying that myself; T-033 (separate, already-written
+ticket, picked up next).
+
+**Depends on:** T-040 (D-015, the threshold this refines), T-039 (the `DESIGN.md`
+numbers being corrected, the probe script gaining the check).
+**Notes:** Found by `/grill-me` across Phase 3 (T-031-T-040), 2026-09-23 - see that
+review's own report (this session) for full context on all findings, including the two
+not picked up here (UI verification, deferred to me; T-033, already its own
+ticket). No live-browser UI work included here.
+
+---
+
 ### T-040 — Resolve range-shaped bracket references (`[1-20]`, `[21-22]`) in citations; don't explode a near-total-source range into one citation per source
 
 **Status:** done

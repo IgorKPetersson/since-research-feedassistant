@@ -205,6 +205,20 @@ class RangeCitationTests(unittest.TestCase):
         self.assertEqual(result.unlinked_references, [])
         self.assertEqual(result.descriptive_ranges, ["[1-31]"])
 
+    def test_same_claim_spelled_out_as_31_comma_separated_bare_numbers_is_also_descriptive(self):
+        """T-041, real gap the first version of D-015 left open: the identical F12-A
+        "reviewed all sources" claim, but with the model spelling out every number
+        individually instead of writing a range - "[1,2,3,...,31]" rather than
+        "[1-31]". Must classify the same way: descriptive, not 31 citations. Before
+        T-041 this resolved as 31 real citations, since each bare number's own span
+        is 1 and the original check only looked at one piece at a time."""
+        source_map = self._source_map(31)
+        bracket = "[" + ",".join(str(n) for n in range(1, 32)) + "]"
+        result = build_citations(f"No, Palantir has not been mentioned {bracket}.", source_map)
+        self.assertEqual(result.citations, [])
+        self.assertEqual(result.unlinked_references, [])
+        self.assertEqual(result.descriptive_ranges, [bracket])
+
     def test_threshold_boundary_exactly_five_resolves_six_is_descriptive(self):
         source_map = self._source_map(6)
         at_threshold = build_citations("[1-5]", source_map)

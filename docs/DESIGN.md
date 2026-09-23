@@ -249,7 +249,7 @@ rather than assuming 488 holds forever.
 
 ### What happens if retrieved chunks don't fit
 
-27 is a worst-case ceiling, not a promise that any given top-k will fit — a bug in T-012's
+24 is a worst-case ceiling, not a promise that any given top-k will fit — a bug in T-012's
 chunking, or a chunk that slipped past the 400-token cap, could still produce a set of
 chunks that doesn't. The answer-generation code (Phase 2, but binding on how T-012 exposes
 chunks) must:
@@ -259,8 +259,8 @@ chunks) must:
    token count of its full formatted source text (`vg09.retrieval.format_source()` —
    citation number, title, url, feed date, and the chunk's own text, exactly as it will
    appear in the real prompt) in relevance-descending order, and stop adding once the
-   running total would exceed the chunk budget (13245, `vg09.retrieval.CHUNK_BUDGET_TOKENS`)
-   — regardless of whether that happens before or after 27 chunks.
+   running total would exceed the chunk budget (11787, `vg09.retrieval.CHUNK_BUDGET_TOKENS`,
+   T-039) — regardless of whether that happens before or after 24 chunks.
 2. **Order the assembled prompt so the least-recoverable content is added last, not
    first.** KB-005: content beyond `num_ctx` is silently dropped from the **front**, with no
    error. So the prompt is built as `[chunks, least-relevant-first] + [system prompt] +
