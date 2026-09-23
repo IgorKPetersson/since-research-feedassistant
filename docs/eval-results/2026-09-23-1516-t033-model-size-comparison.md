@@ -90,7 +90,8 @@ Tre HF-papers om recursive self-improvement (RSI) delar det senaste feed date i 
 - 2026-09-16 — ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement
   (`2609.14857`) — https://huggingface.co/papers/2609.14857
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: Samma innehåll, men B tog 33.0s mot A:s 11.7s.
 
 ---
 
@@ -189,7 +190,8 @@ samma fönster:
 - 2026-09-15 — LLaDA-UI: Bringing Block-wise Diffusion to Vision-Language GUI Agents
   (`2609.13287`) — https://huggingface.co/papers/2609.13287
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B 16.0s mot A 12.9s. B beskriver LLaDA-UI som MoE, vilket inte står i abstractet.
 
 ---
 
@@ -267,7 +269,8 @@ scenminne/objektspårning) — inget hårdvaruinslag alls.
   Memory and Fine-Grained Motion Control (`2609.17521`) —
   https://huggingface.co/papers/2609.17521
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: Båda godkända formellt, men B listar fyra äldre papers och hårdvaruresonemang som skymmer vilket som är senast. B 13.5s mot A 16.1s (B snabbare här).
 
 ---
 
@@ -359,7 +362,8 @@ senaste":
 - 2026-09-07 — τ^τ-Bench: An Environment for End-To-End, Realistic Agent Construction
   (`2609.04611`) — https://huggingface.co/papers/2609.04611
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: B drar in Occamy-1.0, HazardAuditor, Stripe-videon m.fl. som inte handlar om coding agents. B 16.8s mot A 10.6s.
 
 ---
 
@@ -413,7 +417,8 @@ Harness** (2609.08183), feed date **2026-09-09** — inom fönstret 2026-09-03�
 - 2026-09-09 — NeoHorse-1: Towards Recursive Self-Improvement via Agentic Post-Training with
   Routing Harness (`2609.08183`) — https://huggingface.co/papers/2609.08183
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B 10.2s, A 10.5s. Jämnaste frågan hittills.
 
 ---
 
@@ -490,7 +495,8 @@ agents).
 - 2026-09-10 — SWE-Bench Pro Verified: A Reliable Benchmark for Software Engineering Agents
   (`2609.08149`) — https://huggingface.co/papers/2609.08149
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: Båda nämner SWE-Bench Pro Verified, men B rangordnar inte och blandar in "Real Suite" från en nyhetsvideo. B 12.8s mot A 17.1s.
 
 ---
 
@@ -582,7 +588,8 @@ inte noll:
 - 2026-08-27 — FIRM-Video: Check Before You Score for Reliable Text-to-Video Reward Modeling
   (`2608.21839`) — https://huggingface.co/papers/2608.21839
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: Båda nämner FIRM-Video inom fönstret. A blandar in två nyhetsvideor trots att frågan gäller forskningen; B håller sig till papers. B 21.1s mot A 18.5s.
 
 ---
 
@@ -651,7 +658,8 @@ namngivet metod/system, "LEGO-RL") — **inte** om LEGO-leksaker/klossar.
 - 2026-08-19 — LEGO-RL: Harness-Native Reinforcement Learning for Coding Agents
   (`2608.17393`) — https://huggingface.co/papers/2608.17393
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B säger uttryckligen att LEGO inte syftar på leksaksmärket. B 11.6s mot A 9.2s.
 
 ---
 
@@ -708,7 +716,8 @@ i hela datasetet — inte bara de senaste veckorna, utan över hela `data/raw/hf
 
 **Förväntade källor:** (inga — frånvaro är det korrekta svaret)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B 13.6s mot A 8.2s.
 
 ---
 
@@ -832,7 +841,8 @@ PhysStream (se Fråga 03), samt YouTube-videon "He Built The Ultimate Spy Tool
 - YouTube: He Built The Ultimate Spy Tool (Free and Open-Source) (`S2VJU5DQqlU`) —
   https://www.youtube.com/watch?v=S2VJU5DQqlU
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: A tar även med YouTube-videon. A:s citat "[their]" tolkades som okopplad hänvisning. B 9.5s mot A 8.2s.
 
 ---
 
@@ -936,7 +946,8 @@ spridning av övriga LLM-/agent-ämnen.
 [2026-09-10, 2026-09-16] (137 dokument vid frysningstillfället; ingen fast lista krävs för
 godkänt svar, se bedömningskriterier ovan).
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B listar 15 papers mot A:s 5, båda inom fönstret. B 28.2s mot A 12.9s.
 
 ---
 
@@ -999,7 +1010,8 @@ annan stavning av namnet ("Palantir", "Pallantir" etc.) förekommer i någon vid
   https://www.youtube.com/watch?v=S2VJU5DQqlU&t=1
   (även vid `&t=315`)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  X Båda fel
+Notering: B hittade "Palunteer" men avfärdade det. A missade det helt. B 9.6s mot A 11.3s.
 
 ---
 
@@ -1104,7 +1116,8 @@ of the hardest and unsolved math problems in the world."*
 - (fullständig lista: 14 videor totalt matchar "openai"/"open ai"/"open aai" i transkriptet
   inom fönstret, se `data/raw/youtube/` för alla)
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** X A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+Notering: Båda klarar kriteriet, men B glider in i kinesiska mitt i svaret ("primarily 围绕 its"). B 25.0s mot A 16.6s.
 
 ---
 
@@ -1224,7 +1237,8 @@ YouTube (videor):
 - 2026-09-16 — He Built The Ultimate Spy Tool (Free and Open-Source) (`S2VJU5DQqlU`) —
   https://www.youtube.com/watch?v=S2VJU5DQqlU
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
+**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  X Båda fel
+Notering: Båda enbart YouTube, ingen HF-källa. B kallar videor för "Articles". Samma utfall som båda armarna i T-032, alltså retrieval och inte modellstorlek. B 12.5s mot A 13.5s.
 
 ---
 
@@ -1357,6 +1371,6 @@ YouTube (videor om agenter inom fönstret, urval):
 - 2026-09-12 — GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)
   (`joKb_QMmglM`) — https://www.youtube.com/watch?v=joKb_QMmglM
 
-**Bedömning:** ☐ A bättre  ☐ B bättre  ☐ Likvärdiga  ☐ Båda fel
-
+**Bedömning:** ☐ A bättre  ☐ B bättre  X Likvärdiga  ☐ Båda fel
+Notering: B 18.0s mot A 8.9s.
 ---
