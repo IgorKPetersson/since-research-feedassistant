@@ -65,6 +65,25 @@ It's shown left of the wordmark in the header and used as the browser-tab favico
 - The header `<img>` has `alt=""`: the adjacent "Since" wordmark already names it,
   so the SVG's own `aria-label` would otherwise be read twice.
 
+**Lockup follow-up (my review, 2026-09-24).** All values below were measured from
+rendered pixels (element screenshots at 1× and at CSS zoom 4×), not taken from the CSS:
+- **Gap:** before, the visible space from the line's end to the S was 9.5px (CSS gap
+  0.45rem, plus the SVG's right padding and the S's side bearing). CSS gap is now
+  5.5px, which measures **8.0px** of visible space at 4×.
+- **Size:** the brief asked for the mark to be "roughly the height of the S" and also
+  said it looked "slightly oversized". Measured, the dot is 9px and the S is 15px, so
+  matching the S would have made the dot bigger. Asked, with zoomed comparisons of
+  both readings. My decision: **keep the current 26px size.**
+- **Vertical centre:** the geometric centres already matched (0.0px at 4×). At 1× the
+  dot rendered 1px below the S's centre (13.0 vs 12.0) because of pixel snapping.
+  Fixed with `line-height: 26px` on the wordmark (both boxes start on the same whole
+  pixel) plus `top: -0.5px` on the mark. Now **0.0px** at 1×. At 4×, standing in for
+  high-DPI screens, the dot is 0.5px high, the compromise between the two. A full
+  -1px nudge measured 0.5px *high* at 1×, so it wasn't used. The half-pixel offset
+  doesn't blur the dot: its edge profile is the same, just mirrored.
+- Close-ups in `.playwright-mcp/` (gitignored): `t046-header-{light,dark}.png` (1×),
+  `t046-brand-{light,dark}-4x.png` (zoomed). Tests: `Ran 207 tests ... OK`.
+
 ### T-045 — Visual identity: rename to "Since", a real typeface, one accent colour
 
 **Status:** done

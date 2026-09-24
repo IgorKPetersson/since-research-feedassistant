@@ -387,15 +387,21 @@ a.citation-chip {
     margin-bottom: 1.2rem;
     border-bottom: 1px solid rgba(128, 128, 128, 0.25);
 }
+/* 5.5px CSS gap = 8px of visible space from the line's end to the S (the SVG's own
+   right padding and the S's side bearing add the rest), measured in rendered pixels. */
 .app-brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 5.5px;
 }
+/* Geometric centres already match; the -0.5px only offsets 1x-DPR pixel snapping,
+   which otherwise rasterises the dot 1px below the S's centre. */
 .app-mark {
     height: 26px;
     width: 26px;
     display: block;
+    position: relative;
+    top: -0.5px;
 }
 /* 700 is Instrument Sans's heaviest cut (Google Fonts returns HTTP 400 for 800), so
    the logo feel comes from the tighter tracking rather than a synthetic bold. */
@@ -403,7 +409,8 @@ a.citation-chip {
     font-size: 1.3rem;
     font-weight: 700;
     letter-spacing: -0.3px;
-    line-height: 1;
+    /* Same height as the mark, so both boxes start on the same whole pixel. */
+    line-height: 26px;
 }
 .app-stats {
     font-size: 0.85rem;
