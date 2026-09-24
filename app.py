@@ -33,19 +33,21 @@ from vg09.ui_helpers import (
     APP_NAME,
     CUSTOM_CSS,
     EXAMPLE_QUESTIONS,
+    LOGO_MARK_PATH,
     build_retrieval_ranks,
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
     format_corpus_summary,
     format_date_range_short,
+    logo_mark_html,
     render_citation_chips,
     text_source_label,
 )
 
 _SOURCE_TYPE_LABEL = {"paper": "PAPER", "video": "VIDEO", "unknown": "SOURCE"}
 
-st.set_page_config(page_title=APP_NAME, page_icon=":material/search:")
+st.set_page_config(page_title=APP_NAME, page_icon=str(LOGO_MARK_PATH))
 st.html(CUSTOM_CSS)
 
 # --- Header (T-045): "Since" small and left, real corpus counts/freshness on the
@@ -55,7 +57,8 @@ st.html(CUSTOM_CSS)
 stats = corpus_stats()
 latest = latest_feed_date()
 st.markdown(
-    f'<div class="app-header"><span class="app-name">{APP_NAME}</span>'
+    f'<div class="app-header"><span class="app-brand">{logo_mark_html()}'
+    f'<span class="app-name">{APP_NAME}</span></span>'
     f'<span class="app-stats">{format_corpus_summary(stats, latest)}</span></div>',
     unsafe_allow_html=True,
 )

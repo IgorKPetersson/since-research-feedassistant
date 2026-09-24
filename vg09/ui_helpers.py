@@ -12,8 +12,10 @@ can't be a single shared Python constant across both), and the Google Fonts type
 
 from __future__ import annotations
 
+import base64
 import re
 from datetime import date
+from pathlib import Path
 
 from vg09.citations import Citation
 from vg09.retrieval import Candidate
@@ -26,6 +28,15 @@ APP_NAME = "Since"
 # Matches .streamlit/config.toml's [theme] primaryColor - the two can't share one
 # Python constant (config.toml isn't Python), so this comment is the cross-reference.
 ACCENT_COLOR = "#C17F1A"
+
+# T-046: one file serves as both the header mark and the favicon.
+LOGO_MARK_PATH = Path(__file__).resolve().parent.parent / "docs" / "assets" / "since-mark.svg"
+
+
+def logo_mark_html() -> str:
+    # alt="" - the adjacent "Since" wordmark already names it for screen readers.
+    encoded = base64.b64encode(LOGO_MARK_PATH.read_bytes()).decode("ascii")
+    return f'<img class="app-mark" src="data:image/svg+xml;base64,{encoded}" alt="">'
 
 _MARKDOWN_SPECIAL_CHARS = "\\`*_[]"
 
@@ -367,7 +378,7 @@ a.citation-chip {
    caption + separate 3-column metric status bar entirely. */
 .app-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     column-gap: 1.5rem;
@@ -376,10 +387,23 @@ a.citation-chip {
     margin-bottom: 1.2rem;
     border-bottom: 1px solid rgba(128, 128, 128, 0.25);
 }
+.app-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.app-mark {
+    height: 26px;
+    width: 26px;
+    display: block;
+}
+/* 700 is Instrument Sans's heaviest cut (Google Fonts returns HTTP 400 for 800), so
+   the logo feel comes from the tighter tracking rather than a synthetic bold. */
 .app-name {
     font-size: 1.3rem;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.3px;
+    line-height: 1;
 }
 .app-stats {
     font-size: 0.85rem;

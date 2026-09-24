@@ -12,12 +12,14 @@ from vg09.ui_helpers import (
     ACCENT_COLOR,
     APP_NAME,
     CUSTOM_CSS,
+    LOGO_MARK_PATH,
     build_retrieval_ranks,
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
     format_corpus_summary,
     format_date_range_short,
+    logo_mark_html,
     render_citation_chips,
     text_source_label,
 )
@@ -117,6 +119,16 @@ class VisualIdentityTests(unittest.TestCase):
         self.assertIn('[data-testid="stMarkdownContainer"] a.citation-chip', CUSTOM_CSS)
         self.assertIn("color: #1a1a1a !important", CUSTOM_CSS)
         self.assertIn("text-decoration: none !important", CUSTOM_CSS)
+
+    def test_logo_mark_svg_uses_the_accent_and_no_placeholder(self):
+        svg = LOGO_MARK_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("CURRENT_ACCENT", svg)
+        self.assertEqual(svg.count(ACCENT_COLOR), 3)
+
+    def test_logo_mark_html_is_a_decorative_svg_data_uri_image(self):
+        html = logo_mark_html()
+        self.assertTrue(html.startswith('<img class="app-mark" src="data:image/svg+xml;base64,'))
+        self.assertIn('alt=""', html)
 
     def test_source_badges_are_one_neutral_grey_not_per_type_colours(self):
         self.assertNotIn(".badge-video", CUSTOM_CSS)

@@ -14,6 +14,57 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-046 — Logo mark: timeline-with-marker SVG in the header and as the favicon
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-046-logo-mark`  ·  **Phase:** 3
+
+**Goal:** "Since" has a mark, not just a wordmark. It's a timeline: a faded line for
+what's already been seen, a solid line for what's new, and a dot at the "since" point.
+It's shown left of the wordmark in the header and used as the browser-tab favicon.
+
+**Why:** my explicit instruction (2026-09-24), with the SVG supplied verbatim.
+
+**Acceptance criteria**
+- [x] `docs/assets/since-mark.svg` is exactly the supplied SVG, with `CURRENT_ACCENT`
+  replaced by the accent in use (`#C17F1A`, `vg09.ui_helpers.ACCENT_COLOR`)
+- [x] Rendered in the header left of the "Since" wordmark, vertically centred, about
+  26px tall
+- [x] Wordmark tightened: letter-spacing -0.3px. Weight **not** raised, see Notes.
+- [x] The same SVG file is the browser-tab favicon
+- [x] Checked live in both themes, with a close-up header screenshot
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes
+
+**Depends on:** T-045 (the header, wordmark and accent this builds on). Branched from
+`t/T-045-visual-identity`, which isn't merged yet.
+
+**Evidence (2026-09-24)**
+- Tests: `Ran 207 tests ... OK` (2 new: the SVG has the accent three times and no
+  `CURRENT_ACCENT` left; the header `<img>` is an SVG data URI with `alt=""`).
+- Live, fresh `streamlit run app.py`: the mark's bounding box is 26×26px, and its
+  vertical centre is 109.0px against the wordmark's 108.99px. The wordmark's computed
+  style is `font-weight: 700`, `letter-spacing: -0.3px`, Instrument Sans. The favicon
+  `<link>` is an SVG data URI that decodes byte-identical to the header mark (both come
+  from `docs/assets/since-mark.svg` via `vg09.ui_helpers.LOGO_MARK_PATH`: Streamlit's
+  `page_icon` turns a local `.svg` path into a data URI).
+- Both themes switched from the main menu (backgrounds `rgb(255, 255, 255)` and
+  `rgb(14, 17, 23)`). Close-ups are in `.playwright-mcp/` (gitignored, not committed):
+  `t046-header-{light,dark}.png` at 1×, `t046-brand-{light,dark}-3x.png` zoomed.
+
+**Notes**
+- **Weight:** the wordmark was already 700, the heaviest weight Instrument Sans ships.
+  Google Fonts returns HTTP 400 for `wght@800`. A heavier setting would give a
+  browser-synthesised faux bold, which smears the letterforms, so the tighter
+  tracking alone does the "logo, not heading" work. If more weight is wanted, the
+  real options are a larger size or a different face for the wordmark only. That's
+  my call.
+- **Mark geometry, as supplied:** the dot (r 4.5 at x 9) covers x 4.5–13.5, so the
+  faded "already seen" line (x 2–22) only shows as a stub left of the dot, about 3px
+  at 26px tall, and at 35% opacity it's faint on white. Rendered exactly as
+  specified, not adjusted.
+- The header `<img>` has `alt=""`: the adjacent "Since" wordmark already names it,
+  so the SVG's own `aria-label` would otherwise be read twice.
+
 ### T-045 — Visual identity: rename to "Since", a real typeface, one accent colour
 
 **Status:** done

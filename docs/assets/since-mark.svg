@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Since">
+  <line x1="2" y1="12" x2="22" y2="12" stroke="#C17F1A" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="9" y1="12" x2="22" y2="12" stroke="#C17F1A" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="9" cy="12" r="4.5" fill="#C17F1A"/>
+</svg>
