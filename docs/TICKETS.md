@@ -14,7 +14,34 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
-### T-046 — Logo mark: timeline-with-marker SVG in the header and as the favicon
+### T-047 — README: the "Since" name and logo, and correct its stale UI facts
+
+**Status:** done
+**Size:** XS  ·  **Branch:** `t/T-047-readme-since`  ·  **Phase:** 3
+
+**Goal:** the README presents the app as "Since", with its logo, and no longer
+describes a UI that no longer exists.
+
+**Why:** (2026-09-24) after T-044–T-046 merged, the README needed the new name and
+the logo. Reading it showed three statements that
+became false during this session, all in the section about using the UI. Leaving
+known-false instructions in a file being edited for the UI's identity would be worse
+than fixing them, so they're included here and named:
+- "press 'Fråga' (Ask)": the button is "Ask" (T-042, D-016)
+- "The interface labels are in Swedish": English since D-016
+- "the model-size comparison is still pending": T-033 is done and graded
+
+**Acceptance criteria**
+- [x] Title is "Since" with `docs/assets/since-mark.svg` beside it
+- [x] The repository name "research-feed-assistant" stays where it's a real identifier
+  (the clone URL, the `cd` path), and the README says the app is called Since
+  inside that repo. Same boundary T-045 drew: display name only.
+- [x] The three stale statements above are corrected; nothing else in the README changes
+
+**Out of scope:** renaming the GitHub repository, `CLAUDE.md`'s project heading, or
+the `vg09` package.
+
+ — Logo mark: timeline-with-marker SVG in the header and as the favicon
 
 **Status:** done
 **Size:** S  ·  **Branch:** `t/T-046-logo-mark`  ·  **Phase:** 3

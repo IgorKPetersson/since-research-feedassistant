@@ -1,7 +1,8 @@
-# research-feed-assistant
+# <img src="docs/assets/since-mark.svg" alt="" width="32" height="32"> Since
 
-A local-first research-feed assistant for Hugging Face Daily Papers and a handful of
-YouTube channels. Ask it in plain language what's new, whether a topic came up, or how a
+*What's happened since you last looked.* Since is the app in this repository
+(`research-feed-assistant`): a local-first research-feed assistant for Hugging Face
+Daily Papers and a handful of YouTube channels. Ask it in plain language what's new, whether a topic came up, or how a
 topic has developed over the last few weeks — it answers with real citations (link, title,
 feed date), and runs entirely on your own machine against a local model. No account, no
 cloud service, no server process.
@@ -100,15 +101,14 @@ All three steps are safe to re-run — nothing is re-fetched or re-embedded twic
 streamlit run app.py
 ```
 
-opens the chat UI in your browser. Type a question and press "Fråga" (Ask). If nothing has
+opens the chat UI in your browser. Type a question and press "Ask". If nothing has
 been ingested yet, the UI shows an explicit empty-state message instead of an empty or
 broken screen.
 
 A few things worth knowing before you use it:
 
-- **The interface labels are in Swedish** (sidebar captions, buttons, status messages) —
-  this was built for a single Swedish-speaking user. You can still **ask your question in
-  any language**; `bge-m3`'s embedding is multilingual and retrieves correctly across
+- **The interface is in English** (D-016). You can **ask your question in any
+  language**; `bge-m3`'s embedding is multilingual and retrieves correctly across
   languages. **Answers are always generated in English**, regardless of what language the
   question was asked in — a deliberate, explicit decision (see `docs/DECISIONS.md`, D-013),
   not something left to the model's default behavior.
@@ -123,8 +123,9 @@ A few things worth knowing before you use it:
 
 `docs/eval-questions.md` holds the 15 hand-written evaluation questions, each with its own
 expected answer and sources. `docs/eval-results/` holds the real, hand-graded comparison
-runs against the actual pipeline — currently the date-aware-vs-plain-retrieval comparison
-this project's central claim rests on (the model-size comparison is still pending). See
+runs against the actual pipeline: the date-aware-vs-plain-retrieval comparison this
+project's central claim rests on, and the `qwen3:30b-a3b`-vs-`qwen3:8b` model-size
+comparison (T-033). See
 `docs/PLAN.md` and `docs/TICKETS.md` for what's done and what's left.
 
 ## Known limitations
