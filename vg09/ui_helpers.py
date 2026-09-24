@@ -313,10 +313,21 @@ a.citation-chip {
     font-weight: 700;
     letter-spacing: 0.03em;
     color: #ffffff;
+    /* Neutral grey for every source type: red/terracotta read as an error state, and
+       the label text already carries the type. White on it is 5.33:1. */
+    background-color: #6b6b6b;
 }
-.source-badge.badge-paper { background-color: #3b6ea5; }
-.source-badge.badge-video { background-color: #a5573b; }
-.source-badge.badge-unknown { background-color: #6b6b6b; }
+
+/* Source-card title links: body text colour with an accent underline, not
+   Streamlit's default blue (clashes with the accent) and not accent-coloured text
+   (3.32:1 on white, too low for text). !important for the same reason as the chips. */
+.st-key-source_cards [data-testid="stMarkdownContainer"] a {
+    color: inherit !important;
+    text-decoration: underline !important;
+    text-decoration-color: __ACCENT_COLOR__ !important;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.15em;
+}
 
 .text-source-badge {
     display: inline-block;

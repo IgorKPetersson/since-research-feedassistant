@@ -79,6 +79,23 @@ out before anything was merged. My decision (2026-09-24): numbers stay as they a
   main menu's System/Light/Dark control.
 - Screenshots: `docs/screenshots/t042-ui-light-theme.png`,
   `docs/screenshots/t042-ui-dark-theme.png` (same answer, theme switched in place).
+  Retaken after the follow-up fixes below, from a later run of the same question:
+  Time 13.8s, 5 chips, 4 source cards, other pipeline numbers unchanged.
+
+**Follow-up fixes (my review of the screenshots, 2026-09-24)**
+- Source-card title links used Streamlit's default blue, which clashed with the
+  accent. They now use the body text colour with a 2px amber underline. Amber text
+  was not used because it's 3.32:1 on white, too low for text. Scoped via a new
+  `st.container(key="source_cards")`. Computed styles: link `rgb(49, 51, 63)` in
+  light and `rgb(250, 250, 250)` in dark (equal to body text in both), underline
+  `rgb(193, 127, 26)`.
+- Source-type badges: the VIDEO badge was red/terracotta, which reads as an error.
+  All types are now one neutral grey, `#6b6b6b` (white label 5.33:1), and the label
+  text carries the type. Computed: `rgb(107, 107, 107)` in both themes.
+- Empty question field confirmed on a fresh page load: `value` is empty,
+  `:placeholder-shown` is true, and the placeholder reads "What's happened since…".
+- Tests: `Ran 205 tests ... OK` (2 new: badges are one grey, links use the accent
+  underline).
 
 **Bugs found during live verification, all fixed in this ticket**
 1. `st.markdown(CUSTOM_CSS, unsafe_allow_html=True)` with a `<link>` tag ahead of the

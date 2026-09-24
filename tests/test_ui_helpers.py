@@ -118,6 +118,15 @@ class VisualIdentityTests(unittest.TestCase):
         self.assertIn("color: #1a1a1a !important", CUSTOM_CSS)
         self.assertIn("text-decoration: none !important", CUSTOM_CSS)
 
+    def test_source_badges_are_one_neutral_grey_not_per_type_colours(self):
+        self.assertNotIn(".badge-video", CUSTOM_CSS)
+        self.assertNotIn(".badge-paper", CUSTOM_CSS)
+        self.assertIn("background-color: #6b6b6b", CUSTOM_CSS)
+
+    def test_source_card_links_use_text_colour_with_accent_underline(self):
+        self.assertIn(".st-key-source_cards", CUSTOM_CSS)
+        self.assertIn(f"text-decoration-color: {ACCENT_COLOR} !important", CUSTOM_CSS)
+
     def test_google_font_is_loaded(self):
         self.assertIn("fonts.googleapis.com", CUSTOM_CSS)
         self.assertIn("Instrument+Sans", CUSTOM_CSS)

@@ -180,24 +180,25 @@ if ask and question.strip():
     st.subheader("Sources")
     if not citations.citations:
         st.caption("No sources could be linked to the answer.")
-    for i, c in enumerate(citations.citations, start=1):
-        source_type = citation_source_type(c.url)
-        title = escape_markdown_link_text(c.title)
-        badges_html = (
-            f'<div id="cite-{i}"></div>'
-            f'<span class="source-badge badge-{source_type}">{_SOURCE_TYPE_LABEL[source_type]}</span>'
-        )
-        ts_label = text_source_label(c.text_source)
-        if ts_label:
-            badges_html += f'<span class="text-source-badge">{ts_label}</span>'
-        rank = ranks.get(c.doc_id)
-        if rank:
-            badges_html += f'<span class="retrieval-rank">retrieval rank #{rank}</span>'
+    with st.container(key="source_cards"):
+        for i, c in enumerate(citations.citations, start=1):
+            source_type = citation_source_type(c.url)
+            title = escape_markdown_link_text(c.title)
+            badges_html = (
+                f'<div id="cite-{i}"></div>'
+                f'<span class="source-badge">{_SOURCE_TYPE_LABEL[source_type]}</span>'
+            )
+            ts_label = text_source_label(c.text_source)
+            if ts_label:
+                badges_html += f'<span class="text-source-badge">{ts_label}</span>'
+            rank = ranks.get(c.doc_id)
+            if rank:
+                badges_html += f'<span class="retrieval-rank">retrieval rank #{rank}</span>'
 
-        with st.container(border=True):
-            st.markdown(badges_html, unsafe_allow_html=True)
-            arxiv_note = f" · arXiv {c.arxiv_published_at[:10]}" if c.arxiv_published_at else ""
-            st.markdown(f"**[{title}]({c.url})**  \n{c.feed_date}{arxiv_note}")
+            with st.container(border=True):
+                st.markdown(badges_html, unsafe_allow_html=True)
+                arxiv_note = f" · arXiv {c.arxiv_published_at[:10]}" if c.arxiv_published_at else ""
+                st.markdown(f"**[{title}]({c.url})**  \n{c.feed_date}{arxiv_note}")
 
     if citations.unlinked_references:
         st.caption(
