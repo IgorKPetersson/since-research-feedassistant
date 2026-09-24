@@ -31,8 +31,8 @@ from vg09.ui_helpers import (
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    format_date_range_short,
     render_citation_chips,
-    short_mode_label,
     text_source_label,
 )
 
@@ -102,23 +102,31 @@ if ask and question.strip():
     date_range = resolve_date_range(question, today, manual_override=manual_range)
     ranking = detect_recency_ranking(question)
 
-    # --- Pipeline strip (T-042): filled in progressively, real data per stage, as
-    # each stage actually completes - not one spinner wrapping the whole call. ---
-    stage_cols = st.columns(5)
-    mode_slot = stage_cols[0].empty()
-    candidates_slot = stage_cols[1].empty()
-    dedup_slot = stage_cols[2].empty()
-    packed_slot = stage_cols[3].empty()
-    time_slot = stage_cols[4].empty()
-    budget_slot = st.empty()
+    # --- Pipeline strip (T-042/T-044): filled in progressively, real data per stage,
+    # as each stage actually completes - not one spinner wrapping the whole call.
+    # Wrapped in a keyed container so CUSTOM_CSS can size these five metrics down
+    # below the answer text without touching the status bar's corpus-count tiles. ---
+    with st.container(key="pipeline_strip"):
+        stage_cols = st.columns(5)
+        date_range_slot = stage_cols[0].empty()
+        candidates_slot = stage_cols[1].empty()
+        dedup_slot = stage_cols[2].empty()
+        packed_slot = stage_cols[3].empty()
+        time_slot = stage_cols[4].empty()
+        budget_slot = st.empty()
 
-    for slot, label in (
-        (candidates_slot, "Candidates"), (dedup_slot, "After dedup"),
-        (packed_slot, "Packed"), (time_slot, "Time"),
-    ):
-        slot.metric(label, "…")
+        for slot, label in (
+            (candidates_slot, "Candidates"), (dedup_slot, "After dedup"),
+            (packed_slot, "Packed"), (time_slot, "Time"),
+        ):
+            slot.metric(label, "…")
 
-    mode_slot.metric("Mode", short_mode_label(interpreted_range, ranking, manual_range))
+        # The real resolved window actually used for retrieval (post manual-override),
+        # not the merely-interpreted one - matching every other tile's "what actually
+        # happened" contract. "None" here covers both unfiltered search and ranking
+        # mode (neither has a bounded window) - describe_retrieval_mode() right below
+        # still tells those two apart in full.
+        date_range_slot.metric("Date range", format_date_range_short(date_range))
     st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range))
 
     try:

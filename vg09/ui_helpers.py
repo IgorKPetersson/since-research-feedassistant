@@ -95,24 +95,31 @@ def text_source_label(text_source: str | None) -> str | None:
     return _TEXT_SOURCE_LABELS.get(text_source, text_source)
 
 
-def short_mode_label(
-    date_range: tuple[date, date] | None,
-    ranking: bool,
-    manual_override: tuple[date, date] | None,
-) -> str:
-    """T-042: the pipeline strip's compact "Mode" tile - a single short word, not the
-    full sentence `describe_retrieval_mode()` renders (still shown in full alongside
-    it). Same priority order, same underlying mechanism - a display-only variant.
-    Kept to <= 8 characters deliberately - `st.metric`'s value truncates with an
-    ellipsis inside a narrow column (found live, T-042's own real verification -
-    "Unfiltered" truncated to "Unfilt…" at 5 equal-width columns)."""
-    if manual_override is not None:
-        return "Manual"
-    if date_range is not None:
-        return "Filtered"
-    if ranking:
-        return "Ranking"
-    return "None"
+_MONTH_ABBR = [
+    "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+]
+
+
+def format_date_range_short(date_range: tuple[date, date] | None) -> str:
+    """T-044: the pipeline strip's "Date range" tile - the real resolved window,
+    compactly ("Sep 11-17" same month, "Sep 28 - Oct 3" across a month boundary,
+    "Sep 16" a single day), or "None" when no window was resolved (unfiltered search
+    or ranking mode both have no bounded window to show - `describe_retrieval_mode()`,
+    shown in full alongside this tile, still tells those two apart).
+
+    Built by hand rather than via `date.strftime()`'s day-of-month formats: `%-d`
+    (no leading zero) is a POSIX strftime extension, not supported by Windows' C
+    runtime this project actually runs on (`%#d` there instead) - string-building the
+    day number directly (`str(d.day)`) sidesteps the platform difference entirely."""
+    if date_range is None:
+        return "None"
+    start, end = date_range
+    if start == end:
+        return f"{_MONTH_ABBR[start.month]} {start.day}"
+    if start.year == end.year and start.month == end.month:
+        return f"{_MONTH_ABBR[start.month]} {start.day}-{end.day}"
+    return f"{_MONTH_ABBR[start.month]} {start.day} - {_MONTH_ABBR[end.month]} {end.day}"
 
 
 def build_retrieval_ranks(chunks: list[Candidate]) -> dict[str, int]:
@@ -252,6 +259,24 @@ CUSTOM_CSS = """
 .retrieval-rank {
     font-size: 0.75em;
     opacity: 0.65;
+}
+
+/* T-044: the pipeline strip's five metrics, scoped to that one keyed container
+   (st.container(key="pipeline_strip") in app.py - Streamlit's own supported way to
+   target a specific region with custom CSS) so the status bar's corpus-count tiles
+   (Papers/Videos/Chunks) are untouched - I asked about the pipeline metrics
+   specifically, not those. st.metric's default value size is a large "hero number"
+   style meant to be the dominant element on a KPI dashboard - backwards here, where
+   the answer paragraph these numbers describe is what actually matters most on the
+   page. Sized below normal body text (Streamlit's own default is ~1rem), not just
+   "smaller than before".
+*/
+.st-key-pipeline_strip [data-testid="stMetricValue"] {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+.st-key-pipeline_strip [data-testid="stMetricLabel"] {
+    font-size: 0.7rem;
 }
 </style>
 """

@@ -12,8 +12,8 @@ from vg09.ui_helpers import (
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    format_date_range_short,
     render_citation_chips,
-    short_mode_label,
     text_source_label,
 )
 
@@ -88,34 +88,34 @@ class DescribeRetrievalModeTests(unittest.TestCase):
         self.assertIn("No date filter", result)
 
 
-class ShortModeLabelTests(unittest.TestCase):
-    def test_manual_override_wins(self):
-        result = short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), True,
-                                   (date(2020, 1, 1), date(2020, 1, 31)))
-        self.assertEqual(result, "Manual")
+class FormatDateRangeShortTests(unittest.TestCase):
+    """T-044: the pipeline strip's "Date range" tile."""
 
-    def test_date_range_without_override(self):
-        result = short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), False, None)
-        self.assertEqual(result, "Filtered")
+    def test_none_renders_as_none(self):
+        self.assertEqual(format_date_range_short(None), "None")
 
-    def test_ranking_without_a_window(self):
-        self.assertEqual(short_mode_label(None, True, None), "Ranking")
+    def test_same_month_range_is_month_day_dash_day(self):
+        result = format_date_range_short((date(2026, 9, 11), date(2026, 9, 17)))
+        self.assertEqual(result, "Sep 11-17")
 
-    def test_nothing_fired(self):
-        self.assertEqual(short_mode_label(None, False, None), "None")
+    def test_single_day_range_is_just_month_day(self):
+        result = format_date_range_short((date(2026, 9, 16), date(2026, 9, 16)))
+        self.assertEqual(result, "Sep 16")
 
-    def test_every_label_is_short_enough_not_to_truncate_in_a_narrow_metric_column(self):
-        """Found live, T-042's own real verification: st.metric's value truncates
-        with an ellipsis at the pipeline strip's 5-equal-column width - "Unfiltered"
-        became "Unfilt…". <= 8 characters was the real, measured safe bound."""
-        cases = [
-            short_mode_label(None, False, None),
-            short_mode_label((date(2026, 9, 10), date(2026, 9, 16)), False, None),
-            short_mode_label(None, True, None),
-            short_mode_label(None, False, (date(2020, 1, 1), date(2020, 1, 31))),
-        ]
-        for label in cases:
-            self.assertLessEqual(len(label), 8, label)
+    def test_range_crossing_a_month_boundary_names_both_months(self):
+        result = format_date_range_short((date(2026, 8, 28), date(2026, 9, 3)))
+        self.assertEqual(result, "Aug 28 - Sep 3")
+
+    def test_range_crossing_a_year_boundary_still_reads_correctly(self):
+        result = format_date_range_short((date(2025, 12, 20), date(2026, 1, 2)))
+        self.assertEqual(result, "Dec 20 - Jan 2")
+
+    def test_no_platform_specific_strftime_flags_double_digit_days_unaffected(self):
+        """Built by hand, not date.strftime() - %-d (no leading zero) is a POSIX
+        extension this project's real Windows environment doesn't support (KB-005-
+        adjacent portability concern, not a formatting nicety)."""
+        result = format_date_range_short((date(2026, 9, 1), date(2026, 9, 9)))
+        self.assertEqual(result, "Sep 1-9")  # single-digit days, no leading zero either way
 
 
 class CitationSourceTypeTests(unittest.TestCase):

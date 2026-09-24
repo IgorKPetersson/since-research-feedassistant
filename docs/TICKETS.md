@@ -14,6 +14,64 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-044 — Pipeline strip follow-ups: "Date range" shows the resolved window, metrics sized below the answer
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-044-ui-polish`  ·  **Phase:** 3
+
+**Goal:** T-042's pipeline strip tells me the actual resolved date window at a
+glance instead of a coarse category label, and its five metric tiles read as
+supporting detail, not as the visually dominant thing on the page.
+
+**Why:** my explicit instruction (2026-09-24), found while reviewing T-042's real
+screenshots for a report: (1) the "Mode" tile said "Filtered"/"None"/etc. - true, but
+less useful than just showing the real window ("Sep 11-17"); (2) `st.metric`'s default
+hero-number styling makes five pipeline numbers visually outrank the answer paragraph
+they're describing, backwards for what matters most on the page. Also: T-042's two
+committed screenshots were taken before T-043 landed, so they show T-042's own real,
+live-found bug (an English question resolving to no date filter) - stale evidence for
+a report about the current, fixed UI.
+
+**Acceptance criteria**
+- [x] The pipeline strip's first tile is labeled "Date range" (not "Mode") and shows
+  the real resolved window compactly (e.g. "Sep 11-17"), or "None" when no window was
+  resolved → `vg09.ui_helpers.format_date_range_short()` (new, 6 tests: same-month,
+  single-day, month-boundary, year-boundary, `None`, and a portability test confirming
+  no POSIX-only `strftime` flags are used - this project runs on Windows). Reflects the
+  actual `date_range` passed to `retrieve()` (post manual-override), not the merely-
+  interpreted one. Confirmed live: a real question resolving "the last two weeks"
+  showed **"Sep 4-17"**, matching the caption below it exactly
+  ("2026-09-04 – 2026-09-17")
+- [x] The pipeline strip's five metric values render visually smaller than the answer
+  text below them → `st.container(key="pipeline_strip")` + CSS scoped to
+  `.st-key-pipeline_strip [data-testid="stMetricValue"/"stMetricLabel"]` (0.95rem
+  values, 0.7rem labels - below Streamlit's ~1rem body text default). Confirmed live in
+  both themes: the five tiles (Date range/Candidates/After dedup/Packed/Time) read as
+  supporting detail under the answer paragraph, not competing with it - the status
+  bar's Papers/Videos/Chunks tiles untouched, confirmed still full-sized in the same
+  screenshots
+- [x] Both T-042 screenshots retaken for real on current `main`, with a real question
+  that actually resolves a date window ("Has Anthropic been mentioned in the last two
+  weeks?" - now resolves via T-043, where the original screenshots predate it and show
+  `Mode: None`) - light and dark theme, committed over the existing files
+  (`docs/screenshots/t042-ui-light-theme.png`/`t042-ui-dark-theme.png`). Real numbers
+  in the new screenshots: Date range Sep 4-17, Candidates 60, After dedup 20, Packed
+  20, Time 13.4s, context budget 7434/16000 (46%), 6 real citation chips linking to 6
+  real source cards
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes → **194/194**
+  (2 net new: 4 `ShortModeLabelTests` removed, 6 `FormatDateRangeShortTests` added)
+
+**Out of scope:** any other T-042 design decision (chip/badge colors, card layout,
+example questions).
+
+**Depends on:** T-042 (the pipeline strip this refines), T-043 (needed for a screenshot
+that actually shows a resolved English date window).
+**Notes:** `short_mode_label()` removed outright rather than deprecated - it had
+exactly one caller (`app.py`'s pipeline strip, now `format_date_range_short()`) and its
+own 5 tests, both gone in this same ticket; nothing else in the repo referenced it.
+
+---
+
 ### T-043 — English relative-time date extraction, matching the Swedish parser's real rules
 
 **Status:** done
