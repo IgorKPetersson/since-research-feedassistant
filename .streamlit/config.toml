@@ -1,0 +1,27 @@
+# T-045: one accent colour, applied via Streamlit's own supported theming mechanism
+# (not CSS fighting its internals) so it's picked up natively by the primary button
+# (Ask) and st.progress() (the context-budget bar) in both light and dark theme.
+# vg09/ui_helpers.py's CUSTOM_CSS uses the same hex for citation chips, by explicit
+# my decision (T-045) - kept as one source of truth here in the comment on both
+# sides, since Streamlit's theme config and a CSS string can't literally share a
+# Python constant.
+#
+# #C17F1A - a warm amber. Chosen deliberately over Streamlit's default red and over
+# an indigo/violet (the other common "distinct from stock" choice, but overused
+# enough in modern SaaS UIs to risk reading as generic too) - see docs/TICKETS.md T-045
+# for the full reasoning.
+#
+# Set under [theme.light] and [theme.dark] separately, not a single top-level
+# [theme] - found live (T-045's own real verification): a bare [theme] section with
+# any color set makes Streamlit treat the app as having one fully custom, fixed
+# theme, and it removes the viewer's Light/Dark toggle entirely, ignoring the OS's
+# own prefers-color-scheme too (checked directly - emulating a dark OS preference
+# still rendered light, with no toggle to switch it back). Defining both variants
+# explicitly, even with only primaryColor set in each, keeps the toggle (two real
+# themes for it to switch between) and lets Streamlit fill in its own sensible
+# per-mode defaults for everything else.
+[theme.light]
+primaryColor = "#C17F1A"
+
+[theme.dark]
+primaryColor = "#C17F1A"

@@ -1,17 +1,22 @@
-"""Unit tests for vg09.ui_helpers (T-025, T-029, T-042)."""
+"""Unit tests for vg09.ui_helpers (T-025, T-029, T-042, T-045)."""
 
 from __future__ import annotations
 
 import unittest
 from datetime import date
+from pathlib import Path
 
 from vg09.citations import Citation
 from vg09.retrieval import Candidate
 from vg09.ui_helpers import (
+    ACCENT_COLOR,
+    APP_NAME,
+    CUSTOM_CSS,
     build_retrieval_ranks,
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    format_corpus_summary,
     format_date_range_short,
     render_citation_chips,
     text_source_label,
@@ -88,6 +93,71 @@ class DescribeRetrievalModeTests(unittest.TestCase):
         self.assertIn("No date filter", result)
 
 
+class VisualIdentityTests(unittest.TestCase):
+    """T-045: the app's real name, accent colour, and the CSS that actually applies
+    them - not exhaustive CSS testing, just the concrete regressions worth catching
+    (a typo in the hex breaking the config.toml/CSS cross-reference, the Google Font
+    link disappearing, an icon-breaking blanket font-family selector creeping in)."""
+
+    def test_app_name_is_since(self):
+        self.assertEqual(APP_NAME, "Since")
+
+    def test_accent_color_is_a_real_hex_and_matches_streamlit_config(self):
+        self.assertRegex(ACCENT_COLOR, r"^#[0-9A-Fa-f]{6}$")
+        config = Path(__file__).resolve().parent.parent / ".streamlit" / "config.toml"
+        self.assertIn(ACCENT_COLOR, config.read_text(encoding="utf-8"),
+                      "the CSS accent and .streamlit/config.toml's primaryColor must match")
+
+    def test_accent_color_drives_the_citation_chip_css(self):
+        self.assertIn(f"background-color: {ACCENT_COLOR}", CUSTOM_CSS)
+
+    def test_citation_chip_text_overrides_streamlit_link_color(self):
+        # Found live: without the scoped selector + !important, chips rendered as
+        # blue underlined link text on the accent.
+        self.assertIn('[data-testid="stMarkdownContainer"] a.citation-chip', CUSTOM_CSS)
+        self.assertIn("color: #1a1a1a !important", CUSTOM_CSS)
+        self.assertIn("text-decoration: none !important", CUSTOM_CSS)
+
+    def test_google_font_is_loaded(self):
+        self.assertIn("fonts.googleapis.com", CUSTOM_CSS)
+        self.assertIn("Instrument+Sans", CUSTOM_CSS)
+
+    def test_font_family_override_does_not_use_a_blanket_universal_selector(self):
+        """A bare "*" selector would also override Streamlit's own higher-specificity
+        icon-font rules (e.g. the reasoning expander's arrow glyph), turning icons
+        into literal text - found and avoided while building this ticket, not just a
+        style nitpick. Scoped to [data-testid] (Streamlit's own content wrappers,
+        never its icon elements) instead - also found live: html/body/.stApp alone
+        lost a real cascade tie against Streamlit's own font rule on
+        [data-testid="stMarkdownContainer"]."""
+        self.assertIn("html, body, .stApp, [data-testid], [data-testid] *", CUSTOM_CSS)
+        self.assertNotRegex(CUSTOM_CSS, r"\n\*\s*\{[^}]*font-family")
+
+    def test_font_is_loaded_via_a_style_import_not_a_link_tag(self):
+        """Found live: st.html() silently strips <link> tags entirely - an @import
+        inside <style> survives instead."""
+        self.assertIn("@import url(", CUSTOM_CSS)
+        self.assertNotIn("<link", CUSTOM_CSS)
+
+
+class FormatCorpusSummaryTests(unittest.TestCase):
+    """T-045: the compact header's right-hand side."""
+
+    def test_includes_all_three_counts_and_the_freshness_date(self):
+        stats = {"hf_documents": 1184, "youtube_documents": 41, "chunks": 1971}
+        result = format_corpus_summary(stats, date(2026, 9, 17))
+        self.assertIn("1184 papers", result)
+        self.assertIn("41 videos", result)
+        self.assertIn("1971 chunks", result)
+        self.assertIn("2026-09-17", result)
+
+    def test_no_freshness_date_when_the_store_has_never_been_populated(self):
+        stats = {"hf_documents": 0, "youtube_documents": 0, "chunks": 0}
+        result = format_corpus_summary(stats, None)
+        self.assertIn("0 papers", result)
+        self.assertNotIn("Caught up", result)
+
+
 class FormatDateRangeShortTests(unittest.TestCase):
     """T-044: the pipeline strip's "Date range" tile."""
 
@@ -160,17 +230,22 @@ class RenderCitationChipsTests(unittest.TestCase):
             unlinked_references=[], descriptive_ranges=[],
         )
         self.assertIn('href="#cite-1"', result)
-        self.assertIn("chip-paper", result)
+        self.assertIn('class="citation-chip"', result)
         self.assertIn(">1<", result)
         self.assertNotIn("[1]", result)
 
-    def test_video_citation_gets_the_video_chip_class(self):
+    def test_video_citation_also_gets_the_one_shared_chip_class(self):
+        """T-045: chips dropped T-042's per-source-type colouring by my explicit
+        decision - a paper and a video citation render identically now (source type
+        stays visible via the unchanged PAPER/VIDEO source-card badge instead)."""
         chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc")
         citation = make_citation("vid1", "https://www.youtube.com/watch?v=abc")
         result = render_citation_chips(
             "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
         )
-        self.assertIn("chip-video", result)
+        self.assertIn('class="citation-chip"', result)
+        self.assertNotIn("chip-video", result)
+        self.assertNotIn("chip-paper", result)
 
     def test_comma_bracket_becomes_one_chip_per_number(self):
         c1, c2 = make_chunk("doc1", "https://huggingface.co/papers/1"), \

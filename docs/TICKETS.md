@@ -14,6 +14,137 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-045 — Visual identity: rename to "Since", a real typeface, one accent colour
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-045-visual-identity`  ·  **Phase:** 3
+
+**Goal:** the chat UI has a real, deliberate visual identity instead of reading as
+stock Streamlit (default font, default red button, a big centered title) - a real
+name ("Since"), a distinct typeface, one consistent accent colour, and a compact
+header, flat throughout, working in both themes.
+
+**Why:** my explicit instruction (2026-09-24).
+
+**Numbering mix-up, recorded so the history reads correctly:** the
+visual-identity work was first called "T-044", but T-044 had already been used
+earlier the same session for the pipeline-strip follow-ups ("Date range" tile,
+smaller metrics, retaken screenshots). Since ticket IDs are never reused, the
+visual-identity work became T-045. A merge of
+`t/T-044-ui-polish` was expected to contain the visual identity. It didn't, and the
+T-044 screenshots still showed the old name, font and red button. The mismatch came
+out before anything was merged. My decision (2026-09-24): numbers stay as they are.
+**T-044 = pipeline-strip tweaks, T-045 = visual identity**, no renumbering.
+
+**Acceptance criteria**
+- [x] The app is renamed "Since" - display strings only (`app.py`'s `page_title` and
+  header), matching T-035's own precedent: the `vg09` package/import path and
+  `vg09.store.COLLECTION_NAME` stay explicitly out of scope, untouched
+- [x] Header redesigned: "Since" small and left-aligned, with the real corpus counts
+  and freshness on the *same line* to its right - no big centered `st.title()`, no
+  subtitle line
+- [x] Question field placeholder reads "What's happened since…"
+- [x] Typeface: a distinct Google Fonts sans (Instrument Sans - see Notes for why over
+  Inter) replaces the Streamlit default, applied throughout - scoped to avoid breaking
+  Streamlit's own icon-font glyphs (the reasoning expander's arrow, etc.), which use
+  their own higher-specificity font rule
+- [x] One accent colour, chosen and justified, replaces Streamlit's default red -
+  applied via `.streamlit/config.toml`'s `primaryColor` (Streamlit's own supported
+  theming mechanism, not CSS overrides fighting its internals) so the Ask button and
+  the context-budget bar pick it up natively in both themes. By decision (this
+  reverses T-042's own per-source-type chip coloring): citation chips also switch to this one accent,
+  dropping the blue/terracotta paper-vs-video distinction chips used to carry - source
+  type stays visible via the (unchanged) PAPER/VIDEO badge on each source card
+- [x] Pipeline metrics stay smaller than the answer text - already shipped in T-044,
+  confirmed still true after this ticket's header/font/colour changes, not re-done
+- [x] Flat throughout (no gradients, no box-shadow, no emoji), both Streamlit themes
+  confirmed working - real screenshots, not assumed
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes
+- [x] Both T-042/T-044 screenshots retaken for real showing the new identity (name,
+  header, typeface, accent), light and dark theme, committed over the existing files
+
+**Evidence (2026-09-24)**
+- Tests: `Ran 203 tests ... OK` (202 before this ticket's last fix, plus
+  `test_citation_chip_text_overrides_streamlit_link_color`).
+- Live run: fresh `streamlit run app.py` against the real store and Ollama
+  (`qwen3:30b-a3b`), question "Has Anthropic been mentioned in the last two weeks?".
+  Pipeline strip: Date range Sep 4-17, Candidates 60, After dedup 20, Packed 20,
+  Time 11.4s, Context budget 7434 / 16000 tokens (46%). Answer had 8 citation chips
+  and 6 source cards.
+- Computed styles checked in the browser (not assumed from the CSS):
+  `.app-name` font-family `"Instrument Sans", ...`. `document.fonts` shows Instrument
+  Sans and Material Symbols Rounded both loaded. Chip background `rgb(193, 127, 26)`
+  (= `#C17F1A`), chip text `rgb(26, 26, 26)`, no underline. Page background
+  `rgb(255, 255, 255)` in light and `rgb(14, 17, 23)` in dark, both switched from the
+  main menu's System/Light/Dark control.
+- Screenshots: `docs/screenshots/t042-ui-light-theme.png`,
+  `docs/screenshots/t042-ui-dark-theme.png` (same answer, theme switched in place).
+
+**Bugs found during live verification, all fixed in this ticket**
+1. `st.markdown(CUSTOM_CSS, unsafe_allow_html=True)` with a `<link>` tag ahead of the
+   `<style>` block rendered the raw CSS as visible page text. Fixed: `st.html()`.
+2. `st.html()` strips `<link>` tags, so the font never loaded. Fixed: `@import` as the
+   first rule inside `<style>`.
+3. `html, body, .stApp` alone lost the cascade to Streamlit's own
+   `[data-testid="stMarkdownContainer"]` font rule (equal specificity, also
+   `!important`). Fixed: selector broadened to `[data-testid], [data-testid] *`.
+4. That broadened selector overrode the Material icon font, so the reasoning
+   expander's arrow rendered as the literal text "keyboard_arrow_right". Fixed: a
+   later, more specific `[data-testid="stIconMaterial"]` rule restoring
+   `Material Symbols Rounded`.
+5. A top-level `[theme]` section in `.streamlit/config.toml` removed the viewer's
+   System/Light/Dark toggle entirely and ignored the OS dark-mode preference. Fixed:
+   `[theme.light]` and `[theme.dark]` sections, each setting only `primaryColor`.
+6. Citation chips rendered their numbers as blue underlined link text on the amber
+   (Streamlit's markdown link rule beat `.citation-chip`; the same bug was already
+   visible on T-042/T-044's terracotta chips). Fixed: selector scoped under
+   `stMarkdownContainer` with `!important` on color and text-decoration. Chip text is
+   dark (`#1a1a1a`, 5.24:1 on the accent) rather than white (3.32:1, below WCAG AA
+   for small text).
+
+**Open, not fixed here:** the Ask button keeps Streamlit's own white label on the
+accent: 3.32:1, below the 4.5:1 AA threshold for normal-size text. Fixing it means
+either overriding Streamlit's primary-button styles (including its darker hover and
+active states, which dark text would not suit) or choosing a different accent. That's
+a design call for me, not an implementation detail.
+
+**Also observed, outside this ticket's scope:** in one of the three live runs of
+the same question, the model answered only "Yes [18]". It was a real, correctly
+cited, but near-useless one-line answer. The other two runs gave full multi-source
+answers. That's answer-generation variance, not UI, and it's worth a ticket if it
+recurs.
+
+**Out of scope:** `vg09`/`COLLECTION_NAME` (explicitly named out of scope in the
+instruction); renaming `README.md`/`CLAUDE.md`'s own project identity
+("research-feed-assistant") - the instruction says "rename the UI", not the project;
+self-hosting the Google Font instead of loading it from Google's CDN (see Notes).
+
+**Depends on:** T-035 (the out-of-scope precedent this follows), T-042 (chips, badges,
+pipeline strip - what this restyles), T-044 (metric sizing, already done).
+**Notes:** **Typeface choice:** Instrument Sans over Inter - Inter is excellent but has
+become the default choice for enough modern products that it risks reading as generic
+again, the exact complaint this ticket exists to fix; Instrument Sans is comparably
+clean and legible at small UI sizes (this app has a lot of small numeric labels -
+dates, counts, citation numbers) while reading as a more deliberate choice.
+
+**Accent choice:** `#C17F1A`, a warm amber. It's clearly different from Streamlit's
+stock red, and it avoids indigo/violet, the other common "not the default" pick,
+which is used widely enough to read as generic too. It holds up against both
+backgrounds: 3.32:1 against light's white and 5.69:1 against dark's `#0e1117`. Both
+clear the 3:1 WCAG minimum for non-text UI elements (the button fill, progress bar
+and chip backgrounds). One hex value lives in two places, `.streamlit/config.toml`
+(`primaryColor`) and `vg09.ui_helpers.ACCENT_COLOR`. A test fails if they diverge.
+
+**Local-first note, flagged not silently absorbed:** loading a font from Google's CDN
+is this chat UI's first real runtime dependency on an external network call outside
+ingest - a genuine, if minor, exception to `docs/GOAL.md`'s "local-first" framing,
+worth naming even though Google Fonts was the chosen source. The font stack
+falls back to system sans-serif fonts if the CDN is unreachable (standard CSS
+fallback), so the UI still renders and functions correctly offline - nothing actually
+breaks, only the specific typeface choice is affected.
+
+---
+
 ### T-044 — Pipeline strip follow-ups: "Date range" shows the resolved window, metrics sized below the answer
 
 **Status:** done

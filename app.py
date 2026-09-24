@@ -6,6 +6,11 @@ cards) - presentation only, every number shown comes from data the pipeline alre
 produces (`vg09.date_range`/`vg09.retrieval`/`vg09.answer`/`vg09.citations`'s actual
 behavior is unchanged). UI text is English throughout, D-016.
 
+T-045: real visual identity - the app is named "Since" (display strings only, `vg09`/
+`COLLECTION_NAME` untouched, same boundary T-035 drew), a compact single-line header
+replaces the old big centered title, a Google Fonts typeface and one accent colour
+(`.streamlit/config.toml`) replace Streamlit's stock look.
+
 A thin rendering layer: every real decision (date-range extraction, retrieval,
 answer generation, citation resolution) already lives in `vg09/` and is unit- and
 real-data-tested there (T-021-T-024). Run with `streamlit run app.py`.
@@ -25,12 +30,14 @@ from vg09.date_range import detect_recency_ranking, resolve_date_range
 from vg09.retrieval import NUM_CTX, retrieve
 from vg09.store import corpus_stats, is_empty, latest_feed_date
 from vg09.ui_helpers import (
+    APP_NAME,
     CUSTOM_CSS,
     EXAMPLE_QUESTIONS,
     build_retrieval_ranks,
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    format_corpus_summary,
     format_date_range_short,
     render_citation_chips,
     text_source_label,
@@ -38,27 +45,24 @@ from vg09.ui_helpers import (
 
 _SOURCE_TYPE_LABEL = {"paper": "PAPER", "video": "VIDEO", "unknown": "SOURCE"}
 
-st.set_page_config(page_title="research-feed-assistant", page_icon=":material/search:")
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-st.title("research-feed-assistant")
-st.caption("Ask what's new, whether a topic came up, or how it has developed over time.")
+st.set_page_config(page_title=APP_NAME, page_icon=":material/search:")
+st.html(CUSTOM_CSS)
+
+# --- Header (T-045): "Since" small and left, real corpus counts/freshness on the
+# same line to its right - no big centered title, no subtitle line. Rendered before
+# the empty-data check, not after: an empty store's real 0/0/0 counts are still real,
+# honest data, not hidden - the empty-state message below is additional, not instead. ---
+stats = corpus_stats()
+latest = latest_feed_date()
+st.markdown(
+    f'<div class="app-header"><span class="app-name">{APP_NAME}</span>'
+    f'<span class="app-stats">{format_corpus_summary(stats, latest)}</span></div>',
+    unsafe_allow_html=True,
+)
 
 if is_empty():
     st.info("No data yet — run ingest.")
     st.stop()
-
-# --- Status bar (T-042): real corpus size and freshness, never hardcoded ---
-stats = corpus_stats()
-latest = latest_feed_date()
-
-status_cols = st.columns(3)
-status_cols[0].metric("Papers", stats["hf_documents"])
-status_cols[1].metric("Videos", stats["youtube_documents"])
-status_cols[2].metric("Chunks", stats["chunks"])
-# A 4th st.metric column here truncated the date with an ellipsis at this width
-# (found live, T-042's own real verification) - a plain caption has room to render
-# the full date instead.
-st.caption(f"Caught up through **{latest.isoformat()}**" if latest else "No content ingested yet")
 
 
 def _fill_question(text: str) -> None:
@@ -88,7 +92,7 @@ with st.sidebar:
 
 question = st.text_input(
     "Question:", key="question_input",
-    placeholder="What's happened with AI agents this week?",
+    placeholder="What's happened since…",
 )
 ask = st.button("Ask", type="primary")
 
