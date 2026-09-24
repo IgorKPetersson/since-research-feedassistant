@@ -28,6 +28,68 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-09-24 — Evaluations graded, UI redesigned and renamed "Since", logo mark
+
+**Tickets:** T-039, T-040, T-035, T-034, T-036, T-041, T-033, T-042, T-043, T-044, T-045,
+T-046, T-047  ·  **Tree:** docs/sessions/2026-09-24-phase-3-grading-ui-redesign-since.md
+
+**Done this session (2026-09-22 → 24):**
+- **Evaluation:** T-032 and T-033 both graded and committed. T-039 (retry on
+  truncation) verified live; T-040 range citations, with the ≤5-number threshold as
+  D-015. T-041 fixed the Phase 3 grill-me findings. T-036 added the last
+  risk-register tests.
+- **Publish:** T-035 rename, then T-034 README + Apache-2.0 LICENSE, then a real
+  fresh-clone test that passed with no fixes needed.
+- **UI:** T-042 redesign (live pipeline strip, citation chips, source cards; UI in
+  English per D-016); T-043 English date parsing (8/0/7/0 on real English translations,
+  same as Swedish); T-044 "Date range" tile; T-045 name "Since", Instrument Sans, one
+  amber accent `#C17F1A`, compact header, grey badges, text-colour links; T-046 timeline
+  logo mark in the header and as the favicon, lockup tuned from pixel measurements.
+- `main` = `c21b19b`, pushed. It contains everything through T-046, with 207/207 tests.
+
+**In progress / half-finished:**
+- **T-047 (README: "Since" name, logo, three stale UI facts) is on `t/T-047-readme-since`,
+  committed (`0cf025d`), not merged.** The README update was asked for, not
+  its merge. This session's docs commit (tree, KB-020–023, this note, PLAN) is on the
+  same branch, so this note is only on `main` once that branch is merged.
+- The screenshots in `docs/screenshots/` are still named `t042-ui-*-theme.png` even
+  though they now show T-046's UI. They were kept on purpose because other
+  documents reference those paths.
+
+**Learned (not obvious from the code):**
+- KB-020: a bare `[theme]` in `.streamlit/config.toml` silently removes dark mode for
+  everyone. Keep `[theme.light]` and `[theme.dark]`.
+- KB-021: Streamlit 1.64 custom CSS loses to its own markdown styles unless scoped under
+  `[data-testid]` with `!important`. `st.html()` strips `<link>`. The broad selector
+  breaks Material icons unless they're restored.
+- KB-022: Instrument Sans stops at weight 700.
+- KB-023 (provisional): live retrieval took ~40–100s per question today, with `bge-m3`
+  seen unloaded. Cause unknown and not investigated.
+- **Process lesson:** don't self-number an unnumbered request and then silently re-file
+  the next number. The T-044/T-045 collision nearly shipped the wrong branch
+  (session tree § 10). Raise a numbering conflict as a question.
+- **Process lesson:** a live verification that starts a long real job (T-034's
+  fresh-clone YouTube backfill) should be announced before it starts, not explained
+  after I notices it (session tree § 3.2).
+- Dead end: `margin-top` to raise a flex item moves the row, not just the item (tree § 12.4).
+
+**Blocked / needs me:**
+- **Merge `t/T-047-readme-since`**, which also carries this note.
+- **Ask button contrast:** its white label on the amber is 3.32:1, below AA (T-045 "Open").
+  Choose: a different accent, or override Streamlit's primary-button styles.
+- **Presentation** (Phase 3's last checklist item). No
+  ticket. Phase 3 is not declared complete.
+
+**Next session should start with:** confirm whether `t/T-047-readme-since` has been
+merged. If not, decide whether to merge it before anything else, because this
+note and KB-020–023 live on that branch.
+
+**Doc updates made:** D-015, D-016 · KB-020, KB-021, KB-022, KB-023 · DESIGN (T-041
+numbers, T-043 English date range) · PLAN (Phase 3 status incl. T-042–T-047) · TICKETS
+T-039–T-047 · README (T-047 branch) · session tree 2026-09-24
+
+---
+
 ## 2026-09-20 (kväll) — Phase 3 opened, T-031/T-038/T-032 run for real, evaluation results committed
 
 **Tickets:** T-037, T-031, T-038, T-032  ·  **Tree:**

@@ -29,6 +29,12 @@ were missed by both models in both comparisons - a retrieval gap, not a model-si
 work, not delegated. **Phase 3 is not being declared complete here** - the report and
 presentation remain, by explicit instruction.
 
+Added 2026-09-23/24, by explicit instruction, outside the original Phase 3 checklist:
+**T-042**–**T-047**, the UI redesign (English UI per D-016), English date parsing
+(T-043), and the app's name and identity, **"Since"** (display name only; the repo, the
+`vg09` package and `COLLECTION_NAME` are unchanged). T-042–T-046 are on `main`. T-047
+(README) is on its own branch, not merged.
+
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
 skill. A checkbox is ticked when all of its tickets are done — never before. Run `grill-me`

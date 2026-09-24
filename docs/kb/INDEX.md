@@ -19,6 +19,8 @@ edited in place — it is superseded by a new one and marked.
 - Retrieval (`vg09.retrieval`, `vg09.date_range`) — measurement methodology
 - Vector store (ChromaDB) — embedded local store, date-range filtering
 - UI (Streamlit / markdown rendering) — rendering free-text into markdown safely
+- UI (Streamlit) — theming and custom CSS injection
+- UI — typeface (Google Fonts)
 
 ## Entries
 
@@ -43,6 +45,10 @@ edited in place — it is superseded by a new one and marked.
 | [KB-017](KB-017-commonmark-link-text-only-needs-bracket-and-backslash-escaping.md) | A markdown `[text](url)` link's text portion only needs `[`, `]` and backslash escaped under CommonMark — parentheses inside `[text]` are safe unescaped, unlike inside `(url)` | UI (Streamlit / markdown rendering) | verified | 2026-09-20 |
 | [KB-018](KB-018-packing-budget-undercounted-the-real-prompt-since-t008.md) | The chunk-packing budget measured only a chunk's bare text, never the real `"[N] Title (url, feed date)\n"` wrapper actually sent to the model — under-counted since T-008; real overhead measured at 41-83 tokens/chunk; F07 (T-031) was the first real question to tip over it | Retrieval — measurement methodology | verified | 2026-09-20 |
 | [KB-019](KB-019-qwen3-reasoning-length-has-a-heavy-tail-across-samples.md) | `qwen3:30b-a3b`'s reasoning length varies up to ~1.6× between samples of the same prompt and reaches 2864 tokens (totals 3118); T-028's 3 samples of one question badly understated the tail — 5 of 32 probe runs exceeded 2542 | Local model behaviour — generation budget | verified | 2026-09-22 |
+| [KB-020](KB-020-streamlit-top-level-theme-section-removes-the-theme-toggle.md) | A top-level `[theme]` in `.streamlit/config.toml` removes the viewer's Light/Dark toggle and ignores the OS preference; `[theme.light]` + `[theme.dark]` keep it | UI (Streamlit) — theming | verified | 2026-09-24 |
+| [KB-021](KB-021-streamlit-custom-css-injection-gotchas.md) | Custom CSS loses to Streamlit's markdown font/link rules unless scoped under `[data-testid]` with `!important`; the broad selector breaks Material icons; `st.html()` strips `<link>` (use `@import`); `page_icon` takes an `.svg` path | UI (Streamlit) — custom CSS injection | verified | 2026-09-24 |
+| [KB-022](KB-022-instrument-sans-heaviest-weight-is-700.md) | Instrument Sans on Google Fonts tops out at 700; `wght@800` returns HTTP 400 | UI — typeface (Google Fonts) | verified | 2026-09-24 |
+| [KB-023](KB-023-ui-retrieval-took-40-100s-per-question-cause-unknown.md) | Live UI retrieval took ~40–100s per question vs 9–17s generation; `bge-m3` was seen unloaded; cause not established | Local model (Ollama) — embedding latency | provisional | 2026-09-24 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
