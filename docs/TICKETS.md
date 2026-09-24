@@ -83,6 +83,10 @@ rendered pixels (element screenshots at 1× and at CSS zoom 4×), not taken from
   doesn't blur the dot: its edge profile is the same, just mirrored.
 - Close-ups in `.playwright-mcp/` (gitignored): `t046-header-{light,dark}.png` (1×),
   `t046-brand-{light,dark}-4x.png` (zoomed). Tests: `Ran 207 tests ... OK`.
+- Full-page screenshots retaken on request, showing the logo lockup:
+  `docs/screenshots/t042-ui-{light,dark}-theme.png`. Same question, same 1252×1222
+  viewport, theme switched in place. Pipeline: Sep 4-17 · 60 · 20 · 20 · 8.8s,
+  context 7434/16000 (46%); 11 citation chips, 5 source cards.
 
 ### T-045 — Visual identity: rename to "Since", a real typeface, one accent colour
 
