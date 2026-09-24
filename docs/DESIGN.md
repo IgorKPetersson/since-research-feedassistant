@@ -409,20 +409,37 @@ filtered by:
 - `manual_override`, whenever the UI's date picker sets one, **always wins** over whatever
   was (or wasn't) extracted from the question text — never the reverse.
 - With no override, the question text is parsed by `extract_date_range()` — a small,
-  rule-based, stdlib-only Swedish parser (no LLM call, no new dependency), matching exactly
-  the relative-time vocabulary T-014's real 15-question eval set uses ("senaste N
+  rule-based, stdlib-only parser (no LLM call, no new dependency), matching exactly the
+  relative-time vocabulary T-014's real 15-question eval set uses in Swedish ("senaste N
   veckorna/dagarna/månaderna", "senaste veckan"/"månaden" without a number, "förra veckan",
-  "den D `<månad>`"). `today` is always an explicit parameter, `date.today()` is never read
-  inside the module, so a re-run against the frozen eval dataset (T-020) resolves the same
-  way regardless of the real wall-clock date.
-- `None` — from either path — means **no date filter**: retrieval runs unfiltered, per
-  T-021's explicit rule that no range is ever invented. A bare plural with no number ("de
-  senaste veckorna") is treated the same way: genuinely ambiguous, not a number to guess at.
-- Real result against T-014's 15 real questions (`scripts/t021_test_date_extraction_against_
-  eval_questions.py`, `today=2026-09-16`): 8/15 resolve to a concrete window matching
+  "den D `<månad>`") **and, since T-043, its real English equivalents** ("the last/past N
+  weeks/days/months", "last week"/"this week"/"last month" without a number, "September 16"/
+  "the 16th of September", "today"). English doesn't reuse the Swedish regexes translated
+  1:1 — Swedish's "senaste" does double duty (window and ranking, disambiguated by what
+  follows it); English already has separate natural words for the two jobs ("last"/"past"
+  for a window, "latest"/"most recent" for ranking), so T-043 uses those instead of
+  overloading one word. `today` is always an explicit parameter, `date.today()` is never
+  read inside the module, so a re-run against the frozen eval dataset (T-020) resolves the
+  same way regardless of the real wall-clock date.
+- `None` — from either path, either language — means **no date filter**: retrieval runs
+  unfiltered, per T-021's explicit rule that no range is ever invented. A bare plural with
+  no number ("de senaste veckorna" / "recent weeks") is treated the same way in both
+  languages: genuinely ambiguous, not a number to guess at.
+- Real result against T-014's 15 real questions, `today=2026-09-16`
+  (`scripts/t021_test_date_extraction_against_eval_questions.py`, Swedish; `scripts/
+  t043_test_english_date_extraction.py`, real hand-written English translations of the
+  same 15 — `docs/eval-results/2026-09-24-t043-english-date-extraction.md`): **identical
+  tally in both languages** — 8/15 resolve to a concrete window matching
   `docs/eval-questions.md`'s own written conventions exactly, 7/15 correctly resolve to
-  `None` (no time phrase, or a ranking word like "det senaste" that isn't a window) — 0
-  wrong extractions, 0 unexpected extractions on the unparseable ones.
+  `None` (no time phrase, or a ranking word like "det senaste"/"the latest" that isn't a
+  window) — 0 wrong extractions, 0 unexpected extractions on the unparseable ones, in
+  either language.
+- **Found real, not fixed by T-043 (out of scope for T-042, the ticket that surfaced
+  it):** before T-043, this parser was Swedish-only — a real, live-discovered gap
+  (T-042's own verification: an English question about "the last two weeks" resolved to
+  no date filter at all). D-016 (UI text switches to English) made this the project's
+  core feature being silently off for non-Swedish questions, not just a theoretical risk
+  — T-043 closed it the same session it was found.
 
 **Filtering by date and sorting by date are two different mechanisms, not one (T-021/T-022).**
 Three of T-021's real `None` results (F01 "de två senaste nyheterna", F03 "det absolut

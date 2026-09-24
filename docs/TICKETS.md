@@ -14,6 +14,73 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-043 — English relative-time date extraction, matching the Swedish parser's real rules
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-043-english-date-parsing`  ·  **Phase:** 3
+
+**Goal:** `vg09.date_range`'s relative-time extraction (date-range filtering and
+recency-ranking detection) works the same in English as it already does in Swedish -
+the project's core "what's new"/"has Q progressed" feature no longer silently turns
+itself off for a question that isn't written in Swedish.
+
+**Why:** my explicit instruction (2026-09-24), upgraded from a risk-register entry
+to a real bug: D-016 (2026-09-23) switched the UI to English by default, and T-042's
+own live verification found the real, direct consequence - an English question about
+"the last two weeks" resolved to no date filter at all. The core feature was off for
+every question not written in Swedish - not acceptable to leave as a deferred
+risk-register row once actually seen happening.
+
+**Acceptance criteria**
+- [x] `vg09.date_range.extract_date_range()`/`detect_recency_ranking()` handle English
+  relative-time phrases alongside the existing Swedish ones, unchanged: "the last/past
+  N weeks/days/months", "this week"/"last week"/"the last month" (no number, same
+  rolling-window convention as Swedish, not calendar-aligned), "today", real month-name
+  absolute dates in both English word orders ("September 16th" and "the 16th of
+  September"), and "the latest"/"most recent" for ranking mode - English uses its own
+  separate words for the window-vs-ranking distinction rather than a 1:1 translation of
+  Swedish's overloaded "senaste"
+- [x] Same rules as the Swedish side: "month" means a real calendar month
+  (`_subtract_months()`), not a fixed 30 days; a bare plural with no number ("recent
+  weeks") stays unresolvable (`None`), never guessed at
+- [x] Tested against real English translations of all 15 of `docs/eval-questions.md`'s
+  real questions, written by hand once, not machine-translated at run time →
+  `scripts/t043_test_english_date_extraction.py`, same methodology as T-021's own
+  script (right/wrong/unparseable_ok/unparseable_wrong)
+- [x] The original Swedish results are confirmed unchanged - re-run for real, not
+  assumed → `scripts/t021_test_date_extraction_against_eval_questions.py` re-run
+  unchanged, same 8/0/7/0 result as T-021's original
+- [x] Unit tests mirror the existing Swedish test classes one-for-one (`tests/
+  test_date_range.py`) - 25 new tests, including both English absolute-date word
+  orders and "today" (not exercised by any of the 15 real questions)
+- [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes
+
+**Real results (both, as instructed):**
+- **Swedish (re-run, unchanged):** right=8, wrong=0, unparseable_ok=7,
+  unparseable_wrong=0 - identical to T-021's original.
+- **English (new, real translations):** right=8, wrong=0, unparseable_ok=7,
+  unparseable_wrong=0 - **identical tally, question for question**, to the Swedish run.
+  Full per-question breakdown, both languages:
+  `docs/eval-results/2026-09-24-t043-english-date-extraction.md`.
+- Ranking detection (`detect_recency_ranking()`, not covered by the window-extraction
+  scripts above) checked separately for the three real ranking questions (F01/F03/F06):
+  `True` in both languages; the window questions and the ambiguous bare plural (F09)
+  correctly `False` in both.
+
+**Out of scope:** any other language; a general natural-language date parser (this
+stays a small, fixed, closed vocabulary matching T-014's real 15 questions plus their
+real English translations, same philosophy T-021 established); changing the Swedish
+patterns themselves (confirmed byte-for-byte behaviorally unchanged, not just "probably
+fine").
+
+**Depends on:** T-021 (the Swedish parser and its real verification methodology, both
+reused directly), T-042/D-016 (found this and made it a real bug, not a risk).
+**Notes:** `docs/DESIGN.md`'s "Date range: the UI ↔ retrieval contract" section and
+`docs/PLAN.md`'s risk register both updated - the risk-register row T-042 wrote for
+this exact gap is now marked resolved, not left as a stale "not fixed" note.
+
+---
+
 ### T-042 — Redesign the Streamlit UI: status bar, live pipeline strip, citation chips, source cards
 
 **Status:** done

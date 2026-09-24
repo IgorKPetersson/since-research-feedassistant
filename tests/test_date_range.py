@@ -1,11 +1,13 @@
-"""Unit tests for vg09.date_range (T-021).
+"""Unit tests for vg09.date_range (T-021/T-043).
 
-The real-question test (against docs/eval-questions.md's 15 actual questions, not
-retyped examples) lives in scripts/t021_test_date_extraction_against_eval_questions.py,
-since it reads a doc file rather than exercising pure logic - this file covers the
-extraction logic itself, including edge cases the 15 real questions don't happen to
-hit (calendar-month day-clamping, the absolute-date year rollback, digit vs. spelled-out
-numbers).
+The real-question tests (against docs/eval-questions.md's 15 actual Swedish questions,
+and T-043's real English translations of the same 15, not retyped examples) live in
+scripts/t021_test_date_extraction_against_eval_questions.py and
+scripts/t043_test_english_date_extraction.py, since they read/embed the real questions
+rather than exercising pure logic in isolation - this file covers the extraction logic
+itself, including edge cases the 15 real questions don't happen to hit (calendar-month
+day-clamping, the absolute-date year rollback, digit vs. spelled-out numbers) for both
+languages.
 """
 
 from __future__ import annotations
@@ -125,6 +127,124 @@ class ResolveDateRangeTests(unittest.TestCase):
         self.assertIsNone(result)
 
 
+class EnglishRelativeWeeksTests(unittest.TestCase):
+    """T-043: same rules as RelativeWeeksTests above, English phrasing."""
+
+    def test_last_week_is_a_7_day_window_ending_today(self):
+        self.assertEqual(
+            extract_date_range("What happened last week?", date(2026, 9, 16)),
+            (date(2026, 9, 10), date(2026, 9, 16)),
+        )
+
+    def test_this_week_is_the_same_7_day_window(self):
+        self.assertEqual(
+            extract_date_range("What's new this week?", date(2026, 9, 16)),
+            (date(2026, 9, 10), date(2026, 9, 16)),
+        )
+
+    def test_the_last_two_weeks_spelled_out_number(self):
+        self.assertEqual(
+            extract_date_range("in the last two weeks", date(2026, 9, 16)),
+            (date(2026, 9, 3), date(2026, 9, 16)),
+        )
+
+    def test_the_last_n_weeks_digit_number(self):
+        self.assertEqual(
+            extract_date_range("in the last 3 weeks", date(2026, 9, 16)),
+            (date(2026, 8, 27), date(2026, 9, 16)),
+        )
+
+    def test_bare_plural_weeks_with_no_number_is_deliberately_unparseable(self):
+        """"recent weeks" (plural, no number) is genuinely ambiguous - same rule as
+        the Swedish "de senaste veckorna" case: no guessed count."""
+        self.assertIsNone(extract_date_range("mentioned in recent weeks", date(2026, 9, 16)))
+
+
+class EnglishRelativeDaysAndMonthsTests(unittest.TestCase):
+    """T-043: same rules as RelativeDaysAndMonthsTests above, English phrasing."""
+
+    def test_the_last_n_days(self):
+        self.assertEqual(
+            extract_date_range("in the last 5 days", date(2026, 9, 16)),
+            (date(2026, 9, 12), date(2026, 9, 16)),
+        )
+
+    def test_last_month_is_one_calendar_month_not_30_days(self):
+        """Same convention as Swedish "senaste manaden": 2026-08-16, a calendar
+        month back, not today-30 (2026-08-17)."""
+        self.assertEqual(
+            extract_date_range("in the last month", date(2026, 9, 16)),
+            (date(2026, 8, 16), date(2026, 9, 16)),
+        )
+
+    def test_this_past_month_is_the_same_calendar_month_window(self):
+        self.assertEqual(
+            extract_date_range("this past month", date(2026, 9, 16)),
+            (date(2026, 8, 16), date(2026, 9, 16)),
+        )
+
+    def test_the_last_n_months_day_clamped_for_a_shorter_target_month(self):
+        # Mar 31 minus 1 month has no Feb 31 - clamps to the last real day of Feb.
+        self.assertEqual(
+            extract_date_range("in the last 1 months", date(2026, 3, 31)),
+            (date(2026, 2, 28), date(2026, 3, 31)),
+        )
+
+    def test_the_last_n_months_across_a_year_boundary(self):
+        self.assertEqual(
+            extract_date_range("in the last 2 months", date(2026, 1, 15)),
+            (date(2025, 11, 15), date(2026, 1, 15)),
+        )
+
+
+class EnglishAbsoluteDateTests(unittest.TestCase):
+    """T-043: same rules as AbsoluteDateTests above, both real English word orders."""
+
+    def test_month_then_day_resolves_to_this_year_when_not_in_the_future(self):
+        self.assertEqual(
+            extract_date_range("What's new on September 16th?", date(2026, 9, 16)),
+            (date(2026, 9, 16), date(2026, 9, 16)),
+        )
+
+    def test_day_of_month_word_order_also_resolves(self):
+        self.assertEqual(
+            extract_date_range("What happened on the 16th of September?", date(2026, 9, 16)),
+            (date(2026, 9, 16), date(2026, 9, 16)),
+        )
+
+    def test_rolls_back_a_year_when_that_date_is_still_in_the_future(self):
+        self.assertEqual(
+            extract_date_range("What happened on September 16?", date(2026, 3, 1)),
+            (date(2025, 9, 16), date(2025, 9, 16)),
+        )
+
+    def test_invalid_calendar_date_is_not_guessed(self):
+        self.assertIsNone(extract_date_range("February 31", date(2026, 9, 16)))
+
+
+class EnglishTodayTests(unittest.TestCase):
+    """T-043: "today" - not exercised by any of the 15 real questions (Swedish or
+    English), but named explicitly in my own instruction for this ticket."""
+
+    def test_today_resolves_to_a_single_day_window(self):
+        self.assertEqual(
+            extract_date_range("What's new today?", date(2026, 9, 16)),
+            (date(2026, 9, 16), date(2026, 9, 16)),
+        )
+
+
+class EnglishNoDiscernibleRangeTests(unittest.TestCase):
+    def test_no_time_phrase_at_all_returns_none(self):
+        self.assertIsNone(extract_date_range("Is LEGO mentioned in any article?", date(2026, 9, 16)))
+
+    def test_a_ranking_word_without_a_window_returns_none(self):
+        """"the latest"/"the two latest" ask for recency ranking, not a bounded
+        window - same rule as the Swedish case."""
+        self.assertIsNone(
+            extract_date_range("What is the absolute latest in X?", date(2026, 9, 16))
+        )
+
+
 class DetectRecencyRankingTests(unittest.TestCase):
     """T-022: real ranking questions from docs/eval-questions.md (F01/F03/F06) vs.
     real window questions that also contain the word "senaste" (F02/F04/F05/F07/F11/
@@ -164,6 +284,40 @@ class DetectRecencyRankingTests(unittest.TestCase):
 
     def test_no_senaste_at_all_is_not_a_ranking_question(self):
         self.assertFalse(detect_recency_ranking("Nämns LEGO i någon artikel?"))
+
+    # T-043: English - the real F01/F03/F06/F02/F05/F09 translations, mirroring the
+    # Swedish cases above one-for-one.
+    def test_english_f01_two_latest_news_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking(
+            "In the area of recursive self-improvement, what are the two latest "
+            "news items and what are they about?"
+        ))
+
+    def test_english_f03_absolute_latest_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking(
+            "What is the absolute latest in video generation, and is it hardware- "
+            "or software-related?"
+        ))
+
+    def test_english_f06_the_latest_within_is_a_ranking_question(self):
+        self.assertTrue(detect_recency_ranking("What is the latest in benchmarking of coding agents?"))
+
+    def test_english_f04_last_week_is_a_window_question_not_ranking(self):
+        self.assertFalse(detect_recency_ranking(
+            "In the last week, what has been said about coding agents? Please summarize."
+        ))
+
+    def test_english_f05_last_two_weeks_is_a_window_question_not_ranking(self):
+        self.assertFalse(detect_recency_ranking("Has NeoHorse been mentioned in the last two weeks?"))
+
+    def test_english_f09_bare_plural_weeks_is_neither_ranking_nor_a_window(self):
+        self.assertFalse(detect_recency_ranking("Has AutoDev been mentioned in recent weeks?"))
+
+    def test_no_latest_or_most_recent_at_all_is_not_a_ranking_question(self):
+        self.assertFalse(detect_recency_ranking("Is LEGO mentioned in any article?"))
+
+    def test_most_recent_is_also_a_ranking_phrase(self):
+        self.assertTrue(detect_recency_ranking("What is the most recent paper on X?"))
 
 
 if __name__ == "__main__":
