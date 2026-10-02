@@ -79,8 +79,9 @@ code, and what should the next session do first.
   directory the app holds open fails on Windows.
 
 **Blocked / needs me:**
-- Read `docs/presentation.md` and say what to change. The presentation itself is the
-  only Definition of done item left.
+- The presentation's content is not yet decided. `docs/presentation.md` is a draft;
+  expect to rework it rather than polish it. The presentation is the only
+  Definition of done item left.
 
 **Next session should start with:** check how old the data is and remind I
 (their standing request). Then ask whether they have read `docs/presentation.md`.
