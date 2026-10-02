@@ -3,7 +3,7 @@
 Closes the Phase 1 grill-me review's deferred finding (docs/PLAN.md's risk
 register): "the riskiest orchestration code in the ingest pipeline, verified
 only by real production runs" (T-019's own self-flagged note). No network
-calls of any kind - vg09.youtube_backfill.list_videos and .normalize
+calls of any kind - vg09.youtube_backfill._list_channel and .normalize
 (imported names, not vg09.youtube's own) are mocked directly.
 
 RAW_DIR is patched in both vg09.document and vg09.youtube_backfill - the same
@@ -84,7 +84,7 @@ class ResumabilityTests(YoutubeBackfillTestCase):
     def test_already_fetched_video_is_skipped_not_refetched(self):
         fake_document("vid1", "2026-09-15").write()  # as if an earlier run already fetched it
 
-        with patch("vg09.youtube_backfill.list_videos",
+        with patch("vg09.youtube_backfill._list_channel",
                     return_value=[fake_video("vid1", "2026-09-15")]) as mock_list, \
              patch("vg09.youtube_backfill.normalize") as mock_normalize:
             result = run(start=date(2026, 9, 1), today=date(2026, 9, 20))
@@ -97,7 +97,7 @@ class ResumabilityTests(YoutubeBackfillTestCase):
     def test_a_not_yet_fetched_video_is_processed_and_written(self):
         self.assertFalse(document.exists("youtube", "2026-09-15", "vid2"))
 
-        with patch("vg09.youtube_backfill.list_videos", return_value=[fake_video("vid2", "2026-09-15")]), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=[fake_video("vid2", "2026-09-15")]), \
              patch("vg09.youtube_backfill.normalize",
                    return_value=fake_document("vid2", "2026-09-15")) as mock_normalize:
             result = run(start=date(2026, 9, 1), today=date(2026, 9, 20))
@@ -110,7 +110,7 @@ class ResumabilityTests(YoutubeBackfillTestCase):
 
     def test_written_document_records_the_channel_it_was_listed_under(self):
         """T-054: without this the store can't count or remove a channel's videos."""
-        with patch("vg09.youtube_backfill.list_videos", return_value=[fake_video("vid3", "2026-09-15")]), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=[fake_video("vid3", "2026-09-15")]), \
              patch("vg09.youtube_backfill.normalize", return_value=fake_document("vid3", "2026-09-15")):
             run(start=date(2026, 9, 1), today=date(2026, 9, 20))
 
@@ -119,11 +119,11 @@ class ResumabilityTests(YoutubeBackfillTestCase):
 
     def test_second_run_does_not_refetch_what_the_first_run_wrote(self):
         video = fake_video("vid3", "2026-09-15")
-        with patch("vg09.youtube_backfill.list_videos", return_value=[video]), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=[video]), \
              patch("vg09.youtube_backfill.normalize", return_value=fake_document("vid3", "2026-09-15")):
             run(start=date(2026, 9, 1), today=date(2026, 9, 20))  # run 1 - fetches it
 
-        with patch("vg09.youtube_backfill.list_videos", return_value=[video]), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=[video]), \
              patch("vg09.youtube_backfill.normalize") as mock_normalize:
             result = run(start=date(2026, 9, 1), today=date(2026, 9, 20))  # run 2 - should skip it
 
@@ -144,7 +144,7 @@ class PacingTests(YoutubeBackfillTestCase):
 
         self.mock_sleep.side_effect = lambda secs: order.append("pause")
 
-        with patch("vg09.youtube_backfill.list_videos", return_value=videos), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=videos), \
              patch("vg09.youtube_backfill.normalize", side_effect=fake_normalize):
             result = run(start=date(2026, 9, 1), today=date(2026, 9, 20))
 
@@ -156,7 +156,7 @@ class PacingTests(YoutubeBackfillTestCase):
         """Below LONG_PAUSE_EVERY (20 attempts), every pause uses the short,
         randomized per-video bounds - asserted against the real random source
         the module calls, not a guessed literal duration."""
-        with patch("vg09.youtube_backfill.list_videos",
+        with patch("vg09.youtube_backfill._list_channel",
                     return_value=[fake_video("vidA", "2026-09-10")]), \
              patch("vg09.youtube_backfill.normalize", return_value=fake_document("vidA", "2026-09-10")), \
              patch("vg09.youtube_backfill.random.uniform", return_value=4.2) as mock_uniform:
@@ -171,7 +171,7 @@ class PacingTests(YoutubeBackfillTestCase):
         pause either."""
         fake_document("vid1", "2026-09-15").write()
 
-        with patch("vg09.youtube_backfill.list_videos", return_value=[fake_video("vid1", "2026-09-15")]), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=[fake_video("vid1", "2026-09-15")]), \
              patch("vg09.youtube_backfill.normalize"):
             run(start=date(2026, 9, 1), today=date(2026, 9, 20))
 
@@ -182,7 +182,7 @@ class WatermarkWriteTests(YoutubeBackfillTestCase):
     def test_watermark_written_only_after_the_full_window_completes(self):
         self.assertIsNone(read_watermark("youtube"))
 
-        with patch("vg09.youtube_backfill.list_videos",
+        with patch("vg09.youtube_backfill._list_channel",
                     return_value=[fake_video("vidA", "2026-09-10")]), \
              patch("vg09.youtube_backfill.normalize", return_value=fake_document("vidA", "2026-09-10")):
             run(start=date(2026, 9, 1), today=date(2026, 9, 20))
@@ -197,7 +197,7 @@ class WatermarkWriteTests(YoutubeBackfillTestCase):
                 raise RuntimeError("simulated crash mid-run")
             return fake_document("vidA", "2026-09-10")
 
-        with patch("vg09.youtube_backfill.list_videos", return_value=videos), \
+        with patch("vg09.youtube_backfill._list_channel", return_value=videos), \
              patch("vg09.youtube_backfill.normalize", side_effect=fake_normalize):
             with self.assertRaises(RuntimeError):
                 run(start=date(2026, 9, 1), today=date(2026, 9, 20))
@@ -209,7 +209,7 @@ class WatermarkWriteTests(YoutubeBackfillTestCase):
         run()'s own try/except around list_videos()) is not the same as a
         run being interrupted - the window still completes for the other
         channels, so the watermark still advances."""
-        with patch("vg09.youtube_backfill.list_videos", side_effect=RuntimeError("channel unreachable")):
+        with patch("vg09.youtube_backfill._list_channel", side_effect=RuntimeError("channel unreachable")):
             run(start=date(2026, 9, 1), today=date(2026, 9, 20))
 
         self.assertEqual(read_watermark("youtube"), "2026-09-20")
@@ -217,3 +217,42 @@ class WatermarkWriteTests(YoutubeBackfillTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ListChannelTests(YoutubeBackfillTestCase):
+    """T-055: YouTube is asked for a video's details only when the video is new."""
+
+    def list_channel(self, ids, details):
+        from vg09.youtube_backfill import _list_channel
+
+        with patch("vg09.youtube_backfill.list_video_ids", return_value=ids), \
+             patch("vg09.youtube_backfill._fetch_single_video_metadata",
+                   side_effect=details) as mock_fetch:
+            videos = _list_channel("https://example.com/testchannel", start=date(2026, 9, 10))
+        return videos, mock_fetch
+
+    def test_a_video_already_on_disk_is_not_asked_about_and_keeps_its_stored_date(self):
+        fake_document("known", "2026-09-15").write()
+
+        videos, mock_fetch = self.list_channel(["known"], [])
+
+        mock_fetch.assert_not_called()
+        self.assertEqual(videos, [{"id": "known", "upload_date": "20260915", "title": None}])
+
+    def test_the_walk_stops_at_the_first_new_video_older_than_the_window(self):
+        details = {"new": fake_video("new", "2026-09-18"), "old": fake_video("old", "2026-09-01")}
+
+        videos, mock_fetch = self.list_channel(["new", "old", "older"], lambda vid: details[vid])
+
+        self.assertEqual([c.args[0] for c in mock_fetch.call_args_list], ["new", "old"])
+        self.assertEqual([v["id"] for v in videos], ["new", "old"])
+
+    def test_one_unreadable_video_is_skipped_and_the_rest_are_still_listed(self):
+        def details(video_id):
+            if video_id == "broken":
+                raise RuntimeError("members only")
+            return fake_video(video_id, "2026-09-18")
+
+        videos, _ = self.list_channel(["broken", "fine"], details)
+
+        self.assertEqual([v["id"] for v in videos], ["fine"])

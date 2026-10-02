@@ -39,7 +39,7 @@ page, with no terminal ingest commands.
 
 ### T-056 — Sources page in the app: list, add, remove, update, first run, stale marker
 
-**Status:** todo
+**Status:** in-progress — five criteria checked in a real browser, two not yet
 **Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** everything D-017 describes is usable from the app.
@@ -47,30 +47,48 @@ page, with no terminal ingest commands.
 **Why:** D-017; `docs/DESIGN.md` § Sources page.
 
 **Acceptance criteria**
-- [ ] The app has two pages, the question page and Sources, and the question page
-  behaves as before (checked in a browser: Enter and Ask both still submit)
-- [ ] Sources shows Hugging Face (on/off, weeks) and each channel with its real document
-  count and latest feed date
-- [ ] Adding a channel checks the address against YouTube first; a wrong address shows
-  an error and saves nothing; a valid one is saved and marked "searchable after the next
-  update"
-- [ ] Removing a channel asks for confirmation, then its documents are gone from the
-  store and a question no longer cites them
-- [ ] "Update now" shows the time warning, starts the job, shows live progress, and
-  cannot be started twice; the question page works while it runs
+- [x] The app has two pages, the question page and Sources, and the question page
+  behaves as before → Streamlit navigation, `vg09/sources_page.py`. Enter submitted a
+  question on the new structure; one click on Ask was not re-tried after the restructure
+- [x] Sources shows Hugging Face (on/off, weeks) and each channel with its real document
+  count and latest feed date → `docs/screenshots/t056-sources-page.png`. Changing the
+  toggle or the week counts was not exercised in the browser
+- [x] Adding a channel checks the address against YouTube first → a made-up address gave
+  "Couldn't find a YouTube channel…" and saved nothing; `@3blue1brown` was saved and
+  shown as "Not fetched yet — searchable after the next update"
+- [x] Removing a channel asks for confirmation, then its documents are gone → done twice
+  for real on the test channel: gone from the list, the store (63 → 62 videos) and
+  `data/raw/`; my four channels untouched (13/12/25/12)
+- [x] "Update now" shows the time warning, starts the job, shows live progress, and
+  cannot be started twice → real run from the page: progress per channel, button disabled
+  throughout, page refreshed itself at the end, 251s in all for one new 3blue1brown
+  video (Whisper). Asking a question during the fetch stages was **not** tried
+  successfully; during the store-writing stage it is refused with a message by design
 - [ ] With no data and no `data/sources.json`, the app opens on Sources with the default
-  channels pre-selected
-- [ ] The header marks data more than two days old
+  channels pre-selected — not run; needs an empty `data/` (T-057's fresh clone)
+- [ ] The header marks data more than two days old — `staleness_note()` is unit-tested;
+  not seen in a browser because the data is current
 
 **Out of scope:** automated UI tests (the project has none); scheduled ingest.
 **Depends on:** T-053, T-054, T-055.
-**Notes:** UI text in English (D-016).
+**Notes:** UI text in English (D-016). Three real defects were found by running it and
+fixed: (1) a question asked while the job wrote the store, and every question after the
+job finished, failed with Chroma's "Error finding id" — the app's cached client no longer
+matched the files. Fixed by `store.reset_client()` when a job has finished
+(`ingest_job.refresh_store_if_updated()`), by refusing questions during the writing
+stage (`is_writing_store()`), and by the job writing only new chunks (4s instead of
+45s). After the fix a question in the same app process cited the newly added channel's
+video. (2) The page told an existing user their channels were "suggestions"; now only on
+a first start. (3) `/ask` gave "Page not found" — the default page lives at `/`.
+**Open, seen once, not explained:** the first question asked about a minute after an
+update that had used Whisper waited 120s and ended with "Ollama isn't responding"; the
+same question a minute later answered in 7s. `bge-m3` was found unloaded afterwards.
 
 ---
 
 ### T-055 — Ingest as a background job with a status file
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** one function starts the whole ingest (fetch, then rebuild the store) as a
@@ -79,22 +97,27 @@ separate process, and another reports how far it has come.
 **Why:** D-017: the app must be able to start ingest and stay usable while it runs.
 
 **Acceptance criteria**
-- [ ] `vg09/ingest_job.py`: `start()` launches the job as a separate process and returns
-  at once; `status()` reads `data/ingest_status.json` (state, stage, counts, started and
-  heartbeat times, process id, last error)
-- [ ] The job honours `data/sources.json`: Hugging Face skipped when off; a source with
-  no watermark gets a backfill of the configured weeks; a channel added since the last
-  run gets its own backfill window, not only the days since the watermark
-- [ ] A second `start()` while one runs is refused; a status whose process is gone or
-  whose heartbeat is old is reported as interrupted
-- [ ] A failure in one stage is recorded in the status with its message, and the store
-  is still rebuilt from whatever was fetched
-- [ ] Unit tests cover start-refused, interrupted detection and the stage order with
-  everything external mocked; one real run completes against the real services
+- [x] `vg09/ingest_job.py`: `start()` launches the job as a separate process and returns
+  at once; `status()` reads `data/ingest_status.json`
+- [x] The job honours `data/sources.json` → unit-tested for all three cases; the
+  new-channel backfill also ran for real (`@3blue1brown`, added in the app, got the
+  four-week window and one video while the other four only caught up)
+- [x] A second `start()` while one runs is refused (seen for real); a status whose
+  heartbeat is old is reported as interrupted (seen for real, after the crash below).
+  Liveness is the heartbeat only, not the process id
+- [x] A failure in one stage is recorded and the store is still rebuilt → unit-tested;
+  not seen for real
+- [x] Unit tests (20) with everything external mocked; real runs: the first **died**,
+  the second and third completed from the app in 182s and 251s with no errors
 
 **Out of scope:** the page itself (T-056); cancelling a running job.
 **Depends on:** T-053, T-054.
-**Notes:** —
+**Notes:** Two things only the real runs showed. (1) The first run died 980 passages into
+the store rebuild with `PermissionError`: Windows won't replace the status file while a
+reader has it open, and the app reads it every two seconds. Writes and reads now retry
+for up to two seconds. (2) Checking four channels with nothing new took 316s, because
+YouTube was asked for the details of 50 videos per channel. `_list_channel()` now asks
+only about videos not on disk and stops at the first one older than the window: 12s.
 
 ---
 

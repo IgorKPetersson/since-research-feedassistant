@@ -224,3 +224,34 @@ class ChannelTests(unittest.TestCase):
             self.assertEqual(sorted(p.name for p in day.iterdir()), ["v3.json", "v9.pending.json"])
         collection.delete.assert_called_once_with(where={"channel": "alpha"})
         self.assertEqual(result, {"chunks": 3, "documents": 1})
+
+
+class BuildStoreOnlyNewTests(unittest.TestCase):
+    """T-055/T-056: the background job embeds and writes only chunks the store lacks."""
+
+    def _run(self, only_new: bool):
+        from vg09.store import build_store
+
+        docs = [
+            {"id": "p1", "source": "hf", "url": "u", "title": "t", "feed_date": "2026-09-10", "text": "a"},
+            {"id": "p2", "source": "hf", "url": "u", "title": "t", "feed_date": "2026-09-11", "text": "b"},
+        ]
+        collection = MagicMock()
+        collection.get.return_value = {"ids": ["hf:p1:0"]}
+        collection.count.return_value = 2
+        with patch("vg09.store.get_collection", return_value=collection), \
+             patch("vg09.store.load_documents", return_value=docs), \
+             patch("vg09.store.embed_batch", side_effect=lambda texts: [[0.0]] * len(texts)):
+            result = build_store(only_new=only_new)
+        written = [i for call in collection.upsert.call_args_list for i in call.kwargs["ids"]]
+        return result, written
+
+    def test_only_new_writes_just_the_chunk_that_is_missing(self):
+        result, written = self._run(only_new=True)
+        self.assertEqual(written, ["hf:p2:0"])
+        self.assertEqual((result["chunks"], result["written"]), (2, 1))
+
+    def test_the_default_still_rewrites_every_chunk(self):
+        result, written = self._run(only_new=False)
+        self.assertEqual(written, ["hf:p1:0", "hf:p2:0"])
+        self.assertEqual(result["written"], 2)

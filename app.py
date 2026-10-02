@@ -11,6 +11,9 @@ T-045: real visual identity - the app is named "Since" (display strings only, `v
 replaces the old big centered title, a Google Fonts typeface and one accent colour
 (`.streamlit/config.toml`) replace Streamlit's stock look.
 
+T-056 (D-017): two pages - asking (this file's `ask_page()`) and Sources
+(`vg09/sources_page.py`), where the watched sources are chosen and fetched.
+
 A thin rendering layer: every real decision (date-range extraction, retrieval,
 answer generation, citation resolution) already lives in `vg09/` and is unit- and
 real-data-tested there (T-021-T-024). Run with `streamlit run app.py`.
@@ -24,6 +27,9 @@ from datetime import date, timedelta
 import requests
 import streamlit as st
 
+import chromadb.errors
+
+from vg09 import ingest_job, sources, sources_page
 from vg09.answer import generate_answer
 from vg09.citations import build_citations
 from vg09.date_range import detect_recency_ranking, resolve_date_range
@@ -42,6 +48,7 @@ from vg09.ui_helpers import (
     format_date_range_short,
     logo_mark_html,
     render_citation_chips,
+    staleness_note,
     text_source_label,
 )
 
@@ -53,57 +60,74 @@ st.html(CUSTOM_CSS)
 # --- Header (T-045): "Since" small and left, real corpus counts/freshness on the
 # same line to its right - no big centered title, no subtitle line. Rendered before
 # the empty-data check, not after: an empty store's real 0/0/0 counts are still real,
-# honest data, not hidden - the empty-state message below is additional, not instead. ---
+# honest data, not hidden - the empty-state message below is additional, not instead.
+# T-056: when the data has fallen behind, the same line says by how many days. ---
+ingest_job.refresh_store_if_updated()  # before anything reads the store (T-056)
 stats = corpus_stats()
 latest = latest_feed_date()
+stale = staleness_note(latest, date.today())
+stale_html = f' · <span class="app-stale">{stale}</span>' if stale else ""
 st.markdown(
     f'<div class="app-header"><span class="app-brand">{logo_mark_html()}'
     f'<span class="app-name">{APP_NAME}</span></span>'
-    f'<span class="app-stats">{format_corpus_summary(stats, latest)}</span></div>',
+    f'<span class="app-stats">{format_corpus_summary(stats, latest)}{stale_html}</span></div>',
     unsafe_allow_html=True,
 )
-
-if is_empty():
-    st.info("No data yet — run ingest.")
-    st.stop()
 
 
 def _fill_question(text: str) -> None:
     st.session_state["question_input"] = text
 
 
-st.caption("Try an example:")
-example_cols = st.columns(3)
-for col, (label, example_q) in zip(example_cols, EXAMPLE_QUESTIONS):
-    col.button(label, on_click=_fill_question, args=(example_q,),
-               use_container_width=True, key=f"example_{label}")
+def ask_page() -> None:
+    if is_empty():
+        st.info("No data yet. Choose your sources and fetch them on the Sources page.")
+        st.page_link(SOURCES_PAGE, label="Go to Sources")
+        return
 
-with st.sidebar:
-    st.header("Date filter")
-    st.caption(
-        "The question is interpreted automatically (e.g. \"last week\"). Set your "
-        "own range below to always override the interpretation."
-    )
-    use_manual_range = st.checkbox("Set a custom date range")
-    manual_range: tuple[date, date] | None = None
-    if use_manual_range:
-        today = latest_feed_date() or date.today()
-        start = st.date_input("From", value=today - timedelta(days=7))
-        end = st.date_input("To", value=today)
-        if start and end:
-            manual_range = (start, end)
+    st.caption("Try an example:")
+    example_cols = st.columns(3)
+    for col, (label, example_q) in zip(example_cols, EXAMPLE_QUESTIONS):
+        col.button(label, on_click=_fill_question, args=(example_q,),
+                   use_container_width=True, key=f"example_{label}")
 
-# T-051: a form, so that Enter in the field or one click on Ask each submit on their
-# own. As a bare text_input plus button, the typed text was only committed on Enter or
-# blur, and that commit's rerun swallowed the click - Enter and then Ask were both needed.
-with st.form("ask_form", border=False):
-    question = st.text_input(
-        "Question:", key="question_input",
-        placeholder="What's happened since…",
-    )
-    ask = st.form_submit_button("Ask", type="primary")
+    with st.sidebar:
+        st.header("Date filter")
+        st.caption(
+            "The question is interpreted automatically (e.g. \"last week\"). Set your "
+            "own range below to always override the interpretation."
+        )
+        use_manual_range = st.checkbox("Set a custom date range")
+        manual_range: tuple[date, date] | None = None
+        if use_manual_range:
+            today = latest_feed_date() or date.today()
+            start = st.date_input("From", value=today - timedelta(days=7))
+            end = st.date_input("To", value=today)
+            if start and end:
+                manual_range = (start, end)
 
-if ask and question.strip():
+    # T-051: a form, so that Enter in the field or one click on Ask each submit on their
+    # own. As a bare text_input plus button, the typed text was only committed on Enter
+    # or blur, and that commit's rerun swallowed the click - Enter and then Ask were both
+    # needed.
+    with st.form("ask_form", border=False):
+        question = st.text_input(
+            "Question:", key="question_input",
+            placeholder="What's happened since…",
+        )
+        ask = st.form_submit_button("Ask", type="primary")
+
+    if ask and not question.strip():
+        st.warning("Write a question first.")
+        return
+    if not ask:
+        return
+    if ingest_job.is_writing_store():
+        # T-056: the embedded store can't be searched while the update writes to it.
+        # That stage takes seconds; the minutes of fetching before it don't block.
+        st.info("New content is being made searchable right now. Ask again in a moment.")
+        return
+
     today = latest_feed_date()
     # T-029: the manual-override-always-wins precedence lives in resolve_date_range()
     # itself (T-021's own contract) - called once here for the value actually used,
@@ -160,7 +184,11 @@ if ask and question.strip():
         citations = build_citations(result.answer, result.source_map)
     except requests.exceptions.RequestException:
         st.error("Ollama isn't responding — is it running, and is the model pulled?")
-        st.stop()
+        return
+    except chromadb.errors.ChromaError:
+        # The update began writing between the check above and the search itself.
+        st.info("New content is being made searchable right now. Ask again in a moment.")
+        return
 
     # T-039: shown whenever a second attempt was made, whether or not it succeeded -
     # the user should know the answer took a second try, and (below) whether even that
@@ -217,5 +245,13 @@ if ask and question.strip():
             "Descriptive ranges (e.g. \"all N sources\") — not source citations: "
             + ", ".join(citations.descriptive_ranges)
         )
-elif ask:
-    st.warning("Write a question first.")
+
+
+# T-056: a first start - nothing stored and no saved choice of sources - opens on
+# Sources, where the choice is made, rather than on a question field with nothing behind it.
+first_start = stats["chunks"] == 0 and not sources.load().saved
+ASK_PAGE = st.Page(ask_page, title="Ask", icon=":material/search:", url_path="ask",
+                   default=not first_start)
+SOURCES_PAGE = st.Page(sources_page.render, title="Sources", icon=":material/rss_feed:",
+                       url_path="sources", default=first_start)
+st.navigation([ASK_PAGE, SOURCES_PAGE]).run()

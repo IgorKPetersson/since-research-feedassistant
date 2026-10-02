@@ -73,6 +73,18 @@ def get_collection():
     return client.get_or_create_collection(COLLECTION_NAME)
 
 
+def reset_client() -> None:
+    """Make the next `get_collection()` read the store from disk again. Chroma keeps one
+    client per path for the life of the process, with the vector index held in memory.
+    When another process (the ingest job, T-055) has added to the store, that in-memory
+    index no longer matches the files, and every similarity query fails with "Error
+    finding id" until the process restarts - found for real in T-056, where counts kept
+    working and questions did not. Dropping the cached client is what a restart did."""
+    from chromadb.api.shared_system_client import SharedSystemClient
+
+    SharedSystemClient.clear_system_cache()
+
+
 def chunk_metadata(c: Chunk) -> dict:
     meta = {
         "doc_id": c.doc_id,
@@ -96,13 +108,25 @@ def chunk_metadata(c: Chunk) -> dict:
     return meta
 
 
-def build_store(sources: tuple[str, ...] = ("hf", "youtube")) -> dict:
+def build_store(
+    sources: tuple[str, ...] = ("hf", "youtube"), on_progress=None, only_new: bool = False
+) -> dict:
+    """`on_progress(done_chunks, total_chunks)` is called after every batch, for the
+    background ingest job's status file (T-055). `only_new` embeds and stores just the
+    chunks whose id the store doesn't have yet: the job's case, where the app can't be
+    queried while the store is written, so the write should take seconds, not the 40-50
+    it takes to re-embed everything. The default still rewrites every chunk, which is
+    what a change to existing chunks' metadata needs."""
     collection = get_collection()
     documents = load_documents(sources)
 
     all_chunks: list[Chunk] = []
     for doc in documents:
         all_chunks.extend(chunk_document(doc))
+    document_chunks = len(all_chunks)
+    if only_new:
+        stored = set(collection.get(include=[])["ids"])
+        all_chunks = [c for c in all_chunks if c.id not in stored]
 
     total = len(all_chunks)
     for start in range(0, total, EMBED_BATCH_SIZE):
@@ -115,8 +139,11 @@ def build_store(sources: tuple[str, ...] = ("hf", "youtube")) -> dict:
             metadatas=[chunk_metadata(c) for c in batch],
         )
         print(f"  embedded+stored {min(start + len(batch), total)}/{total} chunks")
+        if on_progress is not None:
+            on_progress(min(start + len(batch), total), total)
 
-    return {"documents": len(documents), "chunks": total, "collection_count": collection.count()}
+    return {"documents": len(documents), "chunks": document_chunks, "written": total,
+            "collection_count": collection.count()}
 
 
 def is_empty() -> bool:

@@ -323,3 +323,21 @@ class RenderCitationChipsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StalenessNoteTests(unittest.TestCase):
+    """T-056: the header says so when the data has fallen behind."""
+
+    def test_recent_data_and_an_empty_store_give_no_note(self):
+        from vg09.ui_helpers import staleness_note
+
+        today = date(2026, 10, 2)
+        self.assertIsNone(staleness_note(None, today))
+        self.assertIsNone(staleness_note(date(2026, 10, 2), today))
+        self.assertIsNone(staleness_note(date(2026, 9, 30), today))  # a weekend's gap
+
+    def test_data_more_than_two_days_behind_is_reported_in_days(self):
+        from vg09.ui_helpers import staleness_note
+
+        self.assertEqual(staleness_note(date(2026, 9, 17), date(2026, 10, 2)), "15 days old")
+        self.assertEqual(staleness_note(date(2026, 9, 29), date(2026, 10, 2)), "3 days old")

@@ -162,6 +162,21 @@ def format_corpus_summary(stats: dict, latest: date | None) -> str:
     return f"{counts} · Caught up through {latest.isoformat()}"
 
 
+STALE_AFTER_DAYS = 2  # a weekend with no new papers is normal (KB-002); more is not
+
+
+def staleness_note(latest: date | None, today: date) -> str | None:
+    """T-056: the header's warning that the data has fallen behind, or None while it is
+    recent. The app never fetches by itself (no scheduler, by design), so without this
+    the only sign of old data is a date the reader has to compare with today's."""
+    if latest is None:
+        return None
+    days = (today - latest).days
+    if days <= STALE_AFTER_DAYS:
+        return None
+    return f"{days} days old"
+
+
 def build_retrieval_ranks(chunks: list[Candidate]) -> dict[str, int]:
     """1-based rank of each document's first (best) chunk in the real packed retrieval
     order - `vg09.retrieval.retrieve()`'s own `chunks` list is already in that order
@@ -419,6 +434,15 @@ a.citation-chip {
 .app-stats {
     font-size: 0.85rem;
     opacity: 0.7;
+}
+/* T-056: "data is N days old". Body text colour with an accent underline, like the
+   source links - accent-coloured text would fall below 4.5:1 on the dark theme. */
+.app-stale {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: __ACCENT_COLOR__;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.15em;
 }
 </style>
 """

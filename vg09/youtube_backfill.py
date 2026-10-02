@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import random
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
@@ -34,7 +35,7 @@ import yt_dlp
 from vg09 import document, sources
 from vg09.document import RAW_DIR, Document
 from vg09.watermark import write_watermark
-from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_videos, normalize
+from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_video_ids, normalize
 
 BACKFILL_WEEKS = 4  # halved from T-017's original 8-week plan to roughly halve
 # the number of transcript-fetch requests against a path that was IpBlocked
@@ -86,6 +87,42 @@ def _fetch_single_video_metadata(video_id: str) -> dict:
         return ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
 
 
+def _known_video_dates() -> dict[str, str]:
+    """Every video already fetched, id -> feed date, read from where the files sit
+    (`data/raw/youtube/<feed_date>/<id>.json`) without opening them."""
+    return {
+        path.stem: path.parent.name
+        for path in RAW_DIR.glob("youtube/*/*.json")
+        if not path.name.endswith(".pending.json")
+    }
+
+
+def _list_channel(channel_url: str, start: date) -> list[dict]:
+    """The channel's latest videos, newest first, asking YouTube for a video's details
+    only when it is not on disk yet (T-055). `list_videos()` asks for the details of all
+    50, one request each, which made an update with nothing new take over five minutes
+    for four channels. Here the ids come from one request for the whole channel; a known
+    video is returned with the date it was stored under; and the walk stops at the first
+    new video older than the window, since everything after it is older still."""
+    known = _known_video_dates()
+    videos: list[dict] = []
+    for video_id in list_video_ids(channel_url, LIST_COUNT_PER_CHANNEL):
+        if video_id in known:
+            videos.append({"id": video_id, "upload_date": known[video_id].replace("-", ""),
+                           "title": None})
+            continue
+        try:
+            video = _fetch_single_video_metadata(video_id)
+        except Exception as exc:  # noqa: BLE001 - one unavailable video isn't the channel
+            print(f"  could not read {video_id}: {exc!r} - skipping this video")
+            continue
+        videos.append(video)
+        upload_date = video.get("upload_date")
+        if upload_date and _feed_date_from_upload_date(upload_date) < start.isoformat():
+            break
+    return videos
+
+
 def _report(result: BackfillResult) -> None:
     print(
         f"  [progress] captions={result.fetched_captions} "
@@ -104,7 +141,12 @@ def _pause(result: BackfillResult) -> None:
     time.sleep(secs)
 
 
-def _process_video(video: dict, result: BackfillResult, channel: str | None = None) -> None:
+def _process_video(
+    video: dict,
+    result: BackfillResult,
+    channel: str | None = None,
+    on_progress: Callable[[BackfillResult], None] | None = None,
+) -> None:
     """Normalizes and writes one video's document. Always resolves to a final
     document (T-019/D-009: captions -> Whisper -> title+description) - there
     is no block-and-abort case left for the caller to react to. `channel` is the
@@ -124,15 +166,25 @@ def _process_video(video: dict, result: BackfillResult, channel: str | None = No
 
     result.attempts += 1
     _report(result)
+    if on_progress is not None:
+        on_progress(result)
     _pause(result)
 
 
-def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date | None = None) -> BackfillResult:
+def run(
+    weeks_back: int = BACKFILL_WEEKS,
+    start: date | None = None,
+    today: date | None = None,
+    channels: dict[str, str] | None = None,
+    on_progress: Callable[[BackfillResult], None] | None = None,
+) -> BackfillResult:
     """`start`/`today` let a caller (T-013's `catch_up_youtube()`) reuse this
     same paced/three-tier-fallback logic for a narrow catch-up window instead
     of the full `weeks_back` backfill window - same idea as `vg09.sync.sync_hf`
     serving both T-015's backfill and T-013's HF catch-up from one
-    implementation."""
+    implementation. `channels` restricts the run to those channels (T-055: a newly
+    added channel gets a backfill window of its own while the others only catch up);
+    `on_progress` is called after every video, for the background job's status file."""
     today = today or date.today()
     if start is None:
         start = today - timedelta(days=weeks_back * 7 - 1)
@@ -152,15 +204,19 @@ def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date
         except Exception as exc:  # noqa: BLE001 - a metadata-refetch failure isn't a block
             print(f"  could not re-fetch metadata for {video_id}: {exc!r} - skipping this pending video")
             continue
-        _process_video(meta, result)
+        _process_video(meta, result, on_progress=on_progress)
 
     # T-053/D-017: the user's own list (data/sources.json), read when the run starts -
     # vg09/channels.py's four are only the default when nothing has been saved.
-    for handle, url in sources.load().channels.items():
+    if channels is None:
+        channels = sources.load().channels
+    for handle, url in channels.items():
         print(f"\n== {handle} ==")
         result.channels_reached.append(handle)
+        if on_progress is not None:
+            on_progress(result)  # listing a channel can take a minute: say which one
         try:
-            videos = list_videos(url, LIST_COUNT_PER_CHANNEL)
+            videos = _list_channel(url, start)
         except Exception as exc:  # noqa: BLE001 - a listing failure isn't a transcript block
             print(f"  could not list videos for {handle}: {exc!r} - skipping channel")
             continue
@@ -180,7 +236,7 @@ def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date
                 continue  # already retried in the pending pass above
 
             print(f"  {video_id} ({feed_date}) {video.get('title')!r}")
-            _process_video(video, result, channel=handle)
+            _process_video(video, result, channel=handle, on_progress=on_progress)
 
     write_watermark("youtube", today.isoformat())
     print(f"\nDone - full window covered. YouTube watermark set to {today.isoformat()}.")
