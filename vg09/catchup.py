@@ -11,12 +11,16 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from vg09 import sources
 from vg09.sync import sync_hf
 from vg09.watermark import read_watermark
 from vg09.youtube_backfill import run as run_youtube_backfill
 
 
 def catch_up_hf(today: date | None = None) -> dict | None:
+    if not sources.load().hf_enabled:
+        print("Hugging Face Daily Papers is switched off in data/sources.json. Skipping HF catch-up.")
+        return None
     watermark = read_watermark("hf")
     if watermark is None:
         print("No hf watermark found - run the backfill (T-015) first. Skipping HF catch-up.")

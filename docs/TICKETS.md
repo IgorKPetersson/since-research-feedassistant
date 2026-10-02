@@ -128,7 +128,7 @@ shape as D-007. Needs my yes before it is built, per `CLAUDE.md`.
 
 ### T-053 — Sources configuration file, read by ingest instead of the hardcoded list
 
-**Status:** in-progress
+**Status:** done
 **Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** which channels are fetched is decided by `data/sources.json`, not by code.
@@ -136,15 +136,16 @@ shape as D-007. Needs my yes before it is built, per `CLAUDE.md`.
 **Why:** D-017. First slice: no UI yet, no stored-format change, terminal flow unchanged.
 
 **Acceptance criteria**
-- [ ] `vg09/sources.py` loads and saves `data/sources.json`; with no file it returns the
+- [x] `vg09/sources.py` loads and saves `data/sources.json`; with no file it returns the
   four defaults from `vg09/channels.py` and says the configuration is not saved yet
-- [ ] A channel can be added from `@handle`, a bare handle, or a `youtube.com/@handle`
+- [x] A channel can be added from `@handle`, a bare handle, or a `youtube.com/@handle`
   address with or without `/videos`; anything else is rejected with a message; adding an
   existing channel and removing an unknown one are rejected
-- [ ] `vg09.youtube_backfill.run()` fetches the configured channels; `catch_up_hf()`
+- [x] `vg09.youtube_backfill.run()` fetches the configured channels; `catch_up_hf()`
   does nothing when Hugging Face is switched off
-- [ ] Unit tests cover the above with the file path patched to a temporary directory;
-  the existing suite still passes
+- [x] Unit tests cover the above with the file path patched to a temporary directory;
+  the existing suite still passes → `tests/test_sources.py` (9 tests) plus one in
+  `tests/test_catchup.py`; 219/219 pass. No real ingest was run with a saved file yet
 
 **Out of scope:** checking that a channel exists on YouTube (T-056); the page.
 **Depends on:** —

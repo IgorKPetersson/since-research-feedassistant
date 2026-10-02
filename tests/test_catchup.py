@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from vg09.catchup import catch_up_hf, catch_up_youtube
+from vg09.sources import Sources, save
 from vg09.watermark import write_watermark
 
 
@@ -25,6 +26,20 @@ class CatchUpHfTests(unittest.TestCase):
         patcher = patch("vg09.watermark.WATERMARK_DIR", Path(tmp.name))
         patcher.start()
         self.addCleanup(patcher.stop)
+        # T-053: never the user's real data/sources.json - a missing file means defaults.
+        self.sources_path = Path(tmp.name) / "sources.json"
+        sources_patcher = patch("vg09.sources.SOURCES_PATH", self.sources_path)
+        sources_patcher.start()
+        self.addCleanup(sources_patcher.stop)
+
+    def test_hf_switched_off_skips_without_calling_sync(self):
+        write_watermark("hf", "2026-09-10")
+        save(Sources(hf_enabled=False))
+        with patch("vg09.catchup.sync_hf") as mock_sync:
+            result = catch_up_hf(today=date(2026, 9, 16))
+
+        mock_sync.assert_not_called()
+        self.assertIsNone(result)
 
     def test_no_watermark_skips_without_calling_sync(self):
         with patch("vg09.catchup.sync_hf") as mock_sync:

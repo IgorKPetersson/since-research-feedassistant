@@ -31,8 +31,7 @@ from datetime import date, datetime, timedelta
 
 import yt_dlp
 
-from vg09 import document
-from vg09.channels import CHANNELS
+from vg09 import document, sources
 from vg09.document import RAW_DIR, Document
 from vg09.watermark import write_watermark
 from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_videos, normalize
@@ -153,7 +152,9 @@ def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date
             continue
         _process_video(meta, result)
 
-    for handle, url in CHANNELS.items():
+    # T-053/D-017: the user's own list (data/sources.json), read when the run starts -
+    # vg09/channels.py's four are only the default when nothing has been saved.
+    for handle, url in sources.load().channels.items():
         print(f"\n== {handle} ==")
         result.channels_reached.append(handle)
         try:

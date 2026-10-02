@@ -14,8 +14,8 @@ Patching vg09.document.RAW_DIR alone would redirect document.exists()/
 Document.write() but not youtube_backfill's own pending-marker glob.
 
 time.sleep is always patched too - nothing in this suite waits on a real
-wall clock, and CHANNELS is patched to one fake channel so a test's video
-list is exactly what it declares, not the real 4-channel set.
+wall clock, and vg09.sources.load is patched to one fake channel so a test's
+video list is exactly what it declares, not the user's real configuration.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ from unittest.mock import patch
 
 from vg09 import document
 from vg09.document import Document
+from vg09.sources import Sources
 from vg09.watermark import read_watermark
 from vg09.youtube_backfill import SHORT_PAUSE_SECONDS, run
 
@@ -65,8 +66,10 @@ class YoutubeBackfillTestCase(unittest.TestCase):
         watermark_patcher.start()
         self.addCleanup(watermark_patcher.stop)
 
+        # T-053: the channel list now comes from vg09.sources.load() at run time.
         channels_patcher = patch(
-            "vg09.youtube_backfill.CHANNELS", {"testchannel": "https://example.com/testchannel"}
+            "vg09.sources.load",
+            return_value=Sources(channels={"testchannel": "https://example.com/testchannel"}),
         )
         channels_patcher.start()
         self.addCleanup(channels_patcher.stop)
