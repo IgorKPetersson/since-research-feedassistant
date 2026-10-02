@@ -85,6 +85,34 @@ class AddRemoveTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             add_channel(sources, "@MrEflow")
 
+    def test_a_sixth_channel_is_refused_and_removing_one_makes_room_again(self):
+        """T-058: at most MAX_CHANNELS, since every channel adds minutes to every update."""
+        from vg09.sources import MAX_CHANNELS
+
+        self.assertEqual(MAX_CHANNELS, 5)
+        sources = Sources(channels={})
+        for i in range(MAX_CHANNELS):
+            add_channel(sources, f"channel{i}")
+        with self.assertRaises(ValueError) as refused:
+            add_channel(sources, "onetoomany")
+        self.assertIn("full at 5", str(refused.exception))
+        self.assertEqual(len(sources.channels), MAX_CHANNELS)
+
+        remove_channel(sources, "channel0")
+        add_channel(sources, "onetoomany")
+        self.assertIn("onetoomany", sources.channels)
+
+    def test_a_longer_list_saved_by_hand_still_loads(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch as _patch
+
+        with tempfile.TemporaryDirectory() as tmp, \
+             _patch("vg09.sources.SOURCES_PATH", Path(tmp) / "sources.json"):
+            many = {f"channel{i}": f"https://www.youtube.com/@channel{i}/videos" for i in range(7)}
+            save(Sources(channels=many))
+            self.assertEqual(len(load().channels), 7)
+
     def test_remove_takes_it_out_and_an_unknown_one_is_rejected(self):
         sources = Sources(channels={"mreflow": "https://www.youtube.com/@mreflow/videos"})
         remove_channel(sources, "mreflow")

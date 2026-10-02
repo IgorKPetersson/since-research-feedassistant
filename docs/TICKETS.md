@@ -14,6 +14,33 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-058 — At most five YouTube channels, with the reason shown on the page
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** the Sources page says how many channels are sensible and stops at that number.
+
+**Why:** my request (2026-10-02). Every channel adds minutes to every update:
+videos are fetched 3–8 seconds apart on purpose, and a blocked one is transcribed locally.
+
+**Acceptance criteria**
+- [x] `vg09.sources.MAX_CHANNELS = 5`; `add_channel()` refuses a sixth with a message;
+  removing one makes room again; a longer hand-edited file still loads → 2 new tests,
+  253/253 pass
+- [x] The page states the limit and the reason, and locks the field and the Add button
+  when the list is full → checked in a browser: with a fifth (test) channel added, the
+  field was disabled and read "The list is full at 5. Remove one to add another."; after
+  removing it the field was enabled again and my four channels were unchanged
+- [x] The page's own duplicate check is gone; it calls `add_channel()`, so the rules live
+  in one place
+
+**Out of scope:** a limit on Hugging Face; measuring the real time per channel.
+**Depends on:** T-053, T-056.
+**Notes:** Five is my number, not a measured threshold.
+
+---
+
 ### T-057 — Sources: README, presentation and a fresh-clone run through the page
 
 **Status:** todo

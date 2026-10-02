@@ -61,12 +61,13 @@ def _confirm_remove(handle: str, documents: int) -> None:
 def _add_channel(text: str) -> None:
     config = sources.load()
     try:
-        handle, url = sources.parse_channel(text)
-        if handle.lower() in {h.lower() for h in config.channels}:
-            raise ValueError(f"@{handle} is already in the list")
+        # Every rule about what may be added (form, duplicates, the limit) lives in
+        # vg09.sources. The change is only in memory until save() below.
+        handle = sources.add_channel(config, text)
     except ValueError as exc:
         _flash("error", str(exc))
         return
+    url = config.channels[handle]
     try:
         from vg09.youtube import list_video_ids
 
@@ -76,7 +77,6 @@ def _add_channel(text: str) -> None:
     if not found:
         _flash("error", f"Couldn't find a YouTube channel at @{handle}. Check the spelling.")
         return
-    config.channels[handle] = url
     sources.save(config)
     _flash("success", f"Added @{handle}. Its videos become searchable after the next update.")
 
@@ -130,7 +130,10 @@ def render() -> None:
 
     # --- YouTube ---
     st.subheader("YouTube channels")
+    st.caption(f"Up to {sources.MAX_CHANNELS} channels. Each one adds a few minutes to "
+               "every update, because videos are fetched slowly on purpose.")
     per_channel = channel_stats()
+    full = len(config.channels) >= sources.MAX_CHANNELS
     if not config.channels:
         st.caption("No channels yet.")
     for handle in config.channels:
@@ -145,9 +148,13 @@ def render() -> None:
             _confirm_remove(handle, info["documents"] if info else 0)
 
     with st.form("add_channel", clear_on_submit=True, border=False):
-        new_channel = st.text_input("Add a channel", placeholder="https://www.youtube.com/@handle",
-                                    disabled=running)
-        add = st.form_submit_button("Add", disabled=running)
+        new_channel = st.text_input(
+            "Add a channel",
+            placeholder=(f"The list is full at {sources.MAX_CHANNELS}. Remove one to add another."
+                         if full else "https://www.youtube.com/@handle"),
+            disabled=running or full,
+        )
+        add = st.form_submit_button("Add", disabled=running or full)
     youtube_weeks = st.number_input("Weeks of history to fetch for a new channel", min_value=1,
                                     max_value=12, value=config.youtube_weeks, disabled=running)
     st.caption("YouTube only lists a channel's most recent videos, so older history may "

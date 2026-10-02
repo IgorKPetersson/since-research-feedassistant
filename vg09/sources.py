@@ -17,6 +17,10 @@ from vg09.channels import CHANNELS as DEFAULT_CHANNELS
 SOURCES_PATH = Path(__file__).resolve().parent.parent / "data" / "sources.json"
 DEFAULT_HF_WEEKS = 8  # T-015's backfill window
 DEFAULT_YOUTUBE_WEEKS = 4  # T-017's backfill window
+MAX_CHANNELS = 5  # T-058, my choice: every channel adds minutes to every update
+# (videos are fetched 3-8 seconds apart on purpose, and a blocked one is transcribed
+# locally). Enforced when a channel is added, not when the file is read, so a list
+# someone edited by hand still loads.
 
 # A handle as YouTube allows it: letters, digits, underscore, hyphen, period.
 _HANDLE = r"[A-Za-z0-9_.-]{3,30}"
@@ -78,6 +82,8 @@ def add_channel(sources: Sources, text: str) -> str:
     handle, url = parse_channel(text)
     if handle.lower() in {h.lower() for h in sources.channels}:
         raise ValueError(f"@{handle} is already in the list")
+    if len(sources.channels) >= MAX_CHANNELS:
+        raise ValueError(f"The list is full at {MAX_CHANNELS} channels. Remove one to add another.")
     sources.channels[handle] = url
     return handle
 
