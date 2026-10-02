@@ -25,6 +25,7 @@ T-002 verified (KB-001) - not re-derived here.
 from __future__ import annotations
 
 import os
+import sysconfig
 from datetime import datetime
 from pathlib import Path
 
@@ -44,12 +45,22 @@ _whisper_model = None  # lazy singleton - loaded once, reused across videos in a
 
 def _add_whisper_cuda_dll_dirs() -> None:
     """ctranslate2 (faster-whisper's backend) needs cuBLAS/cuDNN on PATH -
-    `os.add_dll_directory()` does not work for it on Windows (KB-012)."""
-    site_packages = Path(__file__).resolve().parent.parent / ".venv" / "Lib" / "site-packages"
-    dirs = [str(site_packages / "nvidia" / pkg / "bin") for pkg in ("cublas", "cudnn", "cuda_nvrtc")]
+    `os.add_dll_directory()` does not work for it on Windows (KB-012).
+
+    The wheels are looked up in the running interpreter's own site-packages (T-057).
+    This used to assume a virtual environment at `<repo>/.venv`; with the environment
+    anywhere else the directories weren't found, the first transcription raised
+    RuntimeError and the second hung forever - found by running the app from a clone
+    that used an environment outside its own folder."""
+    site_packages = {Path(sysconfig.get_paths()[key]) for key in ("purelib", "platlib")}
+    dirs = [str(sp / "nvidia" / pkg / "bin")
+            for sp in site_packages for pkg in ("cublas", "cudnn", "cuda_nvrtc")]
     dirs = [d for d in dirs if os.path.isdir(d)]
     if dirs:
         os.environ["PATH"] = os.pathsep.join(dirs) + os.pathsep + os.environ.get("PATH", "")
+
+
+_whisper_failed: Exception | None = None  # set by the first failed transcription
 
 
 def _get_whisper_model():
@@ -130,6 +141,13 @@ def fetch_whisper_transcript(video_id: str) -> tuple[str, list[dict]]:
     to the `{text, start, duration}` shape `vg09/document.py` expects.
     Raises on any download or transcription failure; the caller decides what
     to do about it (T-019: fall back to title+description)."""
+    global _whisper_failed
+    if _whisper_failed is not None:
+        # Seen for real (T-057): after one RuntimeError from a broken GPU setup, the
+        # next transcription didn't fail, it hung with no CPU or GPU activity. So one
+        # such failure switches Whisper off for the rest of the process, and the
+        # remaining videos go straight to title+description.
+        raise RuntimeError(f"Whisper is unavailable in this run: {_whisper_failed}")
     WHISPER_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     outtmpl = str(WHISPER_AUDIO_DIR / f"{video_id}.%(ext)s")
     opts = {
@@ -146,12 +164,16 @@ def fetch_whisper_transcript(video_id: str) -> tuple[str, list[dict]]:
             info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=True)
             audio_path = Path(ydl.prepare_filename(info))
 
-        model = _get_whisper_model()
-        raw_segments, _ = model.transcribe(str(audio_path), beam_size=5)
-        segments = [
-            {"text": s.text.strip(), "start": s.start, "duration": s.end - s.start}
-            for s in raw_segments
-        ]
+        try:
+            model = _get_whisper_model()
+            raw_segments, _ = model.transcribe(str(audio_path), beam_size=5)
+            segments = [
+                {"text": s.text.strip(), "start": s.start, "duration": s.end - s.start}
+                for s in raw_segments
+            ]
+        except RuntimeError as exc:  # what ctranslate2 raises for a missing CUDA library
+            _whisper_failed = exc
+            raise
         text = " ".join(s["text"] for s in segments)
         return text, segments
     finally:

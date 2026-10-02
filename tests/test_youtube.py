@@ -147,6 +147,61 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
         patcher = patch("vg09.youtube.WHISPER_AUDIO_DIR", self.audio_dir)
         patcher.start()
         self.addCleanup(patcher.stop)
+        # T-057: a failed transcription is remembered for the rest of the process;
+        # each test starts without one, and whatever it sets is undone afterwards.
+        failed_patcher = patch("vg09.youtube._whisper_failed", None)
+        failed_patcher.start()
+        self.addCleanup(failed_patcher.stop)
+
+    def test_after_one_runtime_error_whisper_is_not_tried_again_in_this_run(self):
+        """Found for real: after one RuntimeError from a broken GPU setup the next
+        transcription hung forever. The second video must fail at once, before any
+        audio is downloaded."""
+        audio_path = self.audio_dir / "vid1.webm"
+
+        class FakeYDL:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *exc):
+                return False
+
+            def extract_info(self_inner, url, download=True):
+                audio_path.write_bytes(b"fake audio")
+                return {"id": "vid1"}
+
+            def prepare_filename(self_inner, info):
+                return str(audio_path)
+
+        class BrokenModel:
+            def transcribe(self_inner, path, beam_size=5):
+                raise RuntimeError("Library cublas64_12.dll is not found")
+
+        with patch("vg09.youtube.yt_dlp.YoutubeDL", return_value=FakeYDL()) as mock_ydl, \
+             patch("vg09.youtube._get_whisper_model", return_value=BrokenModel()):
+            with self.assertRaises(RuntimeError):
+                youtube.fetch_whisper_transcript("vid1")
+            self.assertEqual(mock_ydl.call_count, 1)
+            with self.assertRaises(RuntimeError) as second:
+                youtube.fetch_whisper_transcript("vid2")
+            self.assertEqual(mock_ydl.call_count, 1)  # no second download
+        self.assertIn("unavailable in this run", str(second.exception))
+
+    def test_cuda_dll_dirs_are_found_in_the_running_interpreters_site_packages(self):
+        """The wheels' bin directories are looked up where this interpreter keeps its
+        packages, not in a `.venv` folder assumed to sit inside the repository."""
+        import os
+
+        site_packages = self.audio_dir / "site-packages"
+        for pkg in ("cublas", "cudnn"):
+            (site_packages / "nvidia" / pkg / "bin").mkdir(parents=True)
+        paths = {"purelib": str(site_packages), "platlib": str(site_packages)}
+        with patch("vg09.youtube.sysconfig.get_paths", return_value=paths), \
+             patch.dict(os.environ, {"PATH": "original"}):
+            youtube._add_whisper_cuda_dll_dirs()
+            parts = os.environ["PATH"].split(os.pathsep)
+        self.assertEqual(parts[-1], "original")
+        self.assertEqual(sorted(Path(p).parent.name for p in parts[:-1]), ["cublas", "cudnn"])
 
     def test_converts_segments_and_deletes_audio_after(self):
         audio_path = self.audio_dir / "vid123.webm"
