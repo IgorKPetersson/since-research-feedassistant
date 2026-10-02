@@ -117,8 +117,20 @@ class VisualIdentityTests(unittest.TestCase):
         # Found live: without the scoped selector + !important, chips rendered as
         # blue underlined link text on the accent.
         self.assertIn('[data-testid="stMarkdownContainer"] a.citation-chip', CUSTOM_CSS)
-        self.assertIn("color: #1a1a1a !important", CUSTOM_CSS)
+        self.assertIn("color: #ffffff !important", CUSTOM_CSS)
         self.assertIn("text-decoration: none !important", CUSTOM_CSS)
+
+    def test_white_text_on_the_accent_reaches_wcag_aa(self):
+        """T-050: the Ask button's label and the citation chips are white on the accent.
+        Computed from the constant, so a lighter accent can't be chosen again unnoticed
+        (T-045's #C17F1A was 3.32:1)."""
+        def channel(value: int) -> float:
+            s = value / 255
+            return s / 12.92 if s <= 0.03928 else ((s + 0.055) / 1.055) ** 2.4
+
+        r, g, b = (channel(int(ACCENT_COLOR[i:i + 2], 16)) for i in (1, 3, 5))
+        accent_luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        self.assertGreaterEqual(1.05 / (accent_luminance + 0.05), 4.5)
 
     def test_logo_mark_svg_uses_the_accent_and_no_placeholder(self):
         svg = LOGO_MARK_PATH.read_text(encoding="utf-8")

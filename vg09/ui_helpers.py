@@ -27,7 +27,10 @@ APP_NAME = "Since"
 
 # Matches .streamlit/config.toml's [theme] primaryColor - the two can't share one
 # Python constant (config.toml isn't Python), so this comment is the cross-reference.
-ACCENT_COLOR = "#C17F1A"
+# T-050: darkened from T-045's #C17F1A, on which the Ask button's white label was
+# 3.32:1. This is the lightest shade of the same hue where white text reaches WCAG AA
+# (4.52:1) - my choice over keeping the lighter amber with dark button text.
+ACCENT_COLOR = "#A26B16"
 
 # T-046: one file serves as both the header mark and the favicon.
 LOGO_MARK_PATH = Path(__file__).resolve().parent.parent / "docs" / "assets" / "since-mark.svg"
@@ -298,8 +301,8 @@ html, body, .stApp, [data-testid], [data-testid] * {
 }
 
 /* Scoped under stMarkdownContainer and !important: Streamlit's own markdown link rule
-   otherwise wins and renders chip numbers as blue underlined link text. Dark text,
-   not white: 5.24:1 on the accent vs white's 3.32:1 (below WCAG AA for small text). */
+   otherwise wins and renders chip numbers as blue underlined link text. White text:
+   4.52:1 on the T-050 accent, where the earlier dark text would be only 3.86:1. */
 [data-testid="stMarkdownContainer"] a.citation-chip,
 a.citation-chip {
     display: inline-block;
@@ -309,7 +312,7 @@ a.citation-chip {
     font-size: 0.8em;
     font-weight: 600;
     text-decoration: none !important;
-    color: #1a1a1a !important;
+    color: #ffffff !important;
     background-color: __ACCENT_COLOR__;
     line-height: 1.6;
 }
@@ -331,7 +334,8 @@ a.citation-chip {
 
 /* Source-card title links: body text colour with an accent underline, not
    Streamlit's default blue (clashes with the accent) and not accent-coloured text
-   (3.32:1 on white, too low for text). !important for the same reason as the chips. */
+   (4.52:1 on white, but a title in the accent would compete with the chips).
+   !important for the same reason as the chips. */
 .st-key-source_cards [data-testid="stMarkdownContainer"] a {
     color: inherit !important;
     text-decoration: underline !important;

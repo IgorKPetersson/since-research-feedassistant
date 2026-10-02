@@ -14,6 +14,39 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-050 — Ask button contrast: darken the accent so white text reaches WCAG AA
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** every piece of text set on the accent colour meets WCAG AA (4.5:1).
+
+**Why:** T-045 left this open: the Ask button's white label on `#C17F1A` was 3.32:1.
+Both fixes were compared side by side
+(`docs/screenshots/t050-ask-button-options.png`); the darker accent was chosen over dark
+button text.
+
+**Acceptance criteria**
+- [x] The accent is the lightest shade of the same hue on which white reaches 4.5:1 →
+  `#A26B16`, 4.52:1 (`scripts/t050_button_contrast_options.py` computes it)
+- [x] It is changed everywhere the accent lives: `vg09.ui_helpers.ACCENT_COLOR`, both
+  themes in `.streamlit/config.toml`, the three uses in `docs/assets/since-mark.svg`
+- [x] Citation chips, which had dark text on the accent (3.86:1 on the new shade), now
+  have white text (4.52:1)
+- [x] A test computes the contrast from the constant and fails below 4.5 →
+  `test_white_text_on_the_accent_reaches_wcag_aa`; 209/209 pass
+- [x] Checked in a running browser, both themes: button and chip computed as
+  `rgb(162, 107, 22)` with `rgb(255, 255, 255)` text
+- [x] `docs/screenshots/t042-ui-{light,dark}-theme.png` retaken, same question and
+  1252×1222 viewport as before
+
+**Out of scope:** any other change to T-045's identity.
+
+**Depends on:** T-045.
+**Notes:** 4.52:1 passes with little margin; a lighter accent would fail the test.
+
+---
+
 ### T-049 — Retrieval takes over a minute per question: find the cause and fix it
 
 **Status:** done
@@ -37,7 +70,9 @@ demonstration.
   a test fails if any of them goes back → `OllamaAddressTests`; 208/208 pass
 - [x] Re-measured after the change with no override → `retrieve()` 1.17s
 - [x] KB-023 marked superseded, KB-024 written
-- [ ] Seen in the running Streamlit UI, not only through the pipeline functions
+- [x] Seen in the running Streamlit UI, not only through the pipeline functions → real
+  browser run 2026-10-02: 17.2s from click to answer for F05 and 13.3s for a second
+  question, of which the UI's own "Time" tile (generation) was 7.4s and 9.3s
 
 **Out of scope:** the old feasibility scripts under `scripts/`, which keep `localhost`
 as records of past runs; reducing the number of requests retrieval makes.
@@ -729,7 +764,10 @@ graded it; this fix only changes future runs.
 
 ### T-039 — Raise `NUM_PREDICT` to 4000 and retry once on `done_reason == "length"`
 
-**Status:** review
+**Status:** done — the one unverified criterion (the retry notice in a running UI) was
+checked 2026-10-02: the real `app.py` was run in a browser with `NUM_PREDICT` lowered to
+500 in that process only, and both the retry notice and the incomplete-answer warning
+appeared (`docs/screenshots/t039-retry-notice-live.png`)
 **Size:** M  ·  **Branch:** `t/T-039-raise-num-predict-and-retry-on-truncation`  ·  **Phase:** 3
 
 **Goal:** A question whose reasoning happens to run long no longer comes back with an empty

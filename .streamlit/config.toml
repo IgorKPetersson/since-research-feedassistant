@@ -6,10 +6,11 @@
 # sides, since Streamlit's theme config and a CSS string can't literally share a
 # Python constant.
 #
-# #C17F1A - a warm amber. Chosen deliberately over Streamlit's default red and over
+# #A26B16 - a warm amber. Chosen deliberately over Streamlit's default red and over
 # an indigo/violet (the other common "distinct from stock" choice, but overused
 # enough in modern SaaS UIs to risk reading as generic too) - see docs/TICKETS.md T-045
-# for the full reasoning.
+# for the full reasoning. Darkened from T-045's #C17F1A by T-050 so the Ask button's
+# white label reaches WCAG AA (4.52:1, was 3.32:1).
 #
 # Set under [theme.light] and [theme.dark] separately, not a single top-level
 # [theme] - found live (T-045's own real verification): a bare [theme] section with
@@ -21,7 +22,7 @@
 # themes for it to switch between) and lets Streamlit fill in its own sensible
 # per-mode defaults for everything else.
 [theme.light]
-primaryColor = "#C17F1A"
+primaryColor = "#A26B16"
 
 [theme.dark]
-primaryColor = "#C17F1A"
+primaryColor = "#A26B16"
