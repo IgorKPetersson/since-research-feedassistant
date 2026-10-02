@@ -152,3 +152,75 @@ class EmbedBatchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ChannelTests(unittest.TestCase):
+    """T-054 (D-017): the store knows which channel a video came from."""
+
+    def _collection(self):
+        collection = MagicMock()
+        collection.count.return_value = 5
+        collection.get.return_value = {
+            "metadatas": [
+                {"doc_id": "v1", "channel": "alpha", "feed_date_ordinal": date(2026, 9, 10).toordinal()},
+                {"doc_id": "v1", "channel": "alpha", "feed_date_ordinal": date(2026, 9, 10).toordinal()},
+                {"doc_id": "v2", "channel": "alpha", "feed_date_ordinal": date(2026, 9, 20).toordinal()},
+                {"doc_id": "v3", "channel": "beta", "feed_date_ordinal": date(2026, 9, 15).toordinal()},
+                {"doc_id": "v4", "feed_date_ordinal": date(2026, 9, 1).toordinal()},  # pre-T-054
+            ]
+        }
+        return collection
+
+    def test_chunk_metadata_carries_the_channel_only_when_there_is_one(self):
+        from vg09.chunking import Chunk
+        from vg09.store import chunk_metadata
+
+        base = dict(id="youtube:v1:0", doc_id="v1", source="youtube", url="u", title="t",
+                    feed_date="2026-09-10", text="x")
+        self.assertEqual(chunk_metadata(Chunk(**base, channel="alpha"))["channel"], "alpha")
+        self.assertNotIn("channel", chunk_metadata(Chunk(**base)))
+
+    def test_channel_stats_counts_distinct_videos_and_latest_date_per_channel(self):
+        from vg09.store import channel_stats
+
+        collection = self._collection()
+        with patch("vg09.store.get_collection", return_value=collection):
+            stats = channel_stats()
+
+        collection.get.assert_called_once_with(where={"source": "youtube"}, include=["metadatas"])
+        self.assertEqual(stats["alpha"], {"documents": 2, "latest": date(2026, 9, 20)})
+        self.assertEqual(stats["beta"], {"documents": 1, "latest": date(2026, 9, 15)})
+        # a video with no channel is visible under None, not dropped from every count
+        self.assertEqual(stats[None]["documents"], 1)
+
+    def test_channel_stats_of_an_empty_store_is_empty(self):
+        from vg09.store import channel_stats
+
+        collection = MagicMock()
+        collection.count.return_value = 0
+        with patch("vg09.store.get_collection", return_value=collection):
+            self.assertEqual(channel_stats(), {})
+
+    def test_remove_channel_data_deletes_its_chunks_and_only_its_raw_files(self):
+        import json
+        import tempfile
+        from pathlib import Path
+
+        from vg09.store import remove_channel_data
+
+        collection = MagicMock()
+        collection.count.side_effect = [10, 7]
+        with tempfile.TemporaryDirectory() as tmp:
+            day = Path(tmp) / "youtube" / "2026-09-10"
+            day.mkdir(parents=True)
+            (day / "v1.json").write_text(json.dumps({"id": "v1", "channel": "alpha"}), encoding="utf-8")
+            (day / "v3.json").write_text(json.dumps({"id": "v3", "channel": "beta"}), encoding="utf-8")
+            (day / "v9.pending.json").write_text(json.dumps({"id": "v9"}), encoding="utf-8")
+            # vg09.store.RAW_DIR, its own imported copy of the name (KB-010)
+            with patch("vg09.store.get_collection", return_value=collection), \
+                 patch("vg09.store.RAW_DIR", Path(tmp)):
+                result = remove_channel_data("alpha")
+
+            self.assertEqual(sorted(p.name for p in day.iterdir()), ["v3.json", "v9.pending.json"])
+        collection.delete.assert_called_once_with(where={"channel": "alpha"})
+        self.assertEqual(result, {"chunks": 3, "documents": 1})

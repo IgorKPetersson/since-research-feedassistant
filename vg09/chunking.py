@@ -59,6 +59,7 @@ class Chunk:
     fallback_reason: str | None = None
     arxiv_published_at: str | None = None  # papers only; never used for filtering
     start_seconds: float | None = None  # YouTube chunks with real timing only
+    channel: str | None = None  # YouTube only: the channel handle (T-054, D-017)
 
 
 def chunk_hf_document(doc: dict) -> list[Chunk]:
@@ -97,6 +98,7 @@ def chunk_youtube_document(doc: dict) -> list[Chunk]:
                 text=doc["text"],
                 text_source=doc.get("text_source"),
                 fallback_reason=doc.get("fallback_reason"),
+                channel=doc.get("channel"),
             )
         ]
 
@@ -123,6 +125,7 @@ def chunk_youtube_document(doc: dict) -> list[Chunk]:
                 text_source=doc.get("text_source"),
                 fallback_reason=doc.get("fallback_reason"),
                 start_seconds=start,
+                channel=doc.get("channel"),
             )
         )
         index += 1

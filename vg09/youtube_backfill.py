@@ -104,13 +104,15 @@ def _pause(result: BackfillResult) -> None:
     time.sleep(secs)
 
 
-def _process_video(video: dict, result: BackfillResult) -> None:
+def _process_video(video: dict, result: BackfillResult, channel: str | None = None) -> None:
     """Normalizes and writes one video's document. Always resolves to a final
     document (T-019/D-009: captions -> Whisper -> title+description) - there
-    is no block-and-abort case left for the caller to react to."""
+    is no block-and-abort case left for the caller to react to. `channel` is the
+    handle the video was listed under (T-054); a retried pending video has none."""
     doc: Document | None = normalize(video)
 
     if doc is not None:
+        doc.channel = channel
         doc.write()
         document.clear_pending(doc.source, doc.feed_date, doc.id)
         if doc.text_source == "captions":
@@ -178,7 +180,7 @@ def run(weeks_back: int = BACKFILL_WEEKS, start: date | None = None, today: date
                 continue  # already retried in the pending pass above
 
             print(f"  {video_id} ({feed_date}) {video.get('title')!r}")
-            _process_video(video, result)
+            _process_video(video, result, channel=handle)
 
     write_watermark("youtube", today.isoformat())
     print(f"\nDone - full window covered. YouTube watermark set to {today.isoformat()}.")

@@ -100,7 +100,7 @@ separate process, and another reports how far it has come.
 
 ### T-054 — Record each video's channel, so a channel can be counted and removed
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** the store knows which channel every video came from.
@@ -109,20 +109,28 @@ separate process, and another reports how far it has come.
 its documents. Today neither `Document` nor chunk metadata records the channel.
 
 **Acceptance criteria**
-- [ ] `Document.channel` (optional) is set for every newly fetched video and carried
+- [x] `Document.channel` (optional) is set for every newly fetched video and carried
   into chunk metadata; papers have none. Old raw files without the key still load
-- [ ] A one-time migration assigns a channel to every existing video by listing each
-  configured channel, and reports any video it could not assign
-- [ ] `vg09.store` can report documents and latest feed date per channel, and delete a
-  channel's chunks; raw files for a removed channel are deleted too
-- [ ] After the migration and a store rebuild on the real data, every YouTube chunk has
-  a channel, and the per-channel counts sum to the total number of videos
-- [ ] Unit tests cover the metadata, the per-channel stats and the removal
+- [x] A one-time migration assigns a channel to every existing video by listing each
+  configured channel, and reports any video it could not assign →
+  `scripts/t054_assign_channels.py`, real run 2026-10-02: 62 assigned (NateBJones 25,
+  theAIsearch 13, mreflow 12, ColeMedin 12), 0 unassigned
+- [x] `vg09.store` can report documents and latest feed date per channel, and delete a
+  channel's chunks; raw files for a removed channel are deleted too →
+  `channel_stats()`, `remove_channel_data()`. **The removal was only run against mocks
+  and a temporary directory, never against the real store** — it deletes my data
+- [x] After the migration and a store rebuild on the real data, every YouTube chunk has
+  a channel, and the per-channel counts sum to the total number of videos → 1243 YouTube
+  chunks, 0 without a channel; 25+13+12+12 = 62 = `corpus_stats()`'s video count
+- [x] Unit tests cover the metadata, the per-channel stats and the removal → 226/226
 
 **Out of scope:** the page (T-056).
 **Depends on:** T-053.
 **Notes:** **A stored-format change** (`Document`, chunk metadata) — additive, same
-shape as D-007. Needs my yes before it is built, per `CLAUDE.md`.
+shape as D-007. I approved it 2026-10-02, with the condition that their current
+four channels and all current data stay as they are unless they choose to change them.
+A pending video retried later gets no channel (its marker doesn't record one) and would
+show up under no channel in `channel_stats()`; there are none today.
 
 ---
 

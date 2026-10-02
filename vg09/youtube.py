@@ -82,6 +82,24 @@ def list_videos(channel_url: str, count: int) -> list[dict]:
     return [e for e in entries if e][:count]
 
 
+def list_video_ids(channel_url: str, count: int) -> list[str]:
+    """Only the ids of a channel's latest `count` videos, from the flat listing - one
+    request for the whole channel instead of one per video as `list_videos()` makes.
+    For checking that a channel exists and for assigning existing videos to a channel
+    (T-054), where nothing but the id is needed."""
+    opts = {
+        "skip_download": True,
+        "extract_flat": True,
+        "playlistend": count,
+        "quiet": True,
+        "no_warnings": True,
+        "socket_timeout": YT_DLP_SOCKET_TIMEOUT,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(channel_url, download=False)
+    return [e["id"] for e in (info.get("entries") or []) if e and e.get("id")][:count]
+
+
 def _feed_date(upload_date: str) -> str:
     # yt-dlp gives upload_date as YYYYMMDD
     return datetime.strptime(upload_date, "%Y%m%d").date().isoformat()

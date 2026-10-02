@@ -83,6 +83,10 @@ class Document:
     # timing at collection time (D-007, added after T-012 shipped, approved after the
     # fact)
 
+    channel: str | None = None  # YouTube only: the handle of the channel the video
+    # came from (T-054, D-017), so a channel's documents can be counted and removed.
+    # Absent from files written before T-054 until scripts/t054_assign_channels.py ran.
+
     def write(self) -> Path:
         path = raw_path(self.source, self.feed_date, self.id)
         path.parent.mkdir(parents=True, exist_ok=True)

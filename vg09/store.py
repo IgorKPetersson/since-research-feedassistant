@@ -91,6 +91,8 @@ def chunk_metadata(c: Chunk) -> dict:
         meta["arxiv_published_at"] = c.arxiv_published_at
     if c.start_seconds is not None:
         meta["start_seconds"] = c.start_seconds
+    if c.channel is not None:
+        meta["channel"] = c.channel
     return meta
 
 
@@ -170,3 +172,41 @@ def corpus_stats() -> dict:
         "youtube_documents": len(youtube_docs),
         "chunks": total_chunks,
     }
+
+
+def channel_stats() -> dict[str, dict]:
+    """T-054: per YouTube channel, how many distinct videos the store holds and the
+    latest feed date among them - `{handle: {"documents": int, "latest": date}}`. Videos
+    stored before T-054's migration have no channel and are counted under `None`, so a
+    missing assignment is visible rather than silently left out of every count."""
+    collection = get_collection()
+    if collection.count() == 0:
+        return {}
+    result = collection.get(where={"source": "youtube"}, include=["metadatas"])
+    docs: dict[str | None, set[str]] = {}
+    latest: dict[str | None, int] = {}
+    for m in result["metadatas"]:
+        handle = m.get("channel")
+        docs.setdefault(handle, set()).add(m["doc_id"])
+        latest[handle] = max(latest.get(handle, 0), m["feed_date_ordinal"])
+    return {
+        handle: {"documents": len(ids), "latest": date.fromordinal(latest[handle])}
+        for handle, ids in docs.items()
+    }
+
+
+def remove_channel_data(handle: str) -> dict:
+    """T-054 (D-017): removing a channel removes what was fetched from it - its chunks
+    from the store, so no answer can cite it, and its raw files, so the next
+    `build_store()` doesn't put it back (that function only ever upserts)."""
+    collection = get_collection()
+    before = collection.count()
+    collection.delete(where={"channel": handle})
+    removed_files = 0
+    for path in sorted((RAW_DIR / "youtube").rglob("*.json")):
+        if path.name.endswith(".pending.json"):
+            continue
+        if json.loads(path.read_text(encoding="utf-8")).get("channel") == handle:
+            path.unlink()
+            removed_files += 1
+    return {"chunks": before - collection.count(), "documents": removed_files}

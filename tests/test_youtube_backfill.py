@@ -20,6 +20,7 @@ video list is exactly what it declares, not the user's real configuration.
 
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from datetime import date
@@ -106,6 +107,15 @@ class ResumabilityTests(YoutubeBackfillTestCase):
         self.assertEqual(result.attempts, 1)
         self.assertEqual(result.fetched_captions, 1)
         self.assertTrue(document.exists("youtube", "2026-09-15", "vid2"))
+
+    def test_written_document_records_the_channel_it_was_listed_under(self):
+        """T-054: without this the store can't count or remove a channel's videos."""
+        with patch("vg09.youtube_backfill.list_videos", return_value=[fake_video("vid3", "2026-09-15")]), \
+             patch("vg09.youtube_backfill.normalize", return_value=fake_document("vid3", "2026-09-15")):
+            run(start=date(2026, 9, 1), today=date(2026, 9, 20))
+
+        written = json.loads(document.raw_path("youtube", "2026-09-15", "vid3").read_text(encoding="utf-8"))
+        self.assertEqual(written["channel"], "testchannel")
 
     def test_second_run_does_not_refetch_what_the_first_run_wrote(self):
         video = fake_video("vid3", "2026-09-15")

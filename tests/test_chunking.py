@@ -144,3 +144,24 @@ class ChunkDocumentDispatchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ChannelPropagationTests(unittest.TestCase):
+    """T-054: a video's channel reaches every one of its chunks, on both chunking paths;
+    a paper has none."""
+
+    def test_windowed_and_single_chunk_youtube_documents_carry_the_channel(self):
+        base = {"id": "v1", "source": "youtube", "url": "https://www.youtube.com/watch?v=v1",
+                "title": "t", "feed_date": "2026-09-10", "text": "x", "channel": "alpha"}
+        windowed = chunk_youtube_document({**base, "segments": make_segments(400)})
+        self.assertGreater(len(windowed), 1)
+        self.assertEqual({c.channel for c in windowed}, {"alpha"})
+        self.assertEqual(chunk_youtube_document(base)[0].channel, "alpha")
+
+    def test_a_document_without_the_key_and_a_paper_have_no_channel(self):
+        old = {"id": "v1", "source": "youtube", "url": "u", "title": "t",
+               "feed_date": "2026-09-10", "text": "x"}
+        self.assertIsNone(chunk_youtube_document(old)[0].channel)
+        paper = {"id": "2609.1", "source": "hf", "url": "u", "title": "t",
+                 "feed_date": "2026-09-10", "text": "x"}
+        self.assertIsNone(chunk_hf_document(paper)[0].channel)
