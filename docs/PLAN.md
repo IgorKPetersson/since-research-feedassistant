@@ -40,9 +40,9 @@ Added 2026-10-02, by explicit instruction: a finishing pass (**T-049** retrieval
 **T-050** accent contrast, **T-051** one action submits a question, **T-039** closed),
 the presentation draft (**T-048**, `docs/presentation.md`, not yet read by me), and
 the Sources page (**T-052**–**T-058**, D-017): sources chosen and fetched in the app
-instead of in code and the terminal. All on `main`. **Open:** T-056's first-start flow
-and stale-data marker have not been seen in a browser, and T-057's fresh-clone run
-through the Sources page has not been done.
+instead of in code and the terminal. All on `main`. A fresh clone was taken through the
+Sources page to a first answer (T-057), with one week of history and one channel.
+**Open:** T-056's stale-data marker has not been seen in a browser.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`

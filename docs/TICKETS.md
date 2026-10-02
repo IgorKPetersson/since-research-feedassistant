@@ -43,7 +43,7 @@ videos are fetched 3–8 seconds apart on purpose, and a blocked one is transcri
 
 ### T-057 — Sources: README, presentation and a fresh-clone run through the page
 
-**Status:** in-progress — the documents are written, the fresh-clone run is not done
+**Status:** done — with the limits stated in Notes
 **Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** a new user can follow the README from clone to first answer using the Sources
@@ -56,20 +56,28 @@ page, with no terminal ingest commands.
   them"); the terminal commands remain as the alternative, with a warning not to rebuild
   the store while the app is answering (KB-026); two new limitations listed
 - [x] `docs/presentation.md` mentions the Sources page and its checklist uses it
-- [ ] A clone with no `data/` is taken through Sources in a real browser: one default
-  channel removed, update run to completion, one question answered with citations
+- [x] A clone with no `data/` is taken through Sources in a real browser → a fresh
+  `git clone` at `8914a2a`, 2026-10-02: the app opened on Sources at `/` with 0 papers,
+  0 videos, the suggestion banner and the four default channels as "Not fetched yet";
+  three were removed and both history settings set to 1 week (saved correctly to the
+  clone's own `data/sources.json`); Update now finished in 121s with 233 papers, 2
+  videos (both via Whisper), 279 chunks; "What is new in the last week?" answered in 15s
+  in the same app, citing both videos
 
 **Out of scope:** new features.
 **Depends on:** T-056.
-**Notes:** Until the last criterion is run, the README's description of a first start
-("it opens on Sources", "four channels are suggested") is what the code is written to do,
-not something anyone has seen.
+**Notes:** The first attempt at this run found a real defect: the job hung in Whisper
+because the CUDA libraries were looked up in `<repo>/.venv` (KB-028). Fixed, then the run
+above. **Limits of what was run:** one week of history and one channel, not the default
+eight weeks and four channels; the clone used the main project's Python environment, so
+README's `pip install -r requirements.txt` step was not repeated (it was in T-034).
 
 ---
 
 ### T-056 — Sources page in the app: list, add, remove, update, first run, stale marker
 
-**Status:** in-progress — five criteria checked in a real browser, two not yet
+**Status:** review — six criteria checked in a real browser; the stale-data marker is
+unit-tested only
 **Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** everything D-017 describes is usable from the app.
@@ -94,8 +102,8 @@ not something anyone has seen.
   throughout, page refreshed itself at the end, 251s in all for one new 3blue1brown
   video (Whisper). Asking a question during the fetch stages was **not** tried
   successfully; during the store-writing stage it is refused with a message by design
-- [ ] With no data and no `data/sources.json`, the app opens on Sources with the default
-  channels pre-selected — not run; needs an empty `data/` (T-057's fresh clone)
+- [x] With no data and no `data/sources.json`, the app opens on Sources with the default
+  channels pre-selected → seen in T-057's fresh-clone run
 - [ ] The header marks data more than two days old — `staleness_note()` is unit-tested;
   not seen in a browser because the data is current
 

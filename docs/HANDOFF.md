@@ -43,15 +43,17 @@ code, and what should the next session do first.
 - T-052–T-056, T-058 (D-017): sources chosen in the app. `data/sources.json`, a `channel`
   field on documents and chunks (62 existing videos migrated), ingest as a background
   job, a Sources page (list, add, remove, Update now with progress), at most 5 channels.
-- T-057: README and presentation rewritten around the Sources page.
+- T-057: README and presentation rewritten around the Sources page, then a fresh clone
+  taken through it in a browser: opened on Sources, three channels removed, one week of
+  history, update finished in 121s, first question answered with citations. The first
+  attempt hung in Whisper (KB-028) and was fixed before the run that passed.
 - Everything is on `main` and pushed.
 
 **In progress / half-finished:**
-- **T-056, two criteria not seen in a browser:** the first-start flow (empty `data/`,
-  app opens on Sources) and the stale-data marker in the header. Both are unit-tested or
-  compiled only.
-- **T-057's fresh-clone run through the Sources page has not been done.** The README
-  describes the first start without anyone having run it.
+- **T-056 is `review`:** the stale-data marker in the header is unit-tested but has not
+  been seen in a browser, because the data is current.
+- The fresh-clone run used one week and one channel, and the main project's Python
+  environment. The default eight weeks and four channels were not run from the page.
 - T-048: the presentation draft is not yet reviewed; length, language and audience
   are assumptions.
 
@@ -63,7 +65,10 @@ code, and what should the next session do first.
 - KB-026: a Chroma client goes stale when another process writes the store. Queries fail
   with "Error finding id" while counts still look right. `store.reset_client()` fixes it.
 - KB-027 (provisional): the first question after an update that used Whisper hung 120s
-  on Ollama, once.
+  on Ollama, once. It did not happen again in the fresh-clone run, which also used Whisper.
+- KB-028: with Whisper's CUDA libraries not on PATH, the first transcription raises and
+  the second hangs. The lookup assumed `<repo>/.venv`; it now uses the running
+  interpreter's site-packages. A hung transcription is not caught by the job's heartbeat.
 - **Process lesson:** items were reported as done from documents and tests without
   running the app that day, and real gaps were called small.
   Run it before saying it works, and say plainly what was not run.
@@ -78,10 +83,9 @@ code, and what should the next session do first.
   only Definition of done item left.
 
 **Next session should start with:** check how old the data is and remind I
-(their standing request). Then run T-057's fresh-clone test: an empty copy, start the
-app, confirm it opens on Sources, update, ask one question.
+(their standing request). Then ask whether they have read `docs/presentation.md`.
 
-**Doc updates made:** D-017 · KB-024–027 (KB-023 superseded) · DESIGN § Sources page ·
+**Doc updates made:** D-017 · KB-024–028 (KB-023 superseded) · DESIGN § Sources page ·
 PLAN · TICKETS T-048–T-058 · README · presentation · session tree 2026-10-02
 
 ---

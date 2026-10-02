@@ -75,4 +75,11 @@ which defects only a real run exposed.
 
 ## 11. README and presentation for Sources  [T-057]
    - 11.1 README rewritten around the Sources page; terminal commands kept as the alternative
-   - 11.2 Fresh-clone run through the page: outcome recorded in T-057
+   - 11.2 A test from an empty copy is needed, but a small one (one week, one
+     channel) exercises the same untested paths in minutes instead of half an hour
+   - 11.3 First attempt: the job hung in Whisper for nine minutes with a live heartbeat
+     · outcome: CUDA libraries were looked up in `<repo>/.venv`; fixed via `sysconfig`,
+       plus "one RuntimeError switches Whisper off for the run". KB-028
+   - 11.4 Second attempt, new clone: opened on Sources, update in 121s, first question
+     answered with two Whisper-transcribed videos cited
+     · outcome: T-057 done. The stale-data marker (T-056) is still unseen in a browser
