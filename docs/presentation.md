@@ -3,16 +3,28 @@
 Utkast, T-048. Antaganden som inte är bekräftade: cirka 10 minuter plus frågor, på
 att korta. Allt som står som siffra här finns i repot; källan anges i sista avsnittet.
 
-## Före demon (gör detta 15 minuter innan)
+## Före demon
 
-1. Starta Ollama och appen: `streamlit run app.py`.
-2. Ställ en valfri fråga och vänta tills svaret kommer, så att båda modellerna är
-   laddade. Därefter tar sökningen drygt en sekund och svaret ungefär tio.
-3. Kör inte ikapp-inhämtningen precis före. Frågorna nedan är kontrollerade mot data
-   till och med 17 september, och ny data ändrar svaren.
-4. Ha `docs/screenshots/t042-ui-light-theme.png` öppen i en flik som reserv om modellen
+Demofrågorna nedan är kontrollerade mot data till och med 2 oktober 2026. Ny data
+ändrar svaren, eftersom "de senaste två veckorna" räknas från det senaste datumet i
+samlingen. Gör därför så här:
+
+**Dagen före:**
+
+1. Uppdatera datan (tar 15–20 minuter, YouTube-delen är långsam):
+   `python scripts/t013_catch_up.py` och sedan `python scripts/t012_build_store.py`.
+2. Kontrollera demofrågorna mot den nya datan:
+   `python scripts/t048_verify_demo_questions.py`. Läs svaren och rätta "Väntat svar"
+   nedan om de har ändrats. Byt fråga 2 till det nya senaste datumet.
+
+**15 minuter före:**
+
+3. Starta Ollama och appen: `streamlit run app.py`.
+4. Ställ en valfri fråga och vänta tills svaret kommer, så att båda modellerna är
+   laddade. Därefter tar sökningen några sekunder och svaret 5–15 sekunder.
+5. Ha `docs/screenshots/t042-ui-light-theme.png` öppen i en flik som reserv om modellen
    inte svarar.
-5. Ha `docs/eval-results/2026-09-22-0027-t032-date-aware-vs-plain.md` öppen i en flik.
+6. Ha `docs/eval-results/2026-09-22-0027-t032-date-aware-vs-plain.md` öppen i en flik.
 
 ## 1. Problemet (1 min)
 
@@ -41,25 +53,32 @@ Två saker att säga tydligt:
 
 Peka först på statusraden: antal dokument och senaste datum i samlingen.
 
+Väntade svar nedan är från en riktig körning 2 oktober 2026.
+
 **Fråga 1 — har X nämnts?**
-`Har NeoHorse nämnts de senaste två veckorna?`
-Väntat svar: ja, NeoHorse-1, 9 september. Visa att frågan ställs på svenska, att svaret
-kommer på engelska, och att datumfönstret syns i rutan "Date range".
+`Har Opus 5.5 nämnts de senaste två veckorna?`
+Väntat svar: ja, i fyra videor mellan 22 och 30 september, bland annat "Claude Opus 5.5
+is ridiculous" (24 september). Visa att frågan ställs på svenska, att svaret kommer på
+engelska, och att datumfönstret syns i rutan "Date range". Klicka på en källa och visa
+att länken går till rätt ställe i videon.
 
 **Fråga 2 — vad är nytt ett visst datum?**
-`Vad är nytt den 16 september?`
-Väntat svar: flera av de 20 artiklarna och den video som har just det datumet. Klicka
-på en källa och visa att länken går till rätt artikel.
+`Vad är nytt den 2 oktober?`
+Väntat svar: en kort sammanfattning av dagens ämnen och en lång källista där alla 33
+källor har datumet 2 oktober. Svaret radar upp alla källnummer efter varandra, vilket
+ser rörigt ut. Poängen att visa är källistan: inget annat datum slinker med.
 
 **Fråga 3 — hur har något utvecklats?**
 `Vad har hänt med GUI agents den senaste månaden?`
-Väntat svar: minst två av UI-Mate, AnTrap, UI-Venus-2, TRACE och LLaDA-UI, med datum.
+Väntat svar: fem arbeten i datumordning, från UI-Venus-2 (2 september) över LLaDA-UI,
+EvoSkill-GUI och HybridCUA till AutoGUIWorld (2 oktober).
 
 **Om tiden räcker — en fråga som systemet inte klarar.**
 `Har Palantir nämnts i någon video?`
-Rätt svar är ja, men videons automatiska textning skriver "Palunteer", och sökningen
-hittar inte rätt. Det här är en av de två frågor som blev fel i utvärderingen. Att visa
-den är ärligare än att bara visa det som fungerar.
+Systemet svarar nej. Rätt svar är ja: en video från 16 september nämner Palantir, men
+den automatiska textningen skriver "Palunteer", och sökningen hittar den inte. Det här
+är en av de två frågor som blev fel i utvärderingen. Att visa den är ärligare än att
+bara visa det som fungerar.
 
 ## 4. Hur det är byggt (1 min)
 
@@ -133,7 +152,9 @@ Välj två av dessa, inte alla:
 
 - Resultattabellen: `docs/PLAN.md` och de bedömda filerna i `docs/eval-results/`
   (`2026-09-22-0027-t032-…` och `2026-09-23-1516-t033-…`).
-- Väntade svar på demofrågorna: `docs/eval-questions.md`, fråga 05, 10, 02 och 12.
+- Väntade svar på demofrågorna: `scripts/t048_verify_demo_questions.py`, körd 2 oktober
+  2026 mot 1609 artiklar och 62 videor. Palantir-frågan är fråga 12 i
+  `docs/eval-questions.md`.
 - Whisper 24 av 24: T-019 i `docs/TICKETS.md`.
 - 32 mätningar och 30 av 30: T-039 i `docs/TICKETS.md`.
 - Sökningen 68,6 mot 1,4 sekunder: `docs/kb/KB-024-…`.

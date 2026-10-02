@@ -96,11 +96,15 @@ edit and present from — `docs/GOAL.md` Definition of done item 5.
 **Acceptance criteria**
 - [x] `docs/presentation.md` exists, in Swedish, with a pre-demo checklist, timed
 - [x] Every number in it is traceable to a file in the repo, listed in its last section
-- [x] Demo questions are taken verbatim from `docs/eval-questions.md` (F05, F10, F02,
-  and F12 as the known failure)
+- [x] Demo questions cover the three question types plus F12 as the known failure, and
+  their expected answers come from a real run → `scripts/t048_verify_demo_questions.py`,
+  2026-10-02, after the same day's catch-up (1609 papers, 62 videos, 2852 chunks, through
+  2026-10-02): all four `stop`, no retries, retrieval 3.1–7.1s, generation 5.5–14.0s.
+  The original F05/F10 questions were replaced because the catch-up moved the date
+  windows they depended on
 - [ ] I have confirmed length, language and audience, and edited the draft
-- [ ] The demo questions have been asked in the running UI on the day's data and their
-  wait times measured (KB-023's 40–100s retrieval latency is uninvestigated)
+- [ ] The demo questions have been asked in the running UI, not only through the
+  pipeline functions, on the data current on the day
 
 **Out of scope:** slides; investigating KB-023; running `defense-prep`.
 
