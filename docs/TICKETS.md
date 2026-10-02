@@ -14,6 +14,34 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-048 — Draft the live demonstration and presentation
+
+**Status:** review
+**Size:** S  ·  **Branch:** — (docs-only)  ·  **Phase:** 3
+
+**Goal:** I have a run-of-show for the course's live demonstration that they can
+edit and present from — `docs/GOAL.md` Definition of done item 5.
+
+**Why:** the only Definition of done item not met. I asked for a draft
+(2026-10-02); the deliverable is a live demo and presentation, not a written report.
+
+**Acceptance criteria**
+- [x] `docs/presentation.md` exists, in Swedish, with a pre-demo checklist, timed
+- [x] Every number in it is traceable to a file in the repo, listed in its last section
+- [x] Demo questions are taken verbatim from `docs/eval-questions.md` (F05, F10, F02,
+  and F12 as the known failure)
+- [ ] I have confirmed length, language and audience, and edited the draft
+- [ ] The demo questions have been asked in the running UI on the day's data and their
+  wait times measured (KB-023's 40–100s retrieval latency is uninvestigated)
+
+**Out of scope:** slides; investigating KB-023; running `defense-prep`.
+
+**Depends on:** T-032, T-033 (the graded results it reports).
+**Notes:** Length (about 10 minutes), language and audience are assumptions, stated at
+the top of the draft.
+
+---
+
 ### T-047 — README: the "Since" name and logo, and correct its stale UI facts
 
 **Status:** done
