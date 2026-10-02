@@ -21,7 +21,7 @@ import requests
 from vg09.llm import split_reasoning_and_answer
 from vg09.retrieval import CHAT_MODEL, NUM_CTX, Candidate, format_source
 
-OLLAMA = "http://localhost:11434"
+OLLAMA = "http://127.0.0.1:11434"  # not "localhost" - see vg09/store.py (KB-024)
 # T-028: raised from 2000 after a real truncation I found (done_reason=="length")
 # on "Vad har hänt med AI-agenter senaste veckan?". Three real re-runs of that exact
 # question (same retrieved context, only sampling varied) measured reasoning alone at

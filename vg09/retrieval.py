@@ -25,7 +25,7 @@ import requests
 
 from vg09.store import embed_batch, get_collection
 
-OLLAMA = "http://localhost:11434"
+OLLAMA = "http://127.0.0.1:11434"  # not "localhost" - see vg09/store.py (KB-024)
 CHAT_MODEL = "qwen3:30b-a3b"  # D-005
 NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUDE.md)
 

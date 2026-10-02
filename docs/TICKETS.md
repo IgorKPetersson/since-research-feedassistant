@@ -14,6 +14,39 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-049 — Retrieval takes over a minute per question: find the cause and fix it
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** a question's retrieval step takes seconds, not a minute, so the app is usable
+live.
+
+**Why:** KB-023 recorded 40–100s retrieval and left the cause open. Measured again
+2026-10-02: 61s retrieval against 11s generation for one question. Unusable in a live
+demonstration.
+
+**Acceptance criteria**
+- [x] Each retrieval step is timed separately with Ollama's loaded models recorded after
+  each → `scripts/t049_time_retrieval_steps.py`: every request cost about 2s whatever it
+  did, both models stayed loaded throughout
+- [x] The cause is confirmed by changing one thing and re-measuring → same script with
+  `http://127.0.0.1:11434`: `retrieve()` 68.56s → 1.36s, identical result (29 chunks,
+  11444 tokens)
+- [x] `vg09.store`, `vg09.retrieval` and `vg09.answer` address Ollama as `127.0.0.1`, and
+  a test fails if any of them goes back → `OllamaAddressTests`; 208/208 pass
+- [x] Re-measured after the change with no override → `retrieve()` 1.17s
+- [x] KB-023 marked superseded, KB-024 written
+- [ ] Seen in the running Streamlit UI, not only through the pipeline functions
+
+**Out of scope:** the old feasibility scripts under `scripts/`, which keep `localhost`
+as records of past runs; reducing the number of requests retrieval makes.
+
+**Depends on:** —
+**Notes:** Timings recorded before this ticket include the overhead (KB-024 lists which).
+
+---
+
 ### T-048 — Draft the live demonstration and presentation
 
 **Status:** review

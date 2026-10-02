@@ -6,9 +6,8 @@ att korta. Allt som står som siffra här finns i repot; källan anges i sista a
 ## Före demon (gör detta 15 minuter innan)
 
 1. Starta Ollama och appen: `streamlit run app.py`.
-2. Ställ en valfri fråga och vänta tills svaret kommer. Första frågan kan ta lång tid:
-   den 24 september tog sökningen 40–100 sekunder per fråga, och orsaken är inte utredd
-   (KB-023). Mät hur lång tid fråga två och tre tar, så vet du vad publiken får vänta.
+2. Ställ en valfri fråga och vänta tills svaret kommer, så att båda modellerna är
+   laddade. Därefter tar sökningen drygt en sekund och svaret ungefär tio.
 3. Kör inte ikapp-inhämtningen precis före. Frågorna nedan är kontrollerade mot data
    till och med 17 september, och ny data ändrar svaren.
 4. Ha `docs/screenshots/t042-ui-light-theme.png` öppen i en flik som reserv om modellen
@@ -105,6 +104,9 @@ Välj två av dessa, inte alla:
 - **Min egen budget räknade fel i flera veckor.** Jag mätte bara textstyckena, inte
   rubriken och länken som läggs runt varje stycke. En fråga fick ett helt tomt svar
   innan det upptäcktes, och det var utvärderingen som hittade det.
+- **En minuts väntan satt i ett enda ord.** Varje sökning tog över en minut. Orsaken var
+  adressen `localhost`: varje anrop till modellen väntade två sekunder i onödan, och en
+  sökning gör trettio anrop. Med `127.0.0.1` tar samma sökning drygt en sekund.
 - **Samma fråga kan lyckas ena gången och kapas nästa.** Modellen resonerar olika länge
   varje gång. Efter 32 mätningar höjdes taket och ett automatiskt omförsök lades till;
   därefter gick 30 av 30 körningar igenom.
@@ -134,4 +136,4 @@ Välj två av dessa, inte alla:
 - Väntade svar på demofrågorna: `docs/eval-questions.md`, fråga 05, 10, 02 och 12.
 - Whisper 24 av 24: T-019 i `docs/TICKETS.md`.
 - 32 mätningar och 30 av 30: T-039 i `docs/TICKETS.md`.
-- Väntetiden 40–100 sekunder: `docs/kb/KB-023-…`.
+- Sökningen 68,6 mot 1,4 sekunder: `docs/kb/KB-024-…`.

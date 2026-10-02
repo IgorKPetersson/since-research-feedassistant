@@ -18,6 +18,19 @@ from unittest.mock import MagicMock, patch
 from vg09.store import EMBED_MODEL, EMBED_NUM_CTX, corpus_stats, embed_batch, is_empty, latest_feed_date
 
 
+class OllamaAddressTests(unittest.TestCase):
+    def test_no_module_addresses_ollama_as_localhost(self):
+        """T-049/KB-024: "localhost" cost about 2 seconds per request on Windows (IPv6
+        tried first, Ollama on IPv4 only) - 68.6s per retrieval against 1.4s measured
+        with the literal address. All three constants, so one can't quietly go back."""
+        import vg09.answer
+        import vg09.retrieval
+        import vg09.store
+
+        for module in (vg09.answer, vg09.retrieval, vg09.store):
+            self.assertEqual(module.OLLAMA, "http://127.0.0.1:11434", module.__name__)
+
+
 class LatestFeedDateTests(unittest.TestCase):
     def test_returns_the_max_feed_date_ordinal_across_both_sources(self):
         collection = MagicMock()

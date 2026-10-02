@@ -1,7 +1,8 @@
 # KB-023 — In live UI runs on 2026-09-24, retrieval took ~40–100s per question while generation took 9–17s; cause not established
 
 **Area:** Local model (Ollama) — latency of the embedding step
-**Status:** provisional
+**Status:** superseded by KB-024 — the observation was real, but the cause was not model
+unloading: every request to `localhost` cost about 2 seconds, and retrieval makes ~30
 **Date:** 2026-09-24  ·  **From:** T-045/T-046 screenshot runs / session 2026-09-24 § 11
 
 ## Claim

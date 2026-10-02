@@ -26,7 +26,11 @@ import requests
 from vg09.chunking import Chunk, chunk_document
 from vg09.document import RAW_DIR
 
-OLLAMA = "http://localhost:11434"
+# The literal IPv4 address, never "localhost" (T-049, KB-024): on Windows "localhost"
+# is tried over IPv6 first, Ollama listens on IPv4 only, and every single request then
+# waits about 2 seconds for that attempt to give up. Retrieval makes ~30 requests per
+# question, which was the whole of KB-023's 40-100s.
+OLLAMA = "http://127.0.0.1:11434"
 EMBED_MODEL = "bge-m3"
 EMBED_NUM_CTX = 8192  # bge-m3's own context window, per KB-007 - never left implicit
 STORE_PATH = Path(__file__).resolve().parent.parent / "data" / "chroma_store"

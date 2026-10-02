@@ -48,7 +48,8 @@ edited in place — it is superseded by a new one and marked.
 | [KB-020](KB-020-streamlit-top-level-theme-section-removes-the-theme-toggle.md) | A top-level `[theme]` in `.streamlit/config.toml` removes the viewer's Light/Dark toggle and ignores the OS preference; `[theme.light]` + `[theme.dark]` keep it | UI (Streamlit) — theming | verified | 2026-09-24 |
 | [KB-021](KB-021-streamlit-custom-css-injection-gotchas.md) | Custom CSS loses to Streamlit's markdown font/link rules unless scoped under `[data-testid]` with `!important`; the broad selector breaks Material icons; `st.html()` strips `<link>` (use `@import`); `page_icon` takes an `.svg` path | UI (Streamlit) — custom CSS injection | verified | 2026-09-24 |
 | [KB-022](KB-022-instrument-sans-heaviest-weight-is-700.md) | Instrument Sans on Google Fonts tops out at 700; `wght@800` returns HTTP 400 | UI — typeface (Google Fonts) | verified | 2026-09-24 |
-| [KB-023](KB-023-ui-retrieval-took-40-100s-per-question-cause-unknown.md) | Live UI retrieval took ~40–100s per question vs 9–17s generation; `bge-m3` was seen unloaded; cause not established | Local model (Ollama) — embedding latency | provisional | 2026-09-24 |
+| [KB-023](KB-023-ui-retrieval-took-40-100s-per-question-cause-unknown.md) | Live UI retrieval took ~40–100s per question vs 9–17s generation; `bge-m3` was seen unloaded; cause not established | Local model (Ollama) — embedding latency | superseded by KB-024 | 2026-09-24 |
+| [KB-024](KB-024-localhost-costs-two-seconds-per-ollama-request-on-windows.md) | Addressing Ollama as `localhost` costs ~2s per request on Windows (IPv6 tried first, Ollama on IPv4 only); `127.0.0.1` does not — `retrieve()` 68.6s → 1.4s; every wall-clock time recorded before 2026-10-02 includes this overhead | Local model (Ollama) — request latency | verified | 2026-10-02 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
