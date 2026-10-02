@@ -28,6 +28,32 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-02 — T-047 merged to `main`; only the report and presentation remain
+
+**Tickets:** T-047  ·  **Tree:** — (short session, nothing beyond this note)
+
+**Done this session:**
+- `t/T-047-readme-since` fast-forwarded into `main` and pushed (`c21b19b..0dffd65`), as
+  the first Definition of done item. 207/207 tests pass
+  before and after. The 2026-09-24 note below, KB-020–023 and that session's tree are
+  now on `main`.
+- `docs/PLAN.md` corrected to say so.
+
+**In progress / half-finished:** nothing.
+
+**Learned:** nothing new.
+
+**Blocked / needs me:**
+- **Presentation** — Definition of done item 5, the only one not met.
+- Not required for done, still open: T-039 is `review` (the retry notice in the UI has
+  never been seen in a running Streamlit session); the Ask button's 3.32:1 contrast.
+
+**Next session should start with:** the presentation.
+
+**Doc updates made:** PLAN (T-047 merged, Definition of done status)
+
+---
+
 ## 2026-09-24 — Evaluations graded, UI redesigned and renamed "Since", logo mark
 
 **Tickets:** T-039, T-040, T-035, T-034, T-036, T-041, T-033, T-042, T-043, T-044, T-045,

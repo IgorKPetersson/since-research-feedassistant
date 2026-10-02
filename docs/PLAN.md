@@ -32,8 +32,9 @@ presentation remain, by explicit instruction.
 Added 2026-09-23/24, by explicit instruction, outside the original Phase 3 checklist:
 **T-042**–**T-047**, the UI redesign (English UI per D-016), English date parsing
 (T-043), and the app's name and identity, **"Since"** (display name only; the repo, the
-`vg09` package and `COLLECTION_NAME` are unchanged). T-042–T-046 are on `main`. T-047
-(README) is on its own branch, not merged.
+`vg09` package and `COLLECTION_NAME` are unchanged). T-042–T-047 are all on `main` (T-047,
+the README, was merged and pushed 2026-10-02). Of `docs/GOAL.md`'s Definition of done,
+items 1–4 are met; only item 5, the course report and presentation, remains.
 
 Total time: 3 weeks. The checkboxes below are umbrellas, not work items. When a phase
 starts, turn its checkboxes into tickets in `docs/TICKETS.md` using the `ticket-write`
