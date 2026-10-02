@@ -736,6 +736,35 @@ already names, not met by anything currently known.
 
 ---
 
+## D-017 — Sources are chosen in the app and stored in a user-local file; ingest can be started from the app
+**Status:** accepted
+
+**Decision:** The YouTube channel list and the Hugging Face settings live in
+`data/sources.json`, edited from a Sources page in the app, and ingest can be started
+from that page as a background process. `vg09/channels.py` remains as the defaults used
+when no file exists. Removing a channel also removes its stored documents.
+
+**Why:** my explicit instruction (2026-10-02). A cloned repo carried the author's four
+channels in code, and changing them or updating the data required the terminal. The
+author's interests should not be anyone else's starting configuration.
+
+**Rejected:** a committed config file — rejected because every user's choice would show
+up as a change in git, and a pull would overwrite it. Filtering Hugging Face by topic at
+ingest — rejected because the date filter and the question do the narrowing, and a topic
+filter would drop things the user did not know they would ask about. Running ingest in a
+thread inside the app — rejected because Streamlit reruns the script per interaction and
+the job has to outlive the browser tab.
+
+**Cost:** this is beyond `docs/GOAL.md`'s Definition of done, taken on with the
+presentation still outstanding. `Document` and chunk metadata gain a `channel` field, a
+stored-format change that needs a one-time migration of existing videos. The app gains a
+second page and a background process, the first code in this project that does.
+
+**Would change our mind:** if the background process proves unreliable on Windows, fall
+back to the page showing the exact terminal commands for the chosen sources.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

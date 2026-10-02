@@ -14,6 +14,165 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-057 — Sources: README, presentation and a fresh-clone run through the page
+
+**Status:** todo
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** a new user can follow the README from clone to first answer using the Sources
+page, with no terminal ingest commands.
+
+**Why:** the README describes hardcoded channels and three terminal commands (D-017).
+
+**Acceptance criteria**
+- [ ] README's "Configuring which sources it watches" and "Running ingest" describe the
+  Sources page; the terminal commands remain as the alternative
+- [ ] `docs/presentation.md` mentions the Sources page and its checklist uses it
+- [ ] A clone with no `data/` is taken through Sources in a real browser: one default
+  channel removed, update run to completion, one question answered with citations
+
+**Out of scope:** new features.
+**Depends on:** T-056.
+**Notes:** —
+
+---
+
+### T-056 — Sources page in the app: list, add, remove, update, first run, stale marker
+
+**Status:** todo
+**Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** everything D-017 describes is usable from the app.
+
+**Why:** D-017; `docs/DESIGN.md` § Sources page.
+
+**Acceptance criteria**
+- [ ] The app has two pages, the question page and Sources, and the question page
+  behaves as before (checked in a browser: Enter and Ask both still submit)
+- [ ] Sources shows Hugging Face (on/off, weeks) and each channel with its real document
+  count and latest feed date
+- [ ] Adding a channel checks the address against YouTube first; a wrong address shows
+  an error and saves nothing; a valid one is saved and marked "searchable after the next
+  update"
+- [ ] Removing a channel asks for confirmation, then its documents are gone from the
+  store and a question no longer cites them
+- [ ] "Update now" shows the time warning, starts the job, shows live progress, and
+  cannot be started twice; the question page works while it runs
+- [ ] With no data and no `data/sources.json`, the app opens on Sources with the default
+  channels pre-selected
+- [ ] The header marks data more than two days old
+
+**Out of scope:** automated UI tests (the project has none); scheduled ingest.
+**Depends on:** T-053, T-054, T-055.
+**Notes:** UI text in English (D-016).
+
+---
+
+### T-055 — Ingest as a background job with a status file
+
+**Status:** todo
+**Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** one function starts the whole ingest (fetch, then rebuild the store) as a
+separate process, and another reports how far it has come.
+
+**Why:** D-017: the app must be able to start ingest and stay usable while it runs.
+
+**Acceptance criteria**
+- [ ] `vg09/ingest_job.py`: `start()` launches the job as a separate process and returns
+  at once; `status()` reads `data/ingest_status.json` (state, stage, counts, started and
+  heartbeat times, process id, last error)
+- [ ] The job honours `data/sources.json`: Hugging Face skipped when off; a source with
+  no watermark gets a backfill of the configured weeks; a channel added since the last
+  run gets its own backfill window, not only the days since the watermark
+- [ ] A second `start()` while one runs is refused; a status whose process is gone or
+  whose heartbeat is old is reported as interrupted
+- [ ] A failure in one stage is recorded in the status with its message, and the store
+  is still rebuilt from whatever was fetched
+- [ ] Unit tests cover start-refused, interrupted detection and the stage order with
+  everything external mocked; one real run completes against the real services
+
+**Out of scope:** the page itself (T-056); cancelling a running job.
+**Depends on:** T-053, T-054.
+**Notes:** —
+
+---
+
+### T-054 — Record each video's channel, so a channel can be counted and removed
+
+**Status:** todo
+**Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** the store knows which channel every video came from.
+
+**Why:** D-017: per-channel counts on the page, and removing a channel has to remove
+its documents. Today neither `Document` nor chunk metadata records the channel.
+
+**Acceptance criteria**
+- [ ] `Document.channel` (optional) is set for every newly fetched video and carried
+  into chunk metadata; papers have none. Old raw files without the key still load
+- [ ] A one-time migration assigns a channel to every existing video by listing each
+  configured channel, and reports any video it could not assign
+- [ ] `vg09.store` can report documents and latest feed date per channel, and delete a
+  channel's chunks; raw files for a removed channel are deleted too
+- [ ] After the migration and a store rebuild on the real data, every YouTube chunk has
+  a channel, and the per-channel counts sum to the total number of videos
+- [ ] Unit tests cover the metadata, the per-channel stats and the removal
+
+**Out of scope:** the page (T-056).
+**Depends on:** T-053.
+**Notes:** **A stored-format change** (`Document`, chunk metadata) — additive, same
+shape as D-007. Needs my yes before it is built, per `CLAUDE.md`.
+
+---
+
+### T-053 — Sources configuration file, read by ingest instead of the hardcoded list
+
+**Status:** in-progress
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** which channels are fetched is decided by `data/sources.json`, not by code.
+
+**Why:** D-017. First slice: no UI yet, no stored-format change, terminal flow unchanged.
+
+**Acceptance criteria**
+- [ ] `vg09/sources.py` loads and saves `data/sources.json`; with no file it returns the
+  four defaults from `vg09/channels.py` and says the configuration is not saved yet
+- [ ] A channel can be added from `@handle`, a bare handle, or a `youtube.com/@handle`
+  address with or without `/videos`; anything else is rejected with a message; adding an
+  existing channel and removing an unknown one are rejected
+- [ ] `vg09.youtube_backfill.run()` fetches the configured channels; `catch_up_hf()`
+  does nothing when Hugging Face is switched off
+- [ ] Unit tests cover the above with the file path patched to a temporary directory;
+  the existing suite still passes
+
+**Out of scope:** checking that a channel exists on YouTube (T-056); the page.
+**Depends on:** —
+**Notes:** —
+
+---
+
+### T-052 — Specify the Sources page and slice it into tickets
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (docs-only)  ·  **Phase:** 3
+
+**Goal:** the Sources page exists as a written design, a decision
+and checkable tickets before any of it is built.
+
+**Why:** explicit instruction (2026-10-02), after I saw that a cloned repo
+carries their own four channels in code.
+
+**Acceptance criteria**
+- [x] `docs/DESIGN.md` § Sources page; D-017; tickets T-053–T-057 with dependencies
+
+**Out of scope:** building any of it.
+**Depends on:** —
+**Notes:** Beyond `docs/GOAL.md`'s Definition of done; the presentation (T-048) is
+still outstanding.
+
+---
+
 ### T-051 — One action submits a question: Enter or one click on Ask
 
 **Status:** done

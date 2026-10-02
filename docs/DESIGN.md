@@ -500,6 +500,57 @@ count heuristic, not real understanding — a *short* bracket the model used des
 can't be told apart from a genuine citation; only the long-range shape T-024's real F12 run
 and T-032's real F10/F12 grading actually produced is covered.
 
+## Sources page: user-chosen sources and in-app ingest (T-052–T-057, D-017)
+
+**Problem:** the YouTube channels are a hardcoded list in `vg09/channels.py`, and ingest
+is three terminal commands. Someone who clones the repo gets the author's four channels
+and has to edit code to change them.
+
+**Serves:** `docs/GOAL.md`'s "simple to install" and Definition of done item 1; beyond the
+original Definition of done, added by explicit instruction (2026-10-02).
+
+**Behaviour:**
+1. The app has a second page, **Sources**, next to the question page.
+2. It lists Hugging Face Daily Papers (on/off, weeks of history) and each YouTube
+   channel with its real document count and latest feed date.
+3. A channel is added by pasting its address or `@handle`. The address is checked
+   against YouTube before it is saved. Its content becomes searchable after the next
+   update, and the page says so.
+4. Removing a channel removes its documents from the store and from `data/raw/`, after
+   a confirmation. It stops being fetched.
+5. **Update now** starts ingest in the background, with a warning that it takes minutes
+   and a progress line. Questions can be asked meanwhile against what is already
+   stored. New content is searchable once the store has been rebuilt at the end.
+6. With no data and no saved configuration, the app opens on Sources with the four
+   default channels pre-selected as suggestions.
+7. The header marks the data as stale when the latest feed date is more than two days old.
+
+**Not included:** scheduled ingest (still a non-goal); choosing individual papers or
+filtering Hugging Face by topic; sources other than HF Daily Papers and YouTube;
+more than one ingest job at a time.
+
+**Design impact:**
+- `data/sources.json` (new, user-local, gitignored): `{"hf": {"enabled", "backfill_weeks"},
+  "youtube": {"backfill_weeks", "channels": [{"handle", "url"}]}}`. Read and written
+  only through `vg09/sources.py`. When the file is missing, `vg09/channels.py`'s four
+  channels are the defaults, so the terminal commands in the README keep working.
+- `Document` gains an optional `channel` field and chunk metadata gains `channel`, so a
+  channel's documents can be counted and removed. **A stored-format change**, additive;
+  existing videos are assigned by a one-time migration that lists each configured channel.
+- Ingest runs as a separate process started by the app (`vg09/ingest_job.py`), which
+  writes its progress to `data/ingest_status.json`. A separate process, not a thread:
+  Streamlit reruns the script on every interaction and would lose a thread's handle,
+  and the job must survive the browser tab closing.
+- `app.py` becomes two pages via Streamlit's own navigation.
+
+**Verification:** each ticket's criteria; at the end a fresh clone with no `data/` is
+taken through Sources in a real browser: change the channel list, update, ask a question.
+
+**Risks:** YouTube blocking caption requests during an in-app update (already handled
+by the Whisper fallback, but slow — the progress line must show it); the job process
+dying without updating its status file (the status carries the process id and a
+heartbeat time, and a stale one is reported as interrupted, not as running).
+
 ## What we deliberately don't build
 
 - <…>
