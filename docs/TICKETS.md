@@ -43,7 +43,7 @@ videos are fetched 3–8 seconds apart on purpose, and a blocked one is transcri
 
 ### T-057 — Sources: README, presentation and a fresh-clone run through the page
 
-**Status:** todo
+**Status:** in-progress — the documents are written, the fresh-clone run is not done
 **Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** a new user can follow the README from clone to first answer using the Sources
@@ -52,15 +52,18 @@ page, with no terminal ingest commands.
 **Why:** the README describes hardcoded channels and three terminal commands (D-017).
 
 **Acceptance criteria**
-- [ ] README's "Configuring which sources it watches" and "Running ingest" describe the
-  Sources page; the terminal commands remain as the alternative
-- [ ] `docs/presentation.md` mentions the Sources page and its checklist uses it
+- [x] README describes the Sources page ("Start the app", "Choosing sources and fetching
+  them"); the terminal commands remain as the alternative, with a warning not to rebuild
+  the store while the app is answering (KB-026); two new limitations listed
+- [x] `docs/presentation.md` mentions the Sources page and its checklist uses it
 - [ ] A clone with no `data/` is taken through Sources in a real browser: one default
   channel removed, update run to completion, one question answered with citations
 
 **Out of scope:** new features.
 **Depends on:** T-056.
-**Notes:** —
+**Notes:** Until the last criterion is run, the README's description of a first start
+("it opens on Sources", "four channels are suggested") is what the code is written to do,
+not something anyone has seen.
 
 ---
 

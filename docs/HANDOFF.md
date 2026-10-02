@@ -28,6 +28,64 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-02 (evening) — Finishing pass, data caught up, Sources page built
+
+**Tickets:** T-048–T-058  ·  **Tree:** docs/sessions/2026-10-02-finishing-pass-and-sources-page.md
+
+**Done this session:**
+- T-049: retrieval 68.6s → 1.2s. Ollama is addressed as `127.0.0.1`, not `localhost`.
+- T-050: accent darkened to `#A26B16` so white text reaches 4.5:1;
+  chips now white. T-051: Enter or one click on Ask submits. T-039 closed after its
+  retry notice was seen in the running app.
+- Data caught up from 2026-09-17 to 2026-10-02 (1610 papers, 62 videos, 2853 chunks).
+- T-048: `docs/presentation.md`, a run-of-show for the live demo, with demo questions
+  verified against the caught-up data.
+- T-052–T-056, T-058 (D-017): sources chosen in the app. `data/sources.json`, a `channel`
+  field on documents and chunks (62 existing videos migrated), ingest as a background
+  job, a Sources page (list, add, remove, Update now with progress), at most 5 channels.
+- T-057: README and presentation rewritten around the Sources page.
+- Everything is on `main` and pushed.
+
+**In progress / half-finished:**
+- **T-056, two criteria not seen in a browser:** the first-start flow (empty `data/`,
+  app opens on Sources) and the stale-data marker in the header. Both are unit-tested or
+  compiled only.
+- **T-057's fresh-clone run through the Sources page has not been done.** The README
+  describes the first start without anyone having run it.
+- T-048: the presentation draft is not yet reviewed; length, language and audience
+  are assumptions.
+
+**Learned (not obvious from the code):**
+- KB-024: `localhost` costs about 2s per Ollama request on Windows. Every time measured
+  before today includes it.
+- KB-025: `os.replace()` onto a file another process has open raises `PermissionError`
+  on Windows. It killed the first real job run.
+- KB-026: a Chroma client goes stale when another process writes the store. Queries fail
+  with "Error finding id" while counts still look right. `store.reset_client()` fixes it.
+- KB-027 (provisional): the first question after an update that used Whisper hung 120s
+  on Ollama, once.
+- **Process lesson:** items were reported as done from documents and tests without
+  running the app that day, and real gaps were called small.
+  Run it before saying it works, and say plainly what was not run.
+- **Process lesson:** all three defects in the Sources work (KB-025, KB-026, the 316s
+  no-op update) were invisible to 250 passing unit tests and appeared in the first real
+  run. For anything with two processes or a browser, the real run is the test.
+- Dead end not built: a second store directory swapped in after the job. Renaming a
+  directory the app holds open fails on Windows.
+
+**Blocked / needs me:**
+- Read `docs/presentation.md` and say what to change. The presentation itself is the
+  only Definition of done item left.
+
+**Next session should start with:** check how old the data is and remind I
+(their standing request). Then run T-057's fresh-clone test: an empty copy, start the
+app, confirm it opens on Sources, update, ask one question.
+
+**Doc updates made:** D-017 · KB-024–027 (KB-023 superseded) · DESIGN § Sources page ·
+PLAN · TICKETS T-048–T-058 · README · presentation · session tree 2026-10-02
+
+---
+
 ## 2026-10-02 — T-047 merged to `main`; only the report and presentation remain
 
 **Tickets:** T-047  ·  **Tree:** — (short session, nothing beyond this note)

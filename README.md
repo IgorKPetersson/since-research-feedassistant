@@ -53,20 +53,47 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Configuring which sources it watches
+## Start the app
 
-HF Daily Papers is watched in full — no configuration needed. The YouTube channels are
-currently a hardcoded list in [`vg09/channels.py`](vg09/channels.py); there's no config
-file or UI for this yet, so changing the channel list means editing that file directly
-before running the YouTube backfill below.
+```
+streamlit run app.py
+```
 
-## Running ingest
+opens Since in your browser. It has two pages, listed in the sidebar: **Ask** and
+**Sources**. The first time, with nothing fetched yet, it opens on Sources.
 
-Ingest is a manual, offline step — there's no scheduler or background service (a
-deliberate choice; see "Known limitations" below). Run it, then ask questions; run it again
-whenever you want to catch up.
+## Choosing sources and fetching them
 
-**First time (initial backfill — HF: last 8 weeks, YouTube: latest ~4 weeks):**
+Everything about what is watched, and fetching it, is on the **Sources** page.
+
+- **Hugging Face Daily Papers** can be switched on or off, and you choose how many weeks
+  of history to fetch the first time (8 by default). The whole daily selection is
+  fetched; there is no topic filter.
+- **YouTube channels** are added by pasting a channel's address or `@handle`. The address
+  is checked against YouTube before it is saved. Up to 5 channels: each one adds a few
+  minutes to every update, because videos are fetched slowly on purpose. Four channels
+  are suggested on a first start; remove the ones you don't want.
+- **Removing a channel** also removes the videos already fetched from it, so answers stop
+  using them.
+- **Update now** fetches everything new and makes it searchable. It runs in the
+  background and shows its progress, and keeps going if you close the browser tab. The
+  first update takes the longest (tens of minutes); later ones fetch only what is new.
+  Your choices are saved in `data/sources.json`, which is not committed to git — a clone
+  of this repository never carries someone else's channels or data.
+
+For each video, real captions are tried first. If YouTube blocks them, the audio is
+transcribed locally with Whisper, and if that fails too, the video's title and
+description are used alone (weaker, but never a hard failure).
+
+Fetching happens only when you press Update now. There is no scheduler (a deliberate
+choice; see "Known limitations" below). The header shows how far the data reaches and
+marks it when it is more than two days old.
+
+### From the terminal instead
+
+The same ingest can be run without the app. First time (Hugging Face: last 8 weeks,
+YouTube: latest 4 weeks, using the channels in `data/sources.json`, or the four defaults
+in [`vg09/channels.py`](vg09/channels.py) if that file doesn't exist):
 
 ```
 python scripts/t015_hf_backfill.py
@@ -74,36 +101,20 @@ python scripts/t017_youtube_backfill.py
 python scripts/t012_build_store.py
 ```
 
-The first two fetch and write raw documents to `data/raw/` (not committed to git — this is
-your own local dataset). The YouTube step tries real captions first; if a channel's captions
-are blocked, it falls back to local Whisper transcription, and if that also fails, to the
-video's title and description alone (weaker, but never a hard failure). The last step
-chunks, embeds (via `bge-m3`) and writes everything currently in `data/raw/` into a local
-Chroma vector store at `data/chroma_store/` — this is the step that actually makes newly
-fetched documents answerable; running the first two without it leaves the assistant unable
-to see what was just fetched.
-
-**Catching up after time offline** (the PC being off for a few days is expected and
-supported — this is what "no duplicates when run again" and "catches up since the last
-successful run" mean in practice):
+Catching up afterwards (both sources, then the search index):
 
 ```
 python scripts/t013_catch_up.py
-python scripts/t013_youtube_catch_up.py
 python scripts/t012_build_store.py
 ```
 
-All three steps are safe to re-run — nothing is re-fetched or re-embedded twice.
+All of these are safe to re-run — nothing is fetched twice. The last step is the one that
+makes newly fetched documents answerable. Don't run it while the app is answering
+questions: the embedded vector store can't be read by one process while another writes it.
 
 ## Asking a question
 
-```
-streamlit run app.py
-```
-
-opens the chat UI in your browser. Type a question and press "Ask". If nothing has
-been ingested yet, the UI shows an explicit empty-state message instead of an empty or
-broken screen.
+On the **Ask** page, type a question and press Enter or "Ask".
 
 A few things worth knowing before you use it:
 
@@ -130,9 +141,12 @@ comparison (T-033). See
 
 ## Known limitations
 
-- **Ingest only happens while your machine is on and you run it.** There's no scheduler and
-  no always-on service by design (see "Non-goals" in `docs/GOAL.md`) — "always caught up"
-  means the next time you run ingest, not continuous background updates.
+- **Fetching only happens while your machine is on and you start it.** There's no scheduler
+  and no always-on service by design (see "Non-goals" in `docs/GOAL.md`) — "always caught
+  up" means the next time you press Update now, not continuous background updates.
+- **Questions are refused for a few seconds at the end of an update**, while the new
+  content is written to the search index. The app says so and you ask again.
+- **At most 5 YouTube channels**, a deliberate limit to keep updates short.
 - **YouTube's channel listing only exposes the latest ~15 videos per channel.** A long gap
   between catch-up runs on a very active channel can miss older videos that scrolled off
   that list before you caught up.

@@ -11,8 +11,8 @@ samlingen. Gör därför så här:
 
 **Dagen före:**
 
-1. Uppdatera datan (tar 15–20 minuter, YouTube-delen är långsam):
-   `python scripts/t013_catch_up.py` och sedan `python scripts/t012_build_store.py`.
+1. Uppdatera datan: starta appen, gå till sidan **Sources** och tryck **Update now**.
+   Det tar några minuter, och längre om nya videor måste transkriberas.
 2. Kontrollera demofrågorna mot den nya datan:
    `python scripts/t048_verify_demo_questions.py`. Läs svaren och rätta "Väntat svar"
    nedan om de har ändrats. Byt fråga 2 till det nya senaste datumet.
@@ -91,7 +91,12 @@ fråga ─ datumfönster ur frågan ─ datumfilter ─ likhetssökning ─ qwen
 ```
 
 - Python, Ollama, ChromaDB inbäddad i processen, Streamlit.
-- Inhämtningen körs för hand och hinner ikapp sedan förra körningen, utan dubbletter.
+- Källorna väljs på sidan Sources i appen: Hugging Face av eller på, och upp till fem
+  YouTube-kanaler. Valet sparas lokalt, så den som laddar hem projektet får inte mina
+  kanaler eller min data.
+- Inhämtningen startas med en knapp, går i bakgrunden och hinner ikapp sedan förra
+  körningen, utan dubbletter. Visa sidan om tiden räcker, men tryck inte på Update now
+  under demon: ny data ändrar svaren på demofrågorna.
 - För YouTube prövas textning först, sedan lokal Whisper, sist bara titel och
   beskrivning. Två av fyra kanaler blockerade textningen helt, och alla deras 24 videor
   gick igenom via Whisper.
@@ -132,7 +137,8 @@ Välj två av dessa, inte alla:
 
 ## 7. Begränsningar (30 s)
 
-- Inhämtning sker bara när datorn är på och jag kör den.
+- Inhämtning sker bara när datorn är på och jag trycker på knappen. Appen hämtar inte
+  av sig själv, men den visar när datan är mer än två dagar gammal.
 - Kräver ett grafikkort med ungefär 24 GB minne.
 - 15 frågor, bedömda av mig som också byggde systemet. Det är ett litet underlag.
 - Felstavade namn i automatisk textning går inte att söka fram.
