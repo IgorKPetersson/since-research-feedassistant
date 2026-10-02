@@ -14,6 +14,35 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-051 — One action submits a question: Enter or one click on Ask
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** typing a question and pressing Enter, or typing it and clicking Ask once,
+each runs the question.
+
+**Why:** reported by me from using the app (2026-10-02): they had to press Enter
+and then click Ask. The field and the button were a bare `st.text_input` plus
+`st.button`; the typed text is only committed on Enter or blur, and the rerun that
+commit triggers swallowed the click.
+
+**Acceptance criteria**
+- [x] The field and the button are one `st.form` (`border=False`, so the layout is
+  unchanged) with `st.form_submit_button`
+- [x] Checked in a real browser with real key presses and clicks, on the caught-up data:
+  typing then one click on Ask answers (no Enter); typing then Enter answers (no click);
+  an example button fills the field and one click on Ask answers
+- [x] `docs/screenshots/t042-ui-{light,dark}-theme.png` retaken, now showing the
+  caught-up corpus (1609 papers, 62 videos, through 2026-10-02)
+
+**Out of scope:** an automated UI test (this project has none).
+
+**Depends on:** T-042.
+**Notes:** 209/209 unit tests pass; none of them exercise `app.py`.
+
+---
+
 ### T-050 — Ask button contrast: darken the accent so white text reaches WCAG AA
 
 **Status:** done

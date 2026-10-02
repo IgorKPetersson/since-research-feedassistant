@@ -93,11 +93,15 @@ with st.sidebar:
         if start and end:
             manual_range = (start, end)
 
-question = st.text_input(
-    "Question:", key="question_input",
-    placeholder="What's happened since…",
-)
-ask = st.button("Ask", type="primary")
+# T-051: a form, so that Enter in the field or one click on Ask each submit on their
+# own. As a bare text_input plus button, the typed text was only committed on Enter or
+# blur, and that commit's rerun swallowed the click - Enter and then Ask were both needed.
+with st.form("ask_form", border=False):
+    question = st.text_input(
+        "Question:", key="question_input",
+        placeholder="What's happened since…",
+    )
+    ask = st.form_submit_button("Ask", type="primary")
 
 if ask and question.strip():
     today = latest_feed_date()
