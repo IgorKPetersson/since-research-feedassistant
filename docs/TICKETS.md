@@ -14,6 +14,38 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-061 — Tell the model today's date and the time range already applied
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-061-date-in-prompt`  ·  **Phase:** 3
+
+**Goal:** a question about "today" or "this week" is answered from the sources retrieval
+selected, instead of the model rejecting them as being from the future.
+
+**Why:** found by me (2026-10-05). "What has happened with AI today?" retrieved 34
+excerpts, all dated 2026-10-05, and the model answered that they were "a future date",
+reasoning that today "would be a date in 2023 or 2024". The prompt never states the
+date, so the model falls back on its training-era sense of it.
+
+**Acceptance criteria**
+- [x] The user message states today's date, and when a date range was applied, that the
+  sources were selected for that range and must not be discarded for their date → 3
+  tests in `BuildUserMessageTests`
+- [x] The extra line's real token cost is measured and taken off `CHUNK_BUDGET_TOKENS`;
+  `docs/DESIGN.md`'s budget arithmetic matches → 63 tokens measured (prompt_eval_count
+  191 → 254), 70 reserved, budget 11787 → 11717, max top-k still 24
+- [x] Re-asking "What has happebned with Ai today?" against the real store gives an answer
+  that summarises the 2026-10-05 sources with citations → before: "a future date", no
+  citations; after, two runs: 10 and 4 citations, both summarising that day's papers,
+  prompt_eval_count 11612/16000. Run through the pipeline, not yet in the browser
+- [x] Full test suite passes → 273/273
+
+**Out of scope:** changing how date ranges are resolved (D-012); the eval set re-run.
+**Depends on:** —
+**Notes:** KB-005 (num_ctx), D-012 (relative windows anchor to the latest feed date).
+
+---
+
 ### T-060 — Start the app with a double-click
 
 **Status:** done

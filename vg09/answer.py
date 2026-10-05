@@ -15,6 +15,7 @@ truncation safeguard (T-022's token-budget packing is).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 import requests
 
@@ -99,7 +100,23 @@ def number_sources(chunks: list[Candidate]) -> dict[int, Candidate]:
     return {n: c for n, c in enumerate(least_relevant_first, start=1)}
 
 
-def build_user_message(question: str, source_map: dict[int, Candidate]) -> str:
+def date_context(today: date, date_range: tuple[date, date] | None) -> str:
+    """T-061: the date line placed just before the question. Without it the model took
+    "today" to be a date from its training (it reasoned "2023 or 2024") and rejected
+    sources dated 2026-10-05 as being from the future, even though retrieval had already
+    selected exactly those. When a range was applied, saying so stops the model from
+    redoing the date filtering with its own, wrong, idea of the calendar."""
+    line = f"Today's date is {today.isoformat()}."
+    if date_range is not None:
+        line += (f" The sources above were selected for the time range the question asks "
+                 f"about ({date_range[0].isoformat()} to {date_range[1].isoformat()}); "
+                 f"do not discard a source because of its date.")
+    return line
+
+
+def build_user_message(question: str, source_map: dict[int, Candidate],
+                       today: date | None = None,
+                       date_range: tuple[date, date] | None = None) -> str:
     """Empty `source_map` produces an honest "no sources" note rather than a
     special-cased response - the system prompt's own instruction ("say so plainly")
     handles a query with nothing relevant retrieved. Formats each source via
@@ -110,7 +127,8 @@ def build_user_message(question: str, source_map: dict[int, Candidate]) -> str:
         sources_block = "(No sources were retrieved for this question.)"
     else:
         sources_block = "\n\n".join(format_source(c, n) for n, c in source_map.items())
-    return f"Sources:\n\n{sources_block}\n\nQuestion: {question}"
+    dates = date_context(today or date.today(), date_range)
+    return f"Sources:\n\n{sources_block}\n\n{dates}\n\nQuestion: {question}"
 
 
 def _chat_once(messages: list[dict], model: str) -> tuple[str, str, str, int]:
@@ -149,7 +167,8 @@ def _chat_once(messages: list[dict], model: str) -> tuple[str, str, str, int]:
     return reasoning, answer, resp.get("done_reason", ""), prompt_eval_count
 
 
-def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MODEL) -> AnswerResult:
+def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MODEL,
+                    date_range: tuple[date, date] | None = None) -> AnswerResult:
     """The real answer-generation call. A `done_reason == "length"` first attempt is
     repeated up to `MAX_RETRIES` times (T-039/D-014); if the last attempt is still cut
     off it is returned flagged as incomplete, not silently presented as finished, and
@@ -165,7 +184,8 @@ def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MO
     source_map = number_sources(chunks)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": build_user_message(question, source_map)},
+        {"role": "user", "content": build_user_message(question, source_map,
+                                                       date_range=date_range)},
     ]
 
     retries = 0

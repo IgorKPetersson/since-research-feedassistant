@@ -8,6 +8,7 @@ in scripts/t023_verify_answer.py, not here.
 from __future__ import annotations
 
 import unittest
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import requests
@@ -77,6 +78,23 @@ class BuildUserMessageTests(unittest.TestCase):
         message = build_user_message("q", {})
         self.assertIn("No sources were retrieved", message)
         self.assertIn("Question: q", message)
+
+    def test_todays_date_is_stated_before_the_question(self):
+        """T-061: without it the model assumed a training-era "today" and rejected
+        2026 sources as being from the future."""
+        message = build_user_message("q", {}, today=date(2026, 10, 5))
+        self.assertIn("Today's date is 2026-10-05.", message)
+        self.assertLess(message.index("Today's date"), message.index("Question: q"))
+
+    def test_an_applied_date_range_is_stated_so_the_model_does_not_refilter(self):
+        message = build_user_message("q", {}, today=date(2026, 10, 5),
+                                     date_range=(date(2026, 9, 28), date(2026, 10, 5)))
+        self.assertIn("2026-09-28 to 2026-10-05", message)
+        self.assertIn("do not discard a source because of its date", message)
+
+    def test_without_a_date_range_no_range_is_claimed(self):
+        message = build_user_message("q", {}, today=date(2026, 10, 5))
+        self.assertNotIn("selected for", message)
 
 
 class SystemPromptTests(unittest.TestCase):
@@ -246,10 +264,10 @@ class RetryOnLengthTests(unittest.TestCase):
 class ReservationArithmeticTests(unittest.TestCase):
     def test_chunk_budget_is_what_num_ctx_leaves_after_the_other_reservations(self):
         """docs/DESIGN.md § Remaining budget for retrieved chunks. 173 = the system
-        prompt, 40 = the reserved question size (both measured, see DESIGN.md); a change
-        to NUM_PREDICT that forgets CHUNK_BUDGET_TOKENS (or vice versa) fails here
-        instead of silently overrunning num_ctx - the T-038 class of bug."""
-        self.assertEqual(CHUNK_BUDGET_TOKENS + 173 + 40 + NUM_PREDICT, NUM_CTX)
+        prompt, 40 = the reserved question size, 70 = T-061's date line (all measured, see
+        DESIGN.md); a change to NUM_PREDICT that forgets CHUNK_BUDGET_TOKENS (or vice
+        versa) fails here instead of silently overrunning num_ctx - the T-038 class of bug."""
+        self.assertEqual(CHUNK_BUDGET_TOKENS + 173 + 40 + 70 + NUM_PREDICT, NUM_CTX)
 
 
 if __name__ == "__main__":

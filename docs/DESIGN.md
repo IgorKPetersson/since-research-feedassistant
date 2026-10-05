@@ -159,9 +159,18 @@ at their old packed size) are unchanged.
 16000 (num_ctx)
  -  173 (system prompt, T-030's English-answer-instruction wording)
  -   40 (question, reserved)
+ -   70 (date line before the question, T-061)
  - 4000 (reasoning + answer, T-039's measured reservation)
- = 11787 tokens available for retrieved chunks
+ = 11717 tokens available for retrieved chunks
 ```
+
+**Amended by T-061:** the user message now states today's date and, when a range was
+applied, that the sources were selected for it ("do not discard a source because of its
+date"). Without it the model assumed a training-era "today" (it reasoned "2023 or 2024")
+and rejected 2026-10-05 sources as being from the future. Measured for real as the
+difference in `prompt_eval_count` with and without the line: 63 tokens in its longer form
+(with a range); 70 reserved. Max top-k is unchanged: `11717 // 488 = 24`. Later
+references to 11787 below describe the budget as it stood under T-039.
 
 (171/13789/2000/13803/157/13261/2542/13245 in earlier tickets' own historical records, e.g.
 T-008/T-022/T-024/T-028's acceptance-criteria evidence, describe the numbers as they stood

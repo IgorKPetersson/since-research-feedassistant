@@ -195,7 +195,7 @@ def ask_page() -> None:
         packed_slot.metric("Packed", len(retrieval.chunks))
 
         start_t = time.monotonic()
-        result = generate_answer(question, retrieval.chunks)
+        result = generate_answer(question, retrieval.chunks, date_range=date_range)
         elapsed = time.monotonic() - start_t
         time_slot.metric("Time", f"{elapsed:.1f}s")
 

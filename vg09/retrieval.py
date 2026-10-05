@@ -33,14 +33,16 @@ NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUD
 # 16000 (num_ctx) - 173 (system prompt, T-030 - the English-answer instruction added
 # 16 tokens over T-024's 157) - 40 (question) - 2542
 # (reasoning+answer, T-039 - raised from T-028's 2542 after T-032's real run still
-# truncated 4 of 30 calls) = 11787
-CHUNK_BUDGET_TOKENS = 11787
+# truncated 4 of 30 calls) = 11787, - 70 (T-061's date line before the question, 63
+# measured with a date range, the longer form) = 11717
+CHUNK_BUDGET_TOKENS = 11717
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's max-top-k ceiling: 11787 // 488 = 24 (T-039 - was 27 at 13245; T-038
+# docs/DESIGN.md's max-top-k ceiling: 11717 // 488 = 24 (T-061; 11787 under T-039 gave 24
+# too - was 27 at 13245; T-038
 # corrected the earlier 13245 // 400 = 33, which silently assumed zero cost for the real
 # "[N] Title (url, feed date)\n" wrapper every packed chunk actually carries; 488 is the
 # real worst-case chunk-plus-wrapper cost measured against the production store,
