@@ -33,7 +33,7 @@ import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript, RequestBlocked
 
-from vg09.document import Document, clear_pending
+from vg09.document import VIDEO_ID_RE, Document, clear_pending
 
 WHISPER_AUDIO_DIR = Path(__file__).resolve().parent.parent / "data" / "whisper_audio"
 WHISPER_MODEL_SIZE = "small"  # T-018/KB-013's feasibility measurement used this size
@@ -142,6 +142,8 @@ def fetch_whisper_transcript(video_id: str) -> tuple[str, list[dict]]:
     Raises on any download or transcription failure; the caller decides what
     to do about it (T-019: fall back to title+description)."""
     global _whisper_failed
+    if not VIDEO_ID_RE.fullmatch(video_id or ""):  # T-074: it becomes a file name below
+        raise ValueError(f"not a YouTube video id: {video_id!r}")
     if _whisper_failed is not None:
         # Seen for real (T-057): after one RuntimeError from a broken GPU setup, the
         # next transcription didn't fail, it hung with no CPU or GPU activity. So one
@@ -190,6 +192,8 @@ def normalize(video: dict) -> Document | None:
     video_id = video.get("id")
     upload_date = video.get("upload_date")
     if not video_id or not upload_date:
+        return None
+    if not VIDEO_ID_RE.fullmatch(video_id):  # T-074: it becomes a URL and a file name
         return None
     title = video.get("title", "")
     url = f"https://www.youtube.com/watch?v={video_id}"

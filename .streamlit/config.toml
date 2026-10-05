@@ -34,6 +34,12 @@
 showEmailPrompt = false
 address = "127.0.0.1"
 
+# T-074 (D-020): Streamlit sends usage statistics from the browser by default
+# (gatherUsageStats = true, checked with `streamlit config show` 2026-10-05). Nothing
+# leaves this machine that the app does not need, so it is off.
+[browser]
+gatherUsageStats = false
+
 [theme.light]
 primaryColor = "#A26B16"
 

@@ -26,6 +26,20 @@ RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 _UNSAFE_ID_CHARS = re.compile(r"[^A-Za-z0-9_.-]")
 
+# T-074 (D-020): ids and dates come from fetched data and become file names, folder
+# names and addresses, so only their real formats are accepted. Every id and date in
+# data/raw/ matched these on 2026-10-05.
+_FEED_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+ARXIV_ID_RE = re.compile(r"\d{4}\.\d{4,5}")
+VIDEO_ID_RE = re.compile(r"[A-Za-z0-9_-]{11}")
+
+
+def _checked_feed_date(feed_date: str) -> str:
+    """A feed date is a folder name under data/raw/<source>/: "../x" must never be one."""
+    if not _FEED_DATE_RE.fullmatch(feed_date or ""):
+        raise ValueError(f"not a YYYY-MM-DD feed date: {feed_date!r}")
+    return feed_date
+
 
 def raw_path(source: str, feed_date: str, doc_id: str) -> Path:
     """Where a document with this id would live, whether or not it exists yet.
@@ -35,7 +49,7 @@ def raw_path(source: str, feed_date: str, doc_id: str) -> Path:
     `exists()` - first.
     """
     safe_id = _UNSAFE_ID_CHARS.sub("_", doc_id)
-    return RAW_DIR / source / feed_date / f"{safe_id}.json"
+    return RAW_DIR / source / _checked_feed_date(feed_date) / f"{safe_id}.json"
 
 
 def pending_path(source: str, feed_date: str, doc_id: str) -> Path:
@@ -44,7 +58,7 @@ def pending_path(source: str, feed_date: str, doc_id: str) -> Path:
     Kept alongside, not inside, the final document so a reader that only wants
     finished documents can glob `*.json` and skip `*.pending.json`."""
     safe_id = _UNSAFE_ID_CHARS.sub("_", doc_id)
-    return RAW_DIR / source / feed_date / f"{safe_id}.pending.json"
+    return RAW_DIR / source / _checked_feed_date(feed_date) / f"{safe_id}.pending.json"
 
 
 def exists(source: str, feed_date: str, doc_id: str) -> bool:

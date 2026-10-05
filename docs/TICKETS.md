@@ -145,7 +145,7 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 
 ### T-074 — Fetching reaches only the source hosts; ids cannot write outside `data/`
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-074-reach`  ·  **Phase:** 3
 
 **Goal:** fetched data cannot make the app contact other hosts or write elsewhere on disk.
@@ -153,11 +153,27 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 **Why:** `docs/DESIGN.md` § Security baseline, behaviour 4.
 
 **Acceptance criteria**
-- [ ] Every outgoing request in ingest is listed with its host, in the ticket; any host
-  outside Hugging Face, arXiv, YouTube and Ollama on 127.0.0.1 is removed or explained
-- [ ] arXiv and video ids are validated against their real formats before they become
-  file names; tests show `../`, absolute paths and odd characters are rejected
-- [ ] Full suite passes
+- [x] Every outgoing request in ingest is listed with its host, in the ticket; any host
+  outside Hugging Face, arXiv, YouTube and Ollama on 127.0.0.1 is removed or explained →
+  read from the code 2026-10-05:
+  - `huggingface.co/api/daily_papers` (`hf_papers.fetch_day`)
+  - `www.youtube.com` channel listings and video pages via yt-dlp (`youtube.py`,
+    `youtube_backfill.py`); audio for Whisper comes from YouTube's own video servers
+    (googlevideo.com), which yt-dlp is sent to by YouTube
+  - YouTube captions via youtube-transcript-api
+  - Ollama on `127.0.0.1:11434` (`answer.py`, `retrieval.py`, `store.py`)
+  - **Removed:** Streamlit's usage statistics, on by default (`gatherUsageStats = true`),
+    now `false` in `.streamlit/config.toml`, confirmed with `streamlit config show`
+  - **Explained, kept:** the browser loads the Instrument Sans font from
+    fonts.googleapis.com. Google sees the machine's address and that the page loaded,
+    nothing about questions or sources. Self-hosting the font would remove it; not done
+- [x] arXiv and video ids are validated against their real formats before they become
+  file names; tests show `../`, absolute paths and odd characters are rejected →
+  `tests/test_reach.py`, 6 tests, failing first (the Whisper one tried a real download of
+  `../evil`). Also found: the HF feed date became a folder name unchecked; it must now be
+  YYYY-MM-DD. Every id and date in `data/raw/` already matched; a real day (2026-10-02,
+  50 papers) normalizes 50 of 50. Test fixtures `vid1`/`1000.1` got well-formed ids
+- [x] Full suite passes → 346/346
 
 **Out of scope:** limiting what the Python process itself may do (no sandbox, D-020).
 **Depends on:** —

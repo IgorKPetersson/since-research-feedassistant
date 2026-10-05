@@ -48,8 +48,8 @@ class SyncHfTests(unittest.TestCase):
 
     def test_fetches_every_day_and_advances_watermark_before_the_reopen_window(self):
         by_date = {
-            "2026-09-10": [fake_entry("1000.1", "2026-09-10")],
-            "2026-09-11": [fake_entry("1000.2", "2026-09-11")],
+            "2026-09-10": [fake_entry("1000.10001", "2026-09-10")],
+            "2026-09-11": [fake_entry("1000.20002", "2026-09-11")],
             "2026-09-12": [],  # weekend, per KB-002
         }
         with patch("vg09.hf_papers.fetch_day", side_effect=lambda d: by_date.get(d.isoformat(), [])):
@@ -63,13 +63,13 @@ class SyncHfTests(unittest.TestCase):
         self.assertFalse(hf_papers.is_day_done(date(2026, 9, 11)))
         self.assertFalse(hf_papers.is_day_done(date(2026, 9, 12)))
 
-        path = hf_papers.RAW_DIR / "hf" / "2026-09-10" / "1000.1.json"
+        path = hf_papers.RAW_DIR / "hf" / "2026-09-10" / "1000.10001.json"
         self.assertTrue(path.exists())
 
     def test_second_run_skips_settled_days_with_no_duplicate_fetch(self):
         # 2026-09-01 .. 2026-09-10: 10 days. today/yesterday (9-10, 9-09) are
         # always in the reopen window; the other 8 (9-01..9-08) settle.
-        by_date = {"2026-09-01": [fake_entry("3000.1", "2026-09-01")]}
+        by_date = {"2026-09-01": [fake_entry("3000.10001", "2026-09-01")]}
         calls: list[str] = []
 
         def fake_fetch_day(d):

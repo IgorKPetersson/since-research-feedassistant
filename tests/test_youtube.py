@@ -157,7 +157,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
         """Found for real: after one RuntimeError from a broken GPU setup the next
         transcription hung forever. The second video must fail at once, before any
         audio is downloaded."""
-        audio_path = self.audio_dir / "vid1.webm"
+        audio_path = self.audio_dir / "vid1aaaaaaa.webm"
 
         class FakeYDL:
             def __enter__(self_inner):
@@ -168,7 +168,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
 
             def extract_info(self_inner, url, download=True):
                 audio_path.write_bytes(b"fake audio")
-                return {"id": "vid1"}
+                return {"id": "vid1aaaaaaa"}
 
             def prepare_filename(self_inner, info):
                 return str(audio_path)
@@ -180,10 +180,10 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
         with patch("vg09.youtube.yt_dlp.YoutubeDL", return_value=FakeYDL()) as mock_ydl, \
              patch("vg09.youtube._get_whisper_model", return_value=BrokenModel()):
             with self.assertRaises(RuntimeError):
-                youtube.fetch_whisper_transcript("vid1")
+                youtube.fetch_whisper_transcript("vid1aaaaaaa")
             self.assertEqual(mock_ydl.call_count, 1)
             with self.assertRaises(RuntimeError) as second:
-                youtube.fetch_whisper_transcript("vid2")
+                youtube.fetch_whisper_transcript("vid2aaaaaaa")
             self.assertEqual(mock_ydl.call_count, 1)  # no second download
         self.assertIn("unavailable in this run", str(second.exception))
 
@@ -204,7 +204,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
         self.assertEqual(sorted(Path(p).parent.name for p in parts[:-1]), ["cublas", "cudnn"])
 
     def test_converts_segments_and_deletes_audio_after(self):
-        audio_path = self.audio_dir / "vid123.webm"
+        audio_path = self.audio_dir / "vid123aaaaa.webm"
 
         class FakeYDL:
             def __enter__(self_inner):
@@ -216,7 +216,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
             def extract_info(self_inner, url, download=True):
                 self.audio_dir.mkdir(parents=True, exist_ok=True)
                 audio_path.write_bytes(b"fake audio")
-                return {"id": "vid123"}
+                return {"id": "vid123aaaaa"}
 
             def prepare_filename(self_inner, info):
                 return str(audio_path)
@@ -238,7 +238,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
             patch("vg09.youtube.yt_dlp.YoutubeDL", return_value=FakeYDL()),
             patch("vg09.youtube._get_whisper_model", return_value=FakeModel()),
         ):
-            text, segments = youtube.fetch_whisper_transcript("vid123")
+            text, segments = youtube.fetch_whisper_transcript("vid123aaaaa")
 
         self.assertEqual(text, "Hello world")
         self.assertEqual(
@@ -251,7 +251,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
         self.assertFalse(audio_path.exists())  # deleted after transcription (T-019)
 
     def test_deletes_audio_even_when_transcription_fails(self):
-        audio_path = self.audio_dir / "vid123.webm"
+        audio_path = self.audio_dir / "vid123aaaaa.webm"
 
         class FakeYDL:
             def __enter__(self_inner):
@@ -263,7 +263,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
             def extract_info(self_inner, url, download=True):
                 self.audio_dir.mkdir(parents=True, exist_ok=True)
                 audio_path.write_bytes(b"fake audio")
-                return {"id": "vid123"}
+                return {"id": "vid123aaaaa"}
 
             def prepare_filename(self_inner, info):
                 return str(audio_path)
@@ -277,7 +277,7 @@ class FetchWhisperTranscriptTests(unittest.TestCase):
             patch("vg09.youtube._get_whisper_model", return_value=FakeModel()),
         ):
             with self.assertRaises(RuntimeError):
-                youtube.fetch_whisper_transcript("vid123")
+                youtube.fetch_whisper_transcript("vid123aaaaa")
 
         self.assertFalse(audio_path.exists())  # deleted even on failure (T-019)
 
