@@ -24,8 +24,15 @@
 #
 # T-060: Since.bat starts the app with a double-click, so nobody is at the console to
 # answer Streamlit's first-run "enter your email" prompt - it would wait there forever.
+#
+# T-071 (D-020): listen on this machine only. Without it Streamlit binds every
+# interface (0.0.0.0 and [::], measured 2026-10-05), so the app, including the Sources
+# page that starts fetches and writes files, was reachable from the local network and
+# over this machine's global IPv6 addresses wherever the firewall let it through.
+# XSRF protection is left at its default (on).
 [server]
 showEmailPrompt = false
+address = "127.0.0.1"
 
 [theme.light]
 primaryColor = "#A26B16"

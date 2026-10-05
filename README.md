@@ -66,6 +66,10 @@ From a terminal (any OS, with the virtual environment activated):
 streamlit run app.py
 ```
 
+Since only accepts connections from the machine it runs on (`http://127.0.0.1:8501`);
+other computers on your network cannot reach it. Ollama is used the same way, on
+`127.0.0.1`.
+
 Either way, Since opens in your browser. It has two pages, listed in the sidebar: **Ask** and
 **Sources**. The first time, with nothing fetched yet, it opens on Sources.
 

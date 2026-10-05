@@ -165,7 +165,7 @@ answer, and how often they still do is known.
 
 ### T-071 — The app listens only on this machine
 
-**Status:** todo
+**Status:** review — everything checked except a start from `Since.bat` itself
 **Size:** S  ·  **Branch:** `t/T-071-localhost-only`  ·  **Phase:** 3
 
 **Goal:** no other machine can reach Since while it runs.
@@ -175,13 +175,20 @@ listens on every interface, and this machine has a public IP. Anyone could reach
 including the Sources page that starts fetches and writes files.
 
 **Acceptance criteria**
-- [ ] `server.address = "127.0.0.1"` in `.streamlit/config.toml`, with the reason; XSRF
+- [x] `server.address = "127.0.0.1"` in `.streamlit/config.toml`, with the reason; XSRF
   protection not disabled
 - [ ] Started with `Since.bat`: `netstat` shows the port bound to `127.0.0.1` only, and the
-  browser opens and answers a question
-- [ ] Before the change, the same `netstat` check is recorded, so the ticket shows what it
-  was
-- [ ] README says the app is reachable only from the machine it runs on
+  browser opens and answers a question → done with `streamlit run app.py`, the command
+  `Since.bat` runs, reading the same config: `127.0.0.1:8501 LISTENING` only; Streamlit
+  prints one URL, `http://127.0.0.1:8501`; `http://<LAN IPv4>:8501` refused; in a real
+  browser "Has Anthropic been mentioned in the last week?" answered with 7 citation chips.
+  `Since.bat` itself not double-clicked: it opens windows on my desktop
+- [x] Before the change, the same `netstat` check is recorded → `0.0.0.0:8501` and
+  `[::]:8501 LISTENING`; Streamlit printed a Network URL (<LAN IPv4>) and an External
+  URL (<public IPv4>, the router's public IPv4, not on this machine). The machine has
+  global IPv6 addresses, which `[::]` covered. What stopped outside
+  connections was the firewall alone
+- [x] README says the app is reachable only from the machine it runs on
 
 **Out of scope:** Ollama (already `127.0.0.1`, checked 2026-10-05).
 **Depends on:** —
