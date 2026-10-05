@@ -53,7 +53,14 @@ MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # the budget. CANDIDATE_POOL_SIZE is generous headroom over that worst-case ceiling so
 # packing always has real candidates to skip past (an oversized one, or a
 # date-filtered-out one) without running dry before reaching a usable top-k.
-CANDIDATE_POOL_SIZE = 60
+#
+# T-067: raised from 60, which was sized before T-027's per-document dedup existed. A
+# generic question ("What's new this week?") matched 60 chunks from only 6 news videos;
+# dedup left 12, filling 38% of the chunk budget, and none of the week's 248 paper chunks
+# (the first ranked 71st) were ever seen. Measured over the 18-question probe set: at 200,
+# every question fills 96-99% of the budget (that one 97%, with 18 papers); 11 of 18
+# packed sets change, the 7 that were already full do not. Cost: +0.2 s median retrieval.
+CANDIDATE_POOL_SIZE = 200
 
 
 @dataclass

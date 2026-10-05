@@ -307,6 +307,18 @@ class RetrieveIntegrationTests(unittest.TestCase):
         # T-042: 4 candidates in, dedup drops the video's 3rd chunk (MAX_CHUNKS_PER_DOC=2)
         self.assertEqual(result.candidates_after_dedup, 3)
 
+    def test_the_pool_reaches_past_a_few_long_videos_before_dedup(self):
+        """T-067's real case: 6 news videos took the 60 best places; the week's first
+        paper chunk ranked 71st. The pool asked for must reach past that."""
+        collection = MagicMock()
+        collection.query.return_value = {"ids": [[]], "documents": [[]], "metadatas": [[]]}
+        with (
+            patch("vg09.retrieval.get_collection", return_value=collection),
+            patch("vg09.retrieval.embed_batch", return_value=[[0.1, 0.2]]),
+        ):
+            retrieve("What's new this week?", date_range=None, ranking=False)
+        self.assertGreater(collection.query.call_args.kwargs["n_results"], 71)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,35 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-067 — Fetch enough candidates that the per-document limit can't empty the answer
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-067-candidate-pool`  ·  **Phase:** 3
+
+**Goal:** a generic question fills the excerpt budget and can reach papers, instead of
+stopping at a few news videos.
+
+**Why:** the 2026-10-05 probe run: "What's new this week?" packed 12 excerpts from 6
+videos, 38% of the budget, and no papers. Its 60-candidate pool, sized before T-027's
+two-per-document limit existed, was taken entirely by those 6 videos; the week's first
+paper chunk ranked 71st of the 248 in the window.
+
+**Acceptance criteria**
+- [x] `CANDIDATE_POOL_SIZE` 60 → 200, with the measurement in its comment → unit test
+  that the pool asked for reaches past rank 71
+- [x] Over the 18 probe questions (search only, no answers): every question fills
+  96–99% of the budget; "What's new this week?" 38% → 97% with 18 papers; the Swedish
+  agents question 49% → 98%; 11 of 18 packed sets change, the 7 already full do not
+- [x] Retrieval time measured: median 1.06 s → 1.27 s
+- [x] Full suite passes → 318/318
+
+**Out of scope:** guaranteeing a mix of papers and videos (T-068 handles a question that
+names one); re-running the Phase 3 evaluation (T-069).
+**Depends on:** T-027.
+**Notes:** I approved this and T-068/T-069 together (2026-10-05).
+
+---
+
 ### T-066 — Understand everyday date phrases, and tell the model the weekday
 
 **Status:** done
