@@ -151,8 +151,8 @@ A few things worth knowing before you use it:
 ## Evaluation
 
 `docs/eval-questions.md` holds the 15 hand-written evaluation questions, each with its own
-expected answer and sources. `docs/eval-results/` holds the real comparison, judged by hand,
-runs against the actual pipeline: the date-aware-vs-plain-retrieval comparison this
+expected answer and sources. `docs/eval-results/` holds the real comparison
+runs against the actual pipeline, every answer judged by hand: the date-aware-vs-plain-retrieval comparison this
 project's central claim rests on, and the `qwen3:30b-a3b`-vs-`qwen3:8b` model-size
 comparison (T-033). See
 `docs/PLAN.md` and `docs/TICKETS.md` for what's done and what's left.
