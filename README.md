@@ -151,7 +151,7 @@ A few things worth knowing before you use it:
 ## Evaluation
 
 `docs/eval-questions.md` holds the 15 hand-written evaluation questions, each with its own
-expected answer and sources. `docs/eval-results/` holds the real, hand-graded comparison
+expected answer and sources. `docs/eval-results/` holds the real comparison, judged by hand,
 runs against the actual pipeline: the date-aware-vs-plain-retrieval comparison this
 project's central claim rests on, and the `qwen3:30b-a3b`-vs-`qwen3:8b` model-size
 comparison (T-033). See
@@ -186,7 +186,7 @@ Apache License 2.0 — see [`LICENSE`](LICENSE).
 
 ## More
 
-This started as a course project; the full design rationale, the decisions made along the
-way (and why), and session-by-session history all live under [`docs/`](docs/) — start with
+The full design rationale, the decisions made along the way (and why), and
+session-by-session history all live under [`docs/`](docs/). Start with
 [`docs/GOAL.md`](docs/GOAL.md) for what this is trying to prove, or
 [`docs/DESIGN.md`](docs/DESIGN.md) for how the pipeline actually works.

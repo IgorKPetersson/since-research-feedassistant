@@ -6,9 +6,9 @@ questions about them with sources: what is new, whether a topic came up, and how
 has developed over the last weeks. Everything runs on one machine with a local model: no
 account, no cloud service, no server.
 
-Below: why Since exists, how it works, how it is protected, how it was tested and what the
-results were. Every number links to the file it comes from. Installation is in the
-[README](../README.md).
+This document describes why Since exists, how it works, how it is protected, how it was
+tested and what the results were. Every number links to the file it comes from.
+Installation is in the [README](../README.md).
 
 **Contents:** [Problem](#the-problem) · [Claim](#the-claim-tested) ·
 [How it works](#how-it-works-retrieval-augmented-generation-with-time-first) ·
@@ -133,7 +133,7 @@ sources contain no such address. It has no way to find out: it only reads its ex
 | Kind | What | Where |
 |---|---|---|
 | Unit tests | 351 tests, standard-library `unittest`, no model needed (Ollama is mocked) | `tests/` |
-| Graded evaluation | 15 questions and an answer key written by me **before** any retrieval code existed; each answer graded by hand against the key, never by a model | [`eval-questions.md`](eval-questions.md), [`eval-results/`](eval-results/) |
+| Evaluation | 15 questions and an answer key written **before** any retrieval code existed; each answer judged by hand against the key, never by a model | [`eval-questions.md`](eval-questions.md), [`eval-results/`](eval-results/) |
 | Frozen dataset | The third run used a store rebuilt from an archive checked against a 1,279-file manifest, so new data cannot change the answer key | [`eval-dataset-manifest.txt`](eval-dataset-manifest.txt), T-069 |
 | Injection and citation measurement | Real pipeline, fixed questions, before and after each prompt change | `scripts/t073_*.py` |
 | Real use | Questions asked in a real browser, and a fresh clone taken through the README to a first answer, twice (T-034, T-057) | [`TICKETS.md`](TICKETS.md) |
@@ -144,7 +144,7 @@ while every test passed ([KB-035](kb/KB-035-numbered-source-markers-make-qwen3-c
 
 ## Results
 
-**Date filter (A) against plain similarity search (B).** 15 questions per run, graded by
+**Date filter (A) against plain similarity search (B).** 15 questions per run, judged by
 hand:
 
 | Run | A better | B better | Equal | Both wrong | File |
@@ -165,10 +165,9 @@ large better 4, small better 0, equal 9, both wrong 2
 questions failed in both comparisons: retrieval did not find the right source, so a larger
 model could not help.
 
-**The graded runs predate the latest changes.** The prompt was rewritten on 2026-10-05
+**The evaluation runs predate the latest changes.** The prompt was rewritten on 2026-10-05
 (T-073), and "research" stopped narrowing a search to papers (T-078), which changes eval
-questions 7 and 11. The graded evaluation was not re-run after them, by my
-decision; the injection and citation measurements after T-073 are in
+questions 7 and 11. The evaluation was not re-run after them; the injection and citation measurements after T-073 are in
 [that file](eval-results/2026-10-05-t073-prompt-injection.md).
 
 ## What went wrong and what we learned
@@ -191,9 +190,9 @@ The project keeps what it learns about its tools in a knowledge base
 
 ## Limitations
 
-- **15 questions, graded by the person who built it.** Enough to show the pattern held in
+- **15 questions, judged by the author.** Enough to show the pattern held in
   three runs, not to generalise. The key was written first and every answer is in the repo
-  next to it, so anyone can re-grade.
+  next to it, so anyone can judge them again.
 - **Needs a GPU with about 24 GB** for the large model.
 - **Misspellings in captions cannot be searched.** "Palantir" captioned as "Palunteer" is
   never found (eval question 12).
@@ -209,8 +208,8 @@ app opens in the browser, updates itself, and answers at `http://127.0.0.1:8501`
 
 ## How it was built
 
-The code was written with an AI coding agent (Claude Code), directed and reviewed by me
-, who decided what to build, graded every evaluation answer, and tested the app.
+The code was written with an AI coding agent (Claude Code), directed and reviewed by the
+author, who decided what to build, judged every evaluation answer, and tested the app.
 Because an agent starts every session with no memory, the work ran on written records:
 
 - **80 tickets** with checkable acceptance criteria ([`TICKETS.md`](TICKETS.md))
@@ -228,5 +227,5 @@ Because an agent starts every session with no memory, the work ran on written re
 | The design: budget, data model, security baseline | [`DESIGN.md`](DESIGN.md) |
 | Why each choice was made | [`DECISIONS.md`](DECISIONS.md) |
 | The questions and answer key | [`eval-questions.md`](eval-questions.md) |
-| Every graded answer | [`eval-results/`](eval-results/) |
+| Every evaluated answer | [`eval-results/`](eval-results/) |
 | What the tools really do | [`kb/INDEX.md`](kb/INDEX.md) |
