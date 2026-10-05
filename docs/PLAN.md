@@ -170,6 +170,7 @@ Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead
   No written report: the deliverable is a live demo and presentation (me, 2026-10-02)
 - [ ] Security baseline and overview — **T-071**–**T-077** (`docs/DESIGN.md` § Security
   baseline, D-020). Added 2026-10-05: the app must not be reachable
+  from outside or controllable by injected text, and the project needs an overview with
   purpose and results in the repo
 
 **Exit criteria:** every item in the Definition of done in `docs/GOAL.md` is met.

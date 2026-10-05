@@ -587,8 +587,7 @@ the model's answer is rendered with `unsafe_allow_html=True`, so HTML the model 
 live; the prompt does not mark source excerpts as data. Ollama already listens on
 `127.0.0.1` only.
 
-**Serves:** `docs/GOAL.md` — local-first, "no interests sent to someone else's cloud"; the
-course's VG expectation that security is addressed.
+**Serves:** `docs/GOAL.md` — local-first, "no interests sent to someone else's cloud".
 
 **Threat model, in one paragraph:** the app runs for one person on their own machine. The
 untrusted input is the content it fetches: paper titles and abstracts, video titles,

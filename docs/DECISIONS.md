@@ -82,7 +82,7 @@ settings for now.
 
 **Why:** T-004 confirmed both run on the RTX 4090 via Ollama 0.34.0 and answer correctly
 from pasted context (see KB-003). Both are widely used, well-documented model families,
-which matters for a course project others may need to reproduce.
+which matters for a project others may need to reproduce.
 
 **Rejected:** No other model sizes/families were pulled or tested — this is the first pair
 that fit the ~8B/~30B brief in `docs/PLAN.md`, not a comparison winner. Larger quantized
@@ -118,7 +118,7 @@ subset of the unfiltered results (KB-004). It runs fully local and embedded, sat
 
 **Rejected:** LanceDB and sqlite-vec were not tested — ChromaDB was chosen up front as the
 most commonly used option for this kind of RAG setup, with the most available
-documentation for a course project others may need to reproduce, and the first candidate
+documentation for a project others may need to reproduce, and the first candidate
 tried already met the bar. This is not a comparison result; if ChromaDB later proves
 inadequate at real scale, LanceDB is the next candidate to try, not a rejected one.
 
@@ -798,12 +798,11 @@ open the app mainly to ask one quick question and the update gets in the way.
 ## D-019 — The presentation is a Slidev deck in its own `presentation/` folder
 **Status:** accepted
 
-**Decision:** The course presentation is built with Slidev (Node/npm), pinned to exact
+**Decision:** The presentation is built with Slidev (Node/npm), pinned to exact
 versions in `presentation/package.json` with a committed lockfile. It lives apart from the
 Python app: nothing in `vg09/`, `app.py` or the README's install steps depends on it.
 
-**Why:** my explicit decision (2026-10-05), accepting the new dependency. My
-previous course project was presented from a Slidev deck and well received; slides as
+**Why:** my explicit decision (2026-10-05), accepting the new dependency. Slides as
 Markdown live in the repo, diff like code, and carry speaker notes and a presenter view.
 
 **Rejected:** a `.pptx` (binary, no diffs, I prefers working on look in code);
@@ -813,7 +812,7 @@ slide artifact (not in the repo).
 **Cost:** Node and `node_modules` for whoever builds the deck; a second toolchain in a
 Python repo, confined to one folder.
 
-**Would change our mind:** if the course requires a file format Slidev's export (PDF/PPTX)
+**Would change our mind:** if a file format is required that Slidev's export (PDF/PPTX)
 cannot produce acceptably.
 
 ---
