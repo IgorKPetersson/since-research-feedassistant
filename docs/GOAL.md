@@ -52,7 +52,8 @@ to report.
 2. An ingest command that catches up since the last successful run
 3. A simple chat UI that answers with sources, including an empty state when no data exists
 4. An evaluation script and a results table committed to the repo
-5. Course report and presentation
+5. Live demonstration and presentation for the course (no written report — I,
+   2026-10-02)
 
 Anything beyond this is bonus and belongs in § Parked.
 

@@ -72,7 +72,8 @@ day. No code or data was lost: everything was committed and pushed.
   `CANDIDATE_POOL_SIZE` at runtime (e.g. in an eval script) does not change it; pass it in.
 
 **Blocked / needs me:**
-- **T-048 / Phase 3 "Report and presentation":** the only unchecked Phase 3 item. Waiting on
+- **T-048 / Phase 3 "Live demonstration and presentation":** the only unchecked Phase 3
+  item. There is no written report (GOAL.md and PLAN.md said "report" until 2026-10-05). Waiting on
   the outline for the presentation. Then the demo questions are asked in the
   running app and `defense-prep` is run.
 - **"24/7"** in `docs/GOAL.md`: the reading ("always caught up when you ask") is not

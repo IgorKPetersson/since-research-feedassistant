@@ -24,17 +24,18 @@ notable: the smaller model was slower on average despite fewer active parameters
 MoE per D-005; where it lost, it consistently enumerated rather than ranked/narrowed; it
 drifted into Chinese mid-answer once despite D-013's English-answer instruction; F12/F14
 were missed by both models in both comparisons - a retrieval gap, not a model-size effect).
-`docs/PLAN.md`'s own third Phase 3 checklist item, "Report and presentation — run
-`defense-prep`," still has **no ticket yet** and is explicitly my own remaining
-work, not delegated. **Phase 3 is not being declared complete here** - the report and
-presentation remain, by explicit instruction.
+`docs/PLAN.md`'s own third Phase 3 checklist item, "Live demonstration and presentation —
+run `defense-prep`" (first written as "Report and presentation"; there is no written
+report, I 2026-10-02), is my own remaining work, not delegated. **Phase 3
+is not being declared complete here** - the demonstration and presentation remain, by
+explicit instruction.
 
 Added 2026-09-23/24, by explicit instruction, outside the original Phase 3 checklist:
 **T-042**–**T-047**, the UI redesign (English UI per D-016), English date parsing
 (T-043), and the app's name and identity, **"Since"** (display name only; the repo, the
 `vg09` package and `COLLECTION_NAME` are unchanged). T-042–T-047 are all on `main` (T-047,
 the README, was merged and pushed 2026-10-02). Of `docs/GOAL.md`'s Definition of done,
-items 1–4 are met; only item 5, the course report and presentation, remains.
+items 1–4 are met; only item 5, the live demonstration and presentation, remains.
 
 Added 2026-10-02, by explicit instruction: a finishing pass (**T-049** retrieval latency,
 **T-050** accent contrast, **T-051** one action submits a question, **T-039** closed),
@@ -164,8 +165,9 @@ Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead
   HF+YouTube backfill including the Whisper fallback path, real `bge-m3` embedding, real
   browser question) reached a real answer with real citations end to end — nothing in the
   README needed fixing
-- [ ] Report and presentation — run `defense-prep` — **no ticket yet**, not included in
-  this round's ticket-writing instruction (2026-09-20)
+- [ ] Live demonstration and presentation — run `defense-prep` — **T-048** (draft in
+  `docs/presentation.md`, waiting on my outline). No written report: the
+  deliverable is a live demo and presentation (me, 2026-10-02)
 
 **Exit criteria:** every item in the Definition of done in `docs/GOAL.md` is met.
 **Checkpoint:** I review. Project complete.
