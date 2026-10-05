@@ -17,6 +17,9 @@ import re
 from datetime import date
 from html import escape as escape_html
 from pathlib import Path
+from urllib.parse import urlsplit
+
+from markdown_it import MarkdownIt
 
 from vg09.citations import Citation
 from vg09.quote_links import LEAD_SECONDS, with_timestamp
@@ -281,6 +284,38 @@ def _numbers_in_resolved_bracket(raw_inner: str) -> list[int]:
     return numbers
 
 
+# T-072 (D-020): the answer is rendered here, not by Streamlit's markdown. With
+# `html` off, anything the model writes that looks like HTML - including what an
+# injected abstract or transcript talked it into - is escaped to text. Its own links,
+# images and autolinks are not links either: the only links in an answer are the chips
+# below. Tables and strikethrough stay, as the model does use them.
+_ANSWER_MARKDOWN = (
+    MarkdownIt("commonmark", {"html": False})
+    .enable(["table", "strikethrough"])
+    .disable(["link", "image", "autolink"])
+)
+
+# The only places a chip may point to (D-001's two sources, plus arXiv for papers).
+_SOURCE_HOSTS = {"huggingface.co", "arxiv.org", "www.youtube.com", "youtube.com"}
+
+
+def _is_source_url(url: str) -> bool:
+    parts = urlsplit(url)
+    return parts.scheme == "https" and parts.hostname in _SOURCE_HOSTS
+
+
+def _one_html_block(html: str) -> str:
+    """Streamlit's own markdown parses this HTML once more. Kept on one line inside a
+    <div>, it stays one raw HTML block: a blank line would end the block and hand the
+    rest back to markdown. Line breaks inside <pre> are kept as `&#10;`."""
+    parts = re.split(r"(<pre>.*?</pre>)", html, flags=re.DOTALL)
+    joined = "".join(
+        p.replace("\n", "&#10;") if p.startswith("<pre>") else p.replace("\n", " ")
+        for p in parts
+    )
+    return f'<div class="answer-body">{joined.strip()}</div>'
+
+
 def render_citation_chips(
     answer: str,
     source_map: dict[int, Candidate],
@@ -330,6 +365,8 @@ def render_citation_chips(
             if citation is None:
                 continue
             url = candidate.metadata.get("url") or citation.url
+            if not _is_source_url(url):  # T-072: never a link to anywhere else
+                continue
             kind = _SOURCE_TYPE_WORD[citation_source_type(url)]
             where = ""
             # T-063: a quoted video sentence is linked to where it is spoken; otherwise
@@ -346,9 +383,29 @@ def render_citation_chips(
                 f'target="_blank" rel="noopener noreferrer" '
                 f'title="{label}" aria-label="{label}">{n}</a>'
             )
-        return "".join(chips) if chips else raw
+        return "".join(chips) if chips else escape_html(raw, quote=False)
 
-    return _BRACKET_RE.sub(replace, answer)
+    def chip_text(text: str) -> str:
+        """Plain text from the answer: escaped, with its citation brackets as chips."""
+        out, last = [], 0
+        for m in _BRACKET_RE.finditer(text):
+            out.append(escape_html(text[last:m.start()], quote=False))
+            out.append(replace(m))
+            last = m.end()
+        out.append(escape_html(text[last:], quote=False))
+        return "".join(out)
+
+    # T-072: chips go only into text, never into the model's own code spans, so a
+    # backtick pair around citations can no longer show the chips' HTML as text.
+    html = _ANSWER_MARKDOWN.render(answer, {"chip_text": chip_text})
+    return _one_html_block(html)
+
+
+def _render_text_with_chips(renderer, tokens, idx, options, env) -> str:
+    return env["chip_text"](tokens[idx].content)
+
+
+_ANSWER_MARKDOWN.add_render_rule("text", _render_text_with_chips)
 
 
 # T-042/T-045: flat, theme-adaptive (no hardcoded page background/text color - the

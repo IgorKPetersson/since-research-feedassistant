@@ -179,7 +179,7 @@ happened as often before the day's changes as after.
 
 ### T-072 — Render the model's answer as text; only the app's own chips are HTML
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-072-escape-answer`  ·  **Phase:** 3
 
 **Goal:** nothing the model writes can become live HTML in the browser.
@@ -188,17 +188,30 @@ happened as often before the day's changes as after.
 `unsafe_allow_html=True`, and the answer text is passed through unescaped.
 
 **Acceptance criteria**
-- [ ] The answer is HTML-escaped before chips are inserted; tests with
+- [x] The answer is HTML-escaped before chips are inserted; tests with
   `<img src=x onerror=…>`, `<script>`, `<a href="javascript:…">` and markdown
-  `[x](javascript:…)` show them rendered as text
-- [ ] A chip's `href` is only built from an `https://` URL on huggingface.co, arxiv.org or
-  youtube.com; anything else gets no chip; tests
-- [ ] Citations, quote links and ordinary markdown (bold, lists) still render; checked in
-  a real browser with one injected answer and one real answer
-- [ ] Full suite passes
+  `[x](javascript:…)` show them rendered as text → `AnswerRenderingSafetyTests`, 6 tests,
+  written first and failing (8 failures) before the change
+- [x] A chip's `href` is only built from an `https://` URL on huggingface.co, arxiv.org or
+  youtube.com; anything else gets no chip; tests → including `http://huggingface.co` and
+  `huggingface.co.evil.example`
+- [x] Citations, quote links and ordinary markdown (bold, lists) still render; checked in
+  a real browser with one injected answer and one real answer → injected `<img onerror>`,
+  `javascript:` link and `[site](https://evil.example)` shown as text, page title unchanged,
+  0 links besides the chip; the backtick case gives 2 live chips; the app on this branch
+  answered "What has happened in AI the last 4 days in regards to image generation?" with
+  5 chips in a numbered list, no chip HTML as text
+- [x] Full suite passes → 332/332
 
 **Out of scope:** the prompt (T-073).
 **Depends on:** —
+**Notes:** **Plan changed while in progress (2026-10-05),** with my approval: I
+then saw chips shown as raw HTML; the cause was the model's backticks (KB-034).
+Escaping the text alone would not fix that, so the answer is now rendered by the app with
+markdown-it-py (HTML, links, images and autolinks off), chips go only into text tokens,
+and the result is one HTML block on one line. markdown-it-py 4.2.0 was already pinned in
+`requirements.txt` (a dependency of rich, via Streamlit); using it directly was approved by
+I (CLAUDE.md: ask before adding a dependency).
 
 ---
 

@@ -346,14 +346,14 @@ class RenderCitationChipsTests(unittest.TestCase):
         result = render_citation_chips(
             "See [99] for details.", {}, [], unlinked_references=["[99]"], descriptive_ranges=[],
         )
-        self.assertEqual(result, "See [99] for details.")
+        self.assertIn("<p>See [99] for details.</p>", result)  # T-072: rendered as HTML
         self.assertNotIn("citation-chip", result)
 
     def test_descriptive_range_is_left_as_plain_text_not_a_chip(self):
         result = render_citation_chips(
             "All 20 sources [1-20].", {}, [], unlinked_references=[], descriptive_ranges=["[1-20]"],
         )
-        self.assertEqual(result, "All 20 sources [1-20].")
+        self.assertIn("<p>All 20 sources [1-20].</p>", result)
         self.assertNotIn("citation-chip", result)
 
     def test_two_numbers_citing_the_same_document_both_become_chips(self):
@@ -370,7 +370,72 @@ class RenderCitationChipsTests(unittest.TestCase):
         result = render_citation_chips(
             "No citations here.", {}, [], unlinked_references=[], descriptive_ranges=[],
         )
-        self.assertEqual(result, "No citations here.")
+        self.assertIn("<p>No citations here.</p>", result)
+
+
+class AnswerRenderingSafetyTests(unittest.TestCase):
+    """T-072 (D-020): nothing the model writes becomes live HTML, and the app's own chips
+    survive however the model formats its answer."""
+
+    def render(self, answer, urls=None):
+        urls = urls or {1: "https://huggingface.co/papers/1", 2: "https://www.youtube.com/watch?v=v2&t=5"}
+        source_map = {n: make_chunk(f"doc{n}", u) for n, u in urls.items()}
+        citations = [make_citation(f"doc{n}", u) for n, u in urls.items()]
+        return render_citation_chips(answer, source_map, citations,
+                                     unlinked_references=[], descriptive_ranges=[])
+
+    def test_html_written_by_the_model_is_shown_as_text(self):
+        for injected, tag in (('<img src=x onerror="alert(1)">', "<img"),
+                              ("<script>alert(1)</script>", "<script"),
+                              ('<a href="javascript:alert(1)">click</a>', '<a href="javascript'),
+                              ('<iframe src="https://evil.example"></iframe>', "<iframe")):
+            result = self.render(f"Answer {injected} [1].")
+            self.assertNotIn(tag, result, injected)
+            self.assertIn("&lt;", result, injected)
+            self.assertIn('class="citation-chip"', result, injected)
+
+    def test_markdown_links_and_images_written_by_the_model_are_not_links(self):
+        for injected in ("[click](javascript:alert(1))", "[site](https://evil.example)",
+                         "![x](https://evil.example/p.png)", "<https://evil.example>"):
+            result = self.render(f"See {injected} and [1].")
+            self.assertNotIn("evil.example\"", result, injected)
+            self.assertNotIn('href="javascript', result, injected)
+            self.assertNotIn("<img", result, injected)
+            self.assertEqual(result.count("<a "), 1, injected)  # only the chip
+
+    def test_backticks_around_citations_cannot_turn_chips_into_visible_html(self):
+        """My 2026-10-05 report: a code span the model opened swallowed chips
+        29-31, shown as raw `<a class="citation-chip" ...>` text. Reproduced in Streamlit."""
+        result = self.render("Sources [1] text `Claude\n[2] Gemini` and [2] again.")
+        self.assertNotIn("&lt;a class", result)
+        self.assertIn("<code>Claude [2] Gemini</code>", result)  # the model's own code, as text
+        self.assertEqual(result.count('class="citation-chip"'), 2)  # [1] and the last [2]
+
+    def test_a_chip_is_only_built_for_an_https_url_on_a_source_host(self):
+        for url in ("https://evil.example/papers/1", "http://huggingface.co/papers/1",
+                    "javascript:alert(1)", "https://huggingface.co.evil.example/x"):
+            result = self.render("Claim [1].", urls={1: url})
+            self.assertNotIn("citation-chip", result, url)
+            self.assertIn("Claim [1].", result, url)
+        for url in ("https://huggingface.co/papers/1", "https://arxiv.org/abs/2609.1",
+                    "https://www.youtube.com/watch?v=x&t=3", "https://youtube.com/watch?v=x"):
+            self.assertIn("citation-chip", self.render("Claim [1].", urls={1: url}), url)
+
+    def test_ordinary_markdown_still_renders(self):
+        result = self.render("**Bold** intro.\n\n1. first [1]\n2. second [2]\n\n- dash item")
+        self.assertIn("<strong>Bold</strong>", result)
+        self.assertIn("<ol>", result)
+        self.assertIn("<ul>", result)
+        self.assertEqual(result.count('class="citation-chip"'), 2)
+
+    def test_output_is_one_line_so_streamlit_keeps_it_one_html_block(self):
+        """A blank line would end the HTML block and hand the rest back to Streamlit's
+        markdown, which is how chips became text in the first place."""
+        result = self.render("Para one [1].\n\nPara two [2].\n\n```\ncode\n\nmore\n```")
+        self.assertNotIn("\n", result)
+        self.assertTrue(result.startswith("<div"))
+        self.assertIn("code&#10;&#10;more", result)  # line breaks inside code survive
+
 
 
 if __name__ == "__main__":
