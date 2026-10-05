@@ -33,7 +33,7 @@ from vg09 import ingest_job, sources, sources_page
 from vg09.answer import generate_answer
 from vg09.citations import build_citations
 from vg09.date_range import detect_recency_ranking, resolve_date_range
-from vg09.quote_links import quote_times
+from vg09.quote_links import misattributed_quotes, quote_times
 from vg09.retrieval import NUM_CTX, retrieve
 from vg09.store import corpus_stats, is_empty, latest_feed_date
 from vg09.ui_helpers import (
@@ -48,6 +48,7 @@ from vg09.ui_helpers import (
     format_corpus_summary,
     format_date_range_short,
     logo_mark_html,
+    misattribution_note,
     render_citation_chips,
     staleness_note,
     text_source_label,
@@ -231,6 +232,12 @@ def ask_page() -> None:
         quote_seconds=quote_times(result.answer, result.source_map),  # T-063
     )
     st.markdown(chip_answer, unsafe_allow_html=True)
+
+    # T-064: a quote credited to a source that doesn't contain it is the answer's own
+    # error, so it is said right under the answer, not tucked away with the sources.
+    misattributed = misattribution_note(misattributed_quotes(result.answer, result.source_map))
+    if misattributed:
+        st.warning(misattributed)
 
     with st.expander("Show the model's reasoning"):
         st.text(result.reasoning)

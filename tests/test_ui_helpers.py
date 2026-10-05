@@ -387,6 +387,33 @@ class StalenessNoteTests(unittest.TestCase):
         self.assertEqual(staleness_note(date(2026, 9, 29), date(2026, 10, 2)), "3 days old")
 
 
+class MisattributionNoteTests(unittest.TestCase):
+    """T-064: the warning under an answer that credits a quote to the wrong source."""
+
+    def test_nothing_misattributed_gives_no_note(self):
+        from vg09.ui_helpers import misattribution_note
+
+        self.assertIsNone(misattribution_note([]))
+
+    def test_each_quote_is_listed_with_its_source_number(self):
+        from vg09.ui_helpers import misattribution_note
+
+        note = misattribution_note([("I've been working in Claude Code and Codex", [23], 25),
+                                    ("the model is cheaper and faster", [3, 4], None)])
+        self.assertIn("not in the source the answer credits them to", note)
+        self.assertIn("\"I've been working in Claude Code and Codex\" "
+                      "(credited to source 23; it is in source 25)", note)
+        self.assertIn('"the model is cheaper and faster" '
+                      "(credited to sources 3, 4; not found in any source of this answer)", note)
+
+    def test_a_long_quote_is_shortened(self):
+        from vg09.ui_helpers import misattribution_note
+
+        note = misattribution_note([("word " * 40, [1], None)])
+        self.assertIn("…", note)
+        self.assertLess(len(note), 300)
+
+
 class UpdateNoteTests(unittest.TestCase):
     """D-018: the header follows the background update and says why one failed."""
 

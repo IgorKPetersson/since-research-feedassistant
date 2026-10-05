@@ -194,6 +194,27 @@ def staleness_note(latest: date | None, today: date) -> str | None:
     return f"{days} days old"
 
 
+MAX_QUOTE_CHARS = 90
+
+
+def misattribution_note(items: list[tuple[str, list[int], int | None]]) -> str | None:
+    """T-064: the warning for quotes credited to a source that doesn't contain them,
+    saying where the quote really is when another source of the answer has it.
+    Markdown, one line per quote; None when there is nothing to warn about."""
+    if not items:
+        return None
+    lines = []
+    for quote, numbers, actual in items:
+        shown = quote if len(quote) <= MAX_QUOTE_CHARS else quote[:MAX_QUOTE_CHARS].rstrip() + "…"
+        credited = f"source {numbers[0]}" if len(numbers) == 1 else \
+            "sources " + ", ".join(str(n) for n in numbers)
+        where = f"credited to {credited}; it is in source {actual}" if actual is not None \
+            else f"credited to {credited}; not found in any source of this answer"
+        lines.append(f'- "{escape_markdown_link_text(shown)}" ({where})')
+    return ("Some quotes are not in the source the answer credits them to. "
+            "Check them before relying on them:\n" + "\n".join(lines))
+
+
 def update_note(job: dict) -> str | None:
     """D-018: the header's word on the background update - what it is doing while it
     runs, and in plain words why the last one failed. None when there is nothing to say.

@@ -31,15 +31,115 @@ def _normalise(text: str) -> str:
     return " ".join(_NOT_WORD.sub(" ", text.lower()).split())
 
 
-def quotes_in(answer: str) -> list[str]:
-    """Every quoted passage of at least `MIN_QUOTE_WORDS` words; a passage the model
-    shortened with an ellipsis counts as its separate pieces."""
-    found = []
+def _quote_pieces(answer: str):
+    """(piece, start, end) for every quoted passage piece of at least `MIN_QUOTE_WORDS`
+    words; start/end are the whole quoted passage's span, quote marks included."""
     for match in _QUOTED.finditer(answer):
         for piece in _ELLIPSIS.split(match.group(1)):
             piece = piece.strip()
             if len(piece.split()) >= MIN_QUOTE_WORDS:
-                found.append(piece)
+                yield piece, match.start(), match.end()
+
+
+def quotes_in(answer: str) -> list[str]:
+    """Every quoted passage of at least `MIN_QUOTE_WORDS` words; a passage the model
+    shortened with an ellipsis counts as its separate pieces."""
+    return [piece for piece, _, _ in _quote_pieces(answer)]
+
+
+# T-064: how an answer names a source - "[23]", "[3, 4]", "source 23", "Source [23]". A
+# range ("[1-20]") is a descriptive enumeration, not a citation (D-015), and is skipped.
+_BRACKET_REF = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_WORD_REF = re.compile(r"\bsources?\s+(\d+)\b", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"[.!?]\s|\n")
+IMMEDIATE_CHARS = 3  # `"…" [7]`, `"…," [7]` and `"…". [7]` all count as right after
+
+
+def _references(answer: str) -> list[tuple[int, int, list[int]]]:
+    refs = [(m.start(), m.end(), [int(n) for n in m.group(1).split(",")])
+            for m in _BRACKET_REF.finditer(answer)]
+    refs += [(m.start(), m.end(), [int(m.group(1))]) for m in _WORD_REF.finditer(answer)]
+    return sorted(refs)
+
+
+def credited_sources(answer: str) -> list[tuple[str, list[int]]]:
+    """Each quote with the source numbers the answer credits it to: a citation right
+    after the quote; else the last source named before it in the same sentence; else
+    the first named after it in that sentence. A quote credited to nothing is left out.
+    Found for real (T-063): 'source [23] with the statement "…" and in source [25] with
+    the identical statement' credits the quote to 23, where it is not."""
+    refs = _references(answer)
+    credited = []
+    for piece, start, end in _quote_pieces(answer):
+        before_quote = answer[:start]
+        sentence_start = max((m.end() for m in _SENTENCE_END.finditer(before_quote)), default=0)
+        after = _SENTENCE_END.search(answer, end)
+        sentence_end = after.start() + 1 if after else len(answer)
+        immediate = [r for r in refs if end <= r[0] <= end + IMMEDIATE_CHARS
+                     and answer[r[0]] == "["]
+        before = [r for r in refs if sentence_start <= r[0] and r[1] <= start]
+        following = [r for r in refs if end <= r[0] < sentence_end]
+        chosen = immediate[:1] or before[-1:] or following[:1]
+        if chosen:
+            credited.append((piece, chosen[0][2]))
+    return credited
+
+
+# T-064: share of a quote's three-word sequences that must occur in the source. The model
+# quotes loosely ("a personal agent" for "the personal agent", a dropped "a lot of"), so
+# an exact match flagged 4 of 12 real quotes whose source was right. Measured 2026-10-05
+# on real transcripts: right source with loose wording 0.67-0.86, the real false claim
+# 0.00, the best-scoring unrelated video for any of those quotes 0.46.
+QUOTE_MATCH_THRESHOLD = 0.6
+
+
+def _trigrams(words: list[str]) -> list[tuple[str, ...]]:
+    return [tuple(words[i:i + 3]) for i in range(len(words) - 2)]
+
+
+def quote_in_text(quote: str, text: str) -> bool:
+    wanted = _trigrams(_normalise(quote).split())
+    if not wanted:
+        return False
+    present = set(_trigrams(_normalise(text).split()))
+    return sum(g in present for g in wanted) / len(wanted) >= QUOTE_MATCH_THRESHOLD
+
+
+def _document_text(candidate: Candidate) -> str:
+    """The whole document - full transcript or abstract - not just the excerpt: the
+    model can credit a quote to the wrong excerpt of the right video (T-063), and that
+    is not the false claim this check is for."""
+    m = candidate.metadata
+    path = raw_path(m.get("source", ""), m.get("feed_date", ""), m.get("doc_id", ""))
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8")).get("text") or candidate.text
+    return candidate.text
+
+
+def misattributed_quotes(answer: str, source_map: dict[int, Candidate]
+                         ) -> list[tuple[str, list[int], int | None]]:
+    """T-064: (quote, the sources it is credited to, the source it is really in or None)
+    for every quote none of its credited sources contains. Measured on a real answer:
+    4 of 5 quotes were word for word from a different video than the one credited, so
+    where it really is, when that is one of the answer's sources, is worth saying.
+    Numbers that aren't sources in the prompt are ignored; the citation notices already
+    report those."""
+    texts: dict[str, str] = {}
+
+    def text_of(candidate: Candidate) -> str:
+        key = candidate.metadata.get("doc_id", candidate.id)
+        if key not in texts:
+            texts[key] = _document_text(candidate)
+        return texts[key]
+
+    found = []
+    for quote, numbers in credited_sources(answer):
+        known = [n for n in numbers if n in source_map]
+        if not known or any(quote_in_text(quote, text_of(source_map[n])) for n in known):
+            continue
+        actual = next((n for n, c in sorted(source_map.items())
+                       if n not in known and quote_in_text(quote, text_of(c))), None)
+        found.append((quote, known, actual))
     return found
 
 

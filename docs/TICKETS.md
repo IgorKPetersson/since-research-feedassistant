@@ -14,6 +14,50 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-064 — Warn when a quote is not in the source it is credited to
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-064-check-quotes`  ·  **Phase:** 3
+
+**Goal:** an answer that credits a quote to a source that doesn't contain it says so
+under the answer, instead of presenting the claim as sourced.
+
+**Why:** found in T-063's browser run (2026-10-05): the model said video `lnB4Zckx_34`
+had "the identical statement" ("I've been working in Claude Code and Codex for months…"),
+and that video never mentions Claude Code. A safeguard is needed.
+
+**Acceptance criteria**
+- [x] Each quote of 4+ words is credited to a source number: a citation bracket right
+  after it, else the last source named before it in the same sentence, else the first
+  named after it in that sentence → 7 tests in `CreditedSourcesTests`, including the
+  real false answer
+- [x] A quote is checked against the credited source's whole document (the full
+  transcript or abstract on disk), not just the excerpt, case and punctuation ignored →
+  tests. **Changed during the work:** an exact match flagged 4 of 12 real quotes whose
+  source was right (the model quotes loosely: "a personal agent" for "the personal
+  agent"). The check is now the share of the quote's three-word sequences found in the
+  source, accepted at 0.6 — measured: right source 0.67–0.86, the real false claim
+  0.00, best unrelated video 0.46
+- [x] Every quote not found is listed under the answer with its source number, in a
+  warning that says to check it, and names the source that does contain it when one of
+  the answer's sources does → the real false answer rendered with `st.warning` in a
+  browser: "(credited to source 23; it is in source 25)". In the app itself, three live
+  answers showed no warning; the model could not be made to misattribute on demand, so
+  the app's own three-line wiring was not seen firing
+- [x] The real false answer from T-063's run produces the warning for source 23 and not
+  for source 25 → against the real store: `[(quote, [23], 25)]`
+- [x] Full suite passes → 305/305
+
+**Out of scope:** checking paraphrased claims; changing the prompt to make the model
+quote more carefully; removing the false sentence from the answer.
+**Depends on:** T-063.
+**Notes:** Measured on real answers (2026-10-05), with the tolerant check: one "Quote what
+they said" answer about Meta's Muse credited 4 of 5 quotes to the wrong video — each
+quote was word for word (score 1.0) from another retrieved video. Across 6 other answers,
+0 of 21 credited quotes were flagged.
+
+---
+
 ### T-063 — A quoted video sentence links to the second it is spoken
 
 **Status:** done
