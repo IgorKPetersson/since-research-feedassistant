@@ -14,6 +14,30 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-080 — Hide Streamlit's "Press Enter to submit form" hint
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-080-hide-enter-hint`  ·  **Phase:** 3
+
+**Goal:** no leftover hint under the question field after a question is sent.
+
+**Why:** I (2026-10-05): after typing and pressing Enter, "Press Enter to submit
+form" stays. Measured: Streamlit shows it while focus is in the field, and after Enter
+focus stays there, so it stood for 40 s and counting, long after the answer. Not a change
+of the day; it has been so since T-051 made Enter submit. I chose to hide it
+(over blurring the field with page script, which is fragile across Streamlit versions).
+
+**Acceptance criteria**
+- [x] `[data-testid="InputInstructions"]` is hidden by `CUSTOM_CSS` → test
+- [x] In a real browser: the hint is not visible while typing or after Enter; Enter
+  answered (10 chips); a second question sent with the Ask button ran
+- [x] Full suite passes → 351/351
+
+**Out of scope:** the placeholder text (unchanged: "What's happened since…").
+**Depends on:** T-051.
+
+---
+
 ### T-079 — Understand "over the 5 days", "the previous 5 days" and "de 5 senaste dagarna"
 
 **Status:** done

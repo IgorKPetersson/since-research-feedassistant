@@ -578,6 +578,12 @@ a.citation-chip {
     font-size: 0.85rem;
     opacity: 0.7;
 }
+/* T-080: Streamlit's own "Press Enter to submit form" shows while focus is in the
+   field, and after Enter focus stays there, so it stood under the answer indefinitely
+   (measured: 40 s and counting). The Ask button beside the field says the same. */
+[data-testid="InputInstructions"] {
+    display: none;
+}
 /* T-056: "data is N days old". Body text colour with an accent underline, like the
    source links - accent-coloured text would fall below 4.5:1 on the dark theme. */
 .app-stale {

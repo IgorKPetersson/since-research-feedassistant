@@ -128,6 +128,11 @@ class VisualIdentityTests(unittest.TestCase):
         self.assertIn("color: #ffffff !important", CUSTOM_CSS)
         self.assertIn("text-decoration: none !important", CUSTOM_CSS)
 
+    def test_streamlits_press_enter_hint_is_hidden(self):
+        """T-080: the hint stayed while focus stayed in the field, long after the answer."""
+        self.assertIn('[data-testid="InputInstructions"]', CUSTOM_CSS)
+        self.assertIn("display: none", CUSTOM_CSS)
+
     def test_white_text_on_the_accent_reaches_wcag_aa(self):
         """T-050: the Ask button's label and the citation chips are white on the accent.
         Computed from the constant, so a lighter accent can't be chosen again unnoticed
