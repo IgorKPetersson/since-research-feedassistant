@@ -53,8 +53,8 @@ quote more carefully; removing the false sentence from the answer.
 **Depends on:** T-063.
 **Notes:** Measured on real answers (2026-10-05), with the tolerant check: one "Quote what
 they said" answer about Meta's Muse credited 4 of 5 quotes to the wrong video — each
-quote was word for word (score 1.0) from another retrieved video. Across 6 other answers,
-0 of 21 credited quotes were flagged.
+quote was word for word (score 1.0) from another retrieved video. In the same run of 5
+questions, the other 4 answers credited 7 quotes and none was flagged.
 
 ---
 
