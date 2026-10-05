@@ -160,6 +160,14 @@ class MisattributedQuotesTests(unittest.TestCase):
         answer = 'Source [25] says "I\'ve been working in Claude Code and Codex for months".'
         self.assertEqual(misattributed_quotes(answer, sources), [])
 
+    def test_a_quoted_title_is_not_reported(self):
+        """T-065: found in the probe run - the model quotes a paper's title, and the
+        title is not part of the abstract's text."""
+        sources = {32: self.source("a", "We study whether training on protein folding helps.")}
+        sources[32].metadata["title"] = "Does Learning Protein Folding Generalize to Broader Reasoning?"
+        answer = '[32] "Does Learning Protein Folding Generalize to Broader Reasoning?" was published.'
+        self.assertEqual(misattributed_quotes(answer, sources), [])
+
     def test_a_quote_in_no_source_is_reported_with_none(self):
         sources = {1: self.source("a", "practical help with email and small shopping")}
         answer = '"Agents will replace every app by next year" [1].'

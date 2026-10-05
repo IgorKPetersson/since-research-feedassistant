@@ -108,12 +108,14 @@ def quote_in_text(quote: str, text: str) -> bool:
 def _document_text(candidate: Candidate) -> str:
     """The whole document - full transcript or abstract - not just the excerpt: the
     model can credit a quote to the wrong excerpt of the right video (T-063), and that
-    is not the false claim this check is for."""
+    is not the false claim this check is for. The title is included (T-065): the model
+    quotes titles too, and the probe run flagged three correctly quoted titles."""
     m = candidate.metadata
+    text = candidate.text
     path = raw_path(m.get("source", ""), m.get("feed_date", ""), m.get("doc_id", ""))
     if path.exists():
-        return json.loads(path.read_text(encoding="utf-8")).get("text") or candidate.text
-    return candidate.text
+        text = json.loads(path.read_text(encoding="utf-8")).get("text") or text
+    return f"{m.get('title', '')}\n{text}"
 
 
 def misattributed_quotes(answer: str, source_map: dict[int, Candidate]

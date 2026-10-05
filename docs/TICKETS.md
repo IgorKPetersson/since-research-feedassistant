@@ -14,6 +14,30 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-065 — The quote check must not flag a quoted title
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-065-quoted-titles`  ·  **Phase:** 3
+
+**Goal:** a correctly quoted paper or video title no longer produces T-064's warning.
+
+**Why:** found in the 18-question probe run (2026-10-05): three answers quoted a title
+("Does Learning Protein Folding Generalize to Broader Reasoning?", "Circuit Hypernetworks
+for Quantum-Augmented Diffusion Language Models", "the end of the app era") and were
+flagged, because the check searched the abstract or transcript but not the title.
+
+**Acceptance criteria**
+- [x] A source's title is part of the text a quote is checked against → unit test
+- [x] The three quotes from the probe run are accepted against the real store → all three
+  `True`
+- [x] Full suite passes → 306/306
+
+**Out of scope:** the other probe findings, raised with me.
+**Depends on:** T-064.
+**Notes:** —
+
+---
+
 ### T-064 — Warn when a quote is not in the source it is credited to
 
 **Status:** done
