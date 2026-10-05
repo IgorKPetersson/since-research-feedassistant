@@ -120,7 +120,7 @@ before this change; `docs/OVERVIEW.md` (T-076) says so.
 
 ### T-076 — `docs/OVERVIEW.md`: purpose, design, security, tests and results in English
 
-**Status:** todo
+**Status:** review — waiting for my read-through
 **Size:** M  ·  **Branch:** `t/T-076-overview`  ·  **Phase:** 3
 
 how it works, how it is protected, how it was tested and what the results were.
@@ -129,13 +129,15 @@ how it works, how it is protected, how it was tested and what the results were.
 the starting point and walk-through. English, because the app is international.
 
 **Acceptance criteria**
-- [ ] `docs/OVERVIEW.md` has: purpose and problem, the claim tested, how it works (RAG,
+- [x] `docs/OVERVIEW.md` has: purpose and problem, the claim tested, how it works (RAG,
   with a diagram), stack with reasons, security (threat model and measures, D-020),
   testing, results (the three graded runs and the model comparison), limitations, how to
   try it, and a map of where to read more in the repo
-- [ ] Every number links to the file it comes from
-- [ ] It states that the graded evaluation predates the T-073 prompt change
-- [ ] README links to it in its first lines
+- [x] Every number links to the file it comes from → every relative link and anchor
+  checked by script; numbers re-checked against the data: papers per weekday are 22–60,
+  not the 100–150 first written (the deck's slide 2 says ~100: fix in T-077)
+- [x] It states that the graded evaluation predates the T-073 prompt change (and T-078)
+- [x] README links to it in its first lines
 - [ ] Read through by me
 
 **Out of scope:** rewriting README's install steps.

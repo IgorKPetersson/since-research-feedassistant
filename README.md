@@ -7,6 +7,9 @@ topic has developed over the last few weeks — it answers with real citations (
 feed date), and runs entirely on your own machine against a local model. No account, no
 cloud service, no server process.
 
+> **Reviewing the project?** Start with [`docs/OVERVIEW.md`](docs/OVERVIEW.md): purpose,
+> how it works, security, testing and results on one page, with links to every source.
+
 ## The problem this solves
 
 Keeping up with AI research means checking the [HF Daily Papers](https://huggingface.co/papers)
