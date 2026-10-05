@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-060 — Start the app with a double-click
 
-**Status:** todo
+**Status:** review
 **Size:** S  ·  **Branch:** `t/T-060-launcher`  ·  **Phase:** 3
 
 **Goal:** the app is opened by double-clicking a file or a desktop shortcut, not by typing
@@ -26,18 +26,22 @@ a command in a terminal.
 opening is easy; a terminal command is not something to hand a customer.
 
 **Acceptance criteria**
-- [ ] `Since.bat` in the repository root starts the app from the project's `.venv`
-  whatever the current directory is, and the browser opens on the app → checked by
-  double-clicking it in Explorer
-- [ ] If `.venv` is missing, the window says so in one sentence and points at the README,
-  instead of closing → checked by running it with the venv renamed
-- [ ] README's "Start the app" section leads with the double-click and says how to put a
+- [x] `Since.bat` in the repository root starts the app from the project's `.venv`
+  whatever the current directory is, and the browser opens on the app → started with
+  `Start-Process` from `%TEMP%` (what a double-click does), `/_stcore/health` answered
+  `ok`. **Not seen by the agent:** the browser opening, and a literal double-click in
+  Explorer — I am asked to confirm
+- [x] If `.venv` is missing, the window says so in one sentence and points at the README,
+  instead of closing → checked with a copy of the file in an empty folder (rather than
+  renaming the real venv): the sentence, then "Press any key", exit code 1
+- [x] README's "Start the app" section leads with the double-click and says how to put a
   shortcut on the desktop
-- [ ] A desktop shortcut exists on the author's machine and opens the app
+- [x] A desktop shortcut opens the app → created; started through it, `/_stcore/health` answered `ok`
 
 **Out of scope:** an installer; an icon file; detecting an already-running app.
 **Depends on:** —
-**Notes:** D-018.
+**Notes:** D-018. `.streamlit/config.toml` gains `server.showEmailPrompt = false`:
+Streamlit's first-run email prompt would otherwise wait forever in a window nobody types in.
 
 ---
 

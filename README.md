@@ -55,11 +55,18 @@ pip install -r requirements.txt
 
 ## Start the app
 
+On Windows, **double-click `Since.bat`** in the project folder. A small window opens and
+your browser opens on the app; keep the window open while you use it, and close it to
+stop the app. For a desktop shortcut, right-click `Since.bat` → **Send to** → **Desktop
+(create shortcut)**.
+
+From a terminal (any OS, with the virtual environment activated):
+
 ```
 streamlit run app.py
 ```
 
-opens Since in your browser. It has two pages, listed in the sidebar: **Ask** and
+Either way, Since opens in your browser. It has two pages, listed in the sidebar: **Ask** and
 **Sources**. The first time, with nothing fetched yet, it opens on Sources.
 
 ## Choosing sources and fetching them

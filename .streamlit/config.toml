@@ -21,6 +21,12 @@
 # explicitly, even with only primaryColor set in each, keeps the toggle (two real
 # themes for it to switch between) and lets Streamlit fill in its own sensible
 # per-mode defaults for everything else.
+#
+# T-060: Since.bat starts the app with a double-click, so nobody is at the console to
+# answer Streamlit's first-run "enter your email" prompt - it would wait there forever.
+[server]
+showEmailPrompt = false
+
 [theme.light]
 primaryColor = "#A26B16"
 
