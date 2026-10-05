@@ -14,6 +14,37 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-078 — "research" is a topic, not a source: it no longer narrows the search to papers
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-078-research-is-a-topic`  ·  **Phase:** 3
+
+**Goal:** a question about research searches papers and videos, and the caption never
+claims the question mentions papers when it does not.
+
+**Why:** my test (2026-10-05): "What's new in AI agent research this week?" and
+"How has research on coding agents developed over the last month?" both showed "Papers
+only (the question mentions papers)", though neither question mentions papers. T-068 put
+"research"/"forskning" among the paper words (its notes say so).
+
+**Acceptance criteria**
+- [x] `detect_source()` returns None for "research", "forskning", "forskningen" alone;
+  "papers", "arXiv", "artiklar" etc. still mean papers → tests, including both of my
+  questions; the new test failed first ("'hf' is not None")
+- [x] Real run: "What's new in AI agent research this week?" retrieves both papers and
+  videos, and the caption has no "Papers only" → 23 papers + 10 videos, caption "Date
+  filter (interpreted from the question): 2026-09-29 – 2026-10-05"; "How has research on
+  coding agents developed…": 19 papers + 12 videos
+- [x] Full suite passes → 326/326
+
+**Out of scope:** re-running the graded evaluation (me, 2026-10-05).
+**Depends on:** T-068.
+**Notes:** eval questions 7 and 11 ("forskningen") were searched in papers only in
+T-069's arm A; after this they search both sources. T-069's numbers describe the app
+before this change; `docs/OVERVIEW.md` (T-076) says so.
+
+---
+
 ### T-077 — Deck: slides for RAG and the stack, security, and testing
 
 **Status:** todo

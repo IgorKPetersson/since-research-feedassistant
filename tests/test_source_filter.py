@@ -11,9 +11,9 @@ class DetectSourceTests(unittest.TestCase):
     def test_paper_words_mean_hugging_face(self):
         for q in ("What were the most important papers yesterday?",
                   "Was there any paper about protein folding in the last two weeks?",
-                  "What's new in AI research?",
                   "Any arXiv abstracts on RL?",
-                  "Vad säger forskningen om text-to-video den senaste månaden?",
+                  "Which publications covered RL last week?",
+                  "Vilka artiklar handlade om robotar?",
                   "Nämns LEGO i någon artikel?"):
             self.assertEqual(detect_source(q), "hf", q)
 
@@ -41,6 +41,16 @@ class DetectSourceTests(unittest.TestCase):
         for q in ("Which papers did the YouTubers discuss?",
                   "What's new this week?",
                   "Has anyone talked about GPT-6?"):
+            self.assertIsNone(detect_source(q), q)
+
+    def test_research_is_a_topic_not_a_source(self):
+        """T-078: my two questions, which showed "Papers only (the question
+        mentions papers)" without mentioning papers, and eval questions 7 and 11."""
+        for q in ("What's new in AI agent research this week?",
+                  "How has research on coding agents developed over the last month?",
+                  "What's new in AI research?",
+                  "Vad säger forskningen om text-to-video den senaste månaden?",
+                  "Vad hände i forskningen förra veckan?"):
             self.assertIsNone(detect_source(q), q)
 
 
