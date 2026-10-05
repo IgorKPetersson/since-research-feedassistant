@@ -162,10 +162,18 @@ answer, and how often they still do is known.
   runs each question 5 times through the real pipeline, before and after the change; the
   results are committed, failures included
 - [ ] The demo questions still answer with citations after the change (real run)
+- [ ] The system prompt asks for a citation in every list item and every paragraph, not
+  only "every claim"; measured with the citation-placement script (3 questions × 4 runs,
+  before and after, same data) as the share of answers with all citations in the last
+  unit — baseline 2026-10-05: 3/12 on the 2026-10-02 code, 2/12 on main
 - [ ] Full suite passes
 
-**Out of scope:** re-running the graded evaluation (me, 2026-10-05).
+**Out of scope:** re-running the graded evaluation (me, 2026-10-05); an in-app
+notice when citations are bunched at the end (only if the wording does not help).
 **Depends on:** T-072 (so a test that makes the model write HTML is already harmless).
+**Notes:** the citation criterion added 2026-10-05 at my choice, after their test
+showed one answer with every citation in its last sentence; the measurement showed it
+happened as often before the day's changes as after.
 
 ---
 
