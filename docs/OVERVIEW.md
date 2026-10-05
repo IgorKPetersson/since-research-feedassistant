@@ -209,7 +209,7 @@ app opens in the browser, updates itself, and answers at `http://127.0.0.1:8501`
 ## How it was built
 
 The code was written with an AI coding agent (Claude Code), directed and reviewed by the
-author, who decided what to build, judged every evaluation answer, and tested the app.
+author, who decided what to build, judged every evaluation answer, and tested the app thoroughly.
 Because an agent starts every session with no memory, the work ran on written records:
 
 - **80 tickets** with checkable acceptance criteria ([`TICKETS.md`](TICKETS.md))

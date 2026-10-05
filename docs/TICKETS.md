@@ -120,7 +120,7 @@ before this change; `docs/OVERVIEW.md` (T-076) says so.
 
 ### T-076 — `docs/OVERVIEW.md`: purpose, design, security, tests and results in English
 
-**Status:** review — waiting for my read-through
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-076-overview`  ·  **Phase:** 3
 
 how it works, how it is protected, how it was tested and what the results were.
@@ -138,7 +138,8 @@ the starting point and walk-through. English, because the app is international.
   not the 100–150 first written (the deck's slide 2 says ~100: fix in T-077)
 - [x] It states that the graded evaluation predates the T-073 prompt change (and T-078)
 - [x] README links to it in its first lines
-- [ ] Read through by me
+- [x] Read through and approved (2026-10-06), after the wording was changed to
+  describe Since as a product
 
 **Out of scope:** rewriting README's install steps.
 **Depends on:** T-071–T-075 (its security section reports their results).
