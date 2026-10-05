@@ -1,7 +1,7 @@
 # KB-032 — `slidev --remote false` turns remote access on, with "false" as the password
 
 **Area:** Presentation (Slidev) — dev server
-**Status:** verified
+**Status:** superseded by KB-038 — the address it calls public is the router's, not the machine's
 **Date:** 2026-10-05  ·  **From:** T-048
 
 ## Claim

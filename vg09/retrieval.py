@@ -21,6 +21,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
+import re
+
 import requests
 
 from vg09.store import embed_batch, get_collection
@@ -34,14 +36,17 @@ NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUD
 # 16 tokens over T-024's 157) - 40 (question) - 2542
 # (reasoning+answer, T-039 - raised from T-028's 2542 after T-032's real run still
 # truncated 4 of 30 calls) = 11787, - 70 (T-061's date line before the question, 63
-# measured with a date range, the longer form) = 11717
-CHUNK_BUDGET_TOKENS = 11717
+# measured with a date range, the longer form) = 11717, - 157 (T-073: the system prompt
+# grew by 148 measured tokens, 179 -> 327 counted by Ollama, for the untrusted-data and
+# citation rules; reserved 330 instead of 173) = 11560
+CHUNK_BUDGET_TOKENS = 11560
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
 # chunk each - a real, measured effect (see dedup_by_doc()'s docstring)
 
-# docs/DESIGN.md's max-top-k ceiling: 11717 // 488 = 24 (T-061; 11787 under T-039 gave 24
+# docs/DESIGN.md's max-top-k ceiling: 11560 // 502 = 23 (T-073: 488 plus ~14 for the
+# source markers; 11717 // 488 = 24 under T-061; 11787 under T-039 gave 24
 # too - was 27 at 13245; T-038
 # corrected the earlier 13245 // 400 = 33, which silently assumed zero cost for the real
 # "[N] Title (url, feed date)\n" wrapper every packed chunk actually carries; 488 is the
@@ -119,7 +124,22 @@ def format_source(c: Candidate, n: int) -> str:
     generation-time content can never drift apart the way they did before T-038 (packing
     measured bare `c.text` alone; the real prompt included this wrapper, uncounted)."""
     m = c.metadata
-    return f"[{n}] {m['title']} ({m['url']}, feed date {m['feed_date']})\n{c.text}"
+    # T-073 (D-020): fetched text is untrusted, so each source sits between markers the
+    # system prompt names, and a look-alike marker inside it is defused - otherwise a
+    # transcript could "close" its own source and write text that looks like ours.
+    title, text = _defuse_markers(m["title"]), _defuse_markers(c.text)
+    # The markers carry no word "SOURCE" and no number: with "<<<SOURCE 22 BEGIN>>>" the
+    # model began citing "Source 22" instead of [22], 12-91 times per measured run, and
+    # those never become chips. The number is on the [N] line inside.
+    return (f"<<<BEGIN>>>\n[{n}] {title} ({m['url']}, feed date {m['feed_date']})\n"
+            f"{text}\n<<<END>>>")
+
+
+_MARKER_LOOK_ALIKE = re.compile(r"<{2,}|>{2,}")
+
+
+def _defuse_markers(text: str) -> str:
+    return _MARKER_LOOK_ALIKE.sub(lambda m: m.group(0)[0], text)
 
 
 # T-038: packing happens before vg09.answer.number_sources() assigns real citation

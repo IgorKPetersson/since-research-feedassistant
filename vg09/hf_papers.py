@@ -10,12 +10,13 @@ metadata only, per D-002).
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
 import requests
 
-from vg09.document import RAW_DIR, Document
+from vg09.document import ARXIV_ID_RE, RAW_DIR, Document
 
 API_URL = "https://huggingface.co/api/daily_papers"
 DAY_MARKER_NAME = "_done.json"
@@ -36,6 +37,9 @@ def normalize(entry: dict) -> Document | None:
     if not arxiv_id or not feed_date_raw:
         return None
     feed_date = feed_date_raw.split("T", 1)[0]
+    # T-074: the id becomes a URL and a file name, the date a folder - only real formats.
+    if not ARXIV_ID_RE.fullmatch(arxiv_id) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", feed_date):
+        return None
     return Document(
         id=arxiv_id,
         source="hf",

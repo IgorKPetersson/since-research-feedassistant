@@ -14,9 +14,12 @@ from __future__ import annotations
 
 import re
 
+# T-078: "research"/"forskning" are not here. They name the topic, not where to look -
+# videos discuss research too - and T-068 counting them made "What's new in AI agent
+# research this week?" search papers only, captioned "the question mentions papers".
 _PAPER_WORDS = (
-    r"papers?|research|arxiv|abstracts?|publications?"
-    r"|forskning(?:en)?|artikel(?:n)?|artiklar(?:na)?"
+    r"papers?|arxiv|abstracts?|publications?"
+    r"|artikel(?:n)?|artiklar(?:na)?"
 )
 _VIDEO_TOPIC_WORDS = (
     r"generation|genereation|generator|generators|model|models|diffusion|editing"

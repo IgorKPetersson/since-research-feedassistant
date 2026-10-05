@@ -7,6 +7,9 @@ topic has developed over the last few weeks — it answers with real citations (
 feed date), and runs entirely on your own machine against a local model. No account, no
 cloud service, no server process.
 
+**Overview:** [`docs/OVERVIEW.md`](docs/OVERVIEW.md) explains how Since works, how it is
+protected and tested, and what the results were.
+
 ## The problem this solves
 
 Keeping up with AI research means checking the [HF Daily Papers](https://huggingface.co/papers)
@@ -65,6 +68,10 @@ From a terminal (any OS, with the virtual environment activated):
 ```
 streamlit run app.py
 ```
+
+Since only accepts connections from the machine it runs on (`http://127.0.0.1:8501`);
+other computers on your network cannot reach it. Ollama is used the same way, on
+`127.0.0.1`.
 
 Either way, Since opens in your browser. It has two pages, listed in the sidebar: **Ask** and
 **Sources**. The first time, with nothing fetched yet, it opens on Sources.
@@ -144,8 +151,8 @@ A few things worth knowing before you use it:
 ## Evaluation
 
 `docs/eval-questions.md` holds the 15 hand-written evaluation questions, each with its own
-expected answer and sources. `docs/eval-results/` holds the real, hand-graded comparison
-runs against the actual pipeline: the date-aware-vs-plain-retrieval comparison this
+expected answer and sources. `docs/eval-results/` holds the real comparison
+runs against the actual pipeline, every answer judged by hand: the date-aware-vs-plain-retrieval comparison this
 project's central claim rests on, and the `qwen3:30b-a3b`-vs-`qwen3:8b` model-size
 comparison (T-033). See
 `docs/PLAN.md` and `docs/TICKETS.md` for what's done and what's left.
@@ -179,7 +186,7 @@ Apache License 2.0 — see [`LICENSE`](LICENSE).
 
 ## More
 
-This started as a course project; the full design rationale, the decisions made along the
-way (and why), and session-by-session history all live under [`docs/`](docs/) — start with
+The full design rationale, the decisions made along the way (and why), and
+session-by-session history all live under [`docs/`](docs/). Start with
 [`docs/GOAL.md`](docs/GOAL.md) for what this is trying to prove, or
 [`docs/DESIGN.md`](docs/DESIGN.md) for how the pipeline actually works.

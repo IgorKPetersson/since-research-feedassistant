@@ -306,6 +306,30 @@ class T066PhrasesFromTheProbeRunTests(unittest.TestCase):
         self.check("What happened on September 16?", date(2026, 9, 16), date(2026, 9, 16))
 
 
+class T079PhrasesFromTheHumansTestTests(unittest.TestCase):
+    """T-079: my 2026-10-05 test asked "over the 5 days" and got no date filter."""
+
+    TODAY = date(2026, 10, 5)
+
+    def check(self, question: str, start: date) -> None:
+        self.assertEqual(extract_date_range(question, self.TODAY), (start, self.TODAY), question)
+
+    def test_the_n_days_after_over_during_in_within(self):
+        for q in ("How has research on coding agents developed over the 5 days?",
+                  "What happened during the 5 days?",
+                  "Anything new within the five days?",
+                  "What came up in the previous 5 days?"):
+            self.check(q, date(2026, 10, 1))
+        self.check("What happened over the 2 weeks?", date(2026, 9, 22))
+
+    def test_swedish_number_before_senaste(self):
+        self.check("Vad har hänt de 5 senaste dagarna?", date(2026, 10, 1))
+        self.check("Vad hände de två senaste veckorna?", date(2026, 9, 22))
+
+    def test_the_n_days_before_or_after_something_is_not_a_recent_window(self):
+        self.assertIsNone(extract_date_range("What happened in the 5 days before the launch?", self.TODAY))
+
+
 class DetectRecencyRankingTests(unittest.TestCase):
     """T-022: real ranking questions from docs/eval-questions.md (F01/F03/F06) vs.
     real window questions that also contain the word "senaste" (F02/F04/F05/F07/F11/

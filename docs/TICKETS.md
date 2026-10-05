@@ -14,6 +14,318 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-080 — Hide Streamlit's "Press Enter to submit form" hint
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-080-hide-enter-hint`  ·  **Phase:** 3
+
+**Goal:** no leftover hint under the question field after a question is sent.
+
+**Why:** I (2026-10-05): after typing and pressing Enter, "Press Enter to submit
+form" stays. Measured: Streamlit shows it while focus is in the field, and after Enter
+focus stays there, so it stood for 40 s and counting, long after the answer. Not a change
+of the day; it has been so since T-051 made Enter submit. I chose to hide it
+(over blurring the field with page script, which is fragile across Streamlit versions).
+
+**Acceptance criteria**
+- [x] `[data-testid="InputInstructions"]` is hidden by `CUSTOM_CSS` → test
+- [x] In a real browser: the hint is not visible while typing or after Enter; Enter
+  answered (10 chips); a second question sent with the Ask button ran
+- [x] Full suite passes → 351/351
+
+**Out of scope:** the placeholder text (unchanged: "What's happened since…").
+**Depends on:** T-051.
+
+---
+
+### T-079 — Understand "over the 5 days", "the previous 5 days" and "de 5 senaste dagarna"
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-079-date-phrases`  ·  **Phase:** 3
+
+**Goal:** these phrasings get the same date filter as "the last 5 days".
+
+**Why:** my test (2026-10-05): "How has research on coding agents developed over
+the 5 days?" got "No date filter"; the model then made up its own window and said no
+source fell inside it. Adding "last" worked.
+
+**Acceptance criteria**
+- [x] "over/during/in/within/for the N days/weeks/months" and "previous N …" give the last-N
+  window; "the 5 days before/after X" does not → tests (`T079PhrasesFromTheHumansTestTests`),
+  failing first
+- [x] Swedish "de N senaste dagarna/veckorna/månaderna" works like "senaste N …" → tests
+- [x] Full suite passes → 335/335
+
+**Out of scope:** any phrase not seen in a real question.
+**Depends on:** T-066.
+
+---
+
+### T-078 — "research" is a topic, not a source: it no longer narrows the search to papers
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-078-research-is-a-topic`  ·  **Phase:** 3
+
+**Goal:** a question about research searches papers and videos, and the caption never
+claims the question mentions papers when it does not.
+
+**Why:** my test (2026-10-05): "What's new in AI agent research this week?" and
+"How has research on coding agents developed over the last month?" both showed "Papers
+only (the question mentions papers)", though neither question mentions papers. T-068 put
+"research"/"forskning" among the paper words (its notes say so).
+
+**Acceptance criteria**
+- [x] `detect_source()` returns None for "research", "forskning", "forskningen" alone;
+  "papers", "arXiv", "artiklar" etc. still mean papers → tests, including both of my
+  questions; the new test failed first ("'hf' is not None")
+- [x] Real run: "What's new in AI agent research this week?" retrieves both papers and
+  videos, and the caption has no "Papers only" → 23 papers + 10 videos, caption "Date
+  filter (interpreted from the question): 2026-09-29 – 2026-10-05"; "How has research on
+  coding agents developed…": 19 papers + 12 videos
+- [x] Full suite passes → 326/326
+
+**Out of scope:** re-running the graded evaluation (me, 2026-10-05).
+**Depends on:** T-068.
+**Notes:** eval questions 7 and 11 ("forskningen") were searched in papers only in
+T-069's arm A; after this they search both sources. T-069's numbers describe the app
+before this change; `docs/OVERVIEW.md` (T-076) says so.
+
+---
+
+### T-077 — Deck: slides for RAG and the stack, security, and testing
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-048-slidev-deck` (the deck's branch)  ·  **Phase:** 3
+
+**Goal:** the deck shows how Since is built and protected, not only what it does.
+
+**Why:** I (2026-10-05): the deck never says RAG, the stack, the security or the
+
+**Acceptance criteria**
+- [ ] One slide names the pipeline as RAG and splits it into retrieval (date filter, then
+  vector search), augmentation (excerpts inside a fixed token budget) and generation
+- [ ] One slide lists the stack with a one-line reason each, citing its D-0NN in the notes
+- [ ] One slide on security states only what T-071–T-074 verified, including the
+  injection runs' real outcome
+- [ ] One slide on testing: the unit test count from a real run, the graded evaluation,
+  the frozen dataset, the fresh-clone test; no CI claimed
+- [ ] Swedish without dashes (my standing preference); `npm run build` passes;
+  every slide checked by screenshot
+
+**Out of scope:** the overview document (T-076).
+**Depends on:** T-071–T-075.
+**Notes:** may replace the current "Allt körs på min dator" slide rather than add to it.
+
+---
+
+### T-076 — `docs/OVERVIEW.md`: purpose, design, security, tests and results in English
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-076-overview`  ·  **Phase:** 3
+
+how it works, how it is protected, how it was tested and what the results were.
+
+**Why:** a code repo alone does not explain purpose and results; one document should be
+the starting point and walk-through. English, because the app is international.
+
+**Acceptance criteria**
+- [x] `docs/OVERVIEW.md` has: purpose and problem, the claim tested, how it works (RAG,
+  with a diagram), stack with reasons, security (threat model and measures, D-020),
+  testing, results (the three graded runs and the model comparison), limitations, how to
+  try it, and a map of where to read more in the repo
+- [x] Every number links to the file it comes from → every relative link and anchor
+  checked by script; numbers re-checked against the data: papers per weekday are 22–60,
+  not the 100–150 first written (the deck's slide 2 says ~100: fix in T-077)
+- [x] It states that the graded evaluation predates the T-073 prompt change (and T-078)
+- [x] README links to it in its first lines
+- [x] Read through and approved (2026-10-06), after the wording was changed to
+  describe Since as a product
+
+**Out of scope:** rewriting README's install steps.
+**Depends on:** T-071–T-075 (its security section reports their results).
+**Notes:** reverses the 2026-10-02 "no written report" only in part: there is still no
+separate report, but the overview plays that role in the repo (see GOAL item 5 note).
+
+---
+
+### T-075 — Record D-020 and show that the model has no tools
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-075-no-tools`  ·  **Phase:** 3
+
+**Goal:** the "no tools" guarantee is written down and checked, not just true by accident.
+
+**Why:** D-020; it is the main bound on what a prompt injection can do.
+
+**Acceptance criteria**
+- [x] A unit test asserts that every Ollama request the app builds (`answer.py`,
+  `retrieval.py`, `store.py`) has no `tools`/`functions` field and uses only the
+  `/api/chat`, `/api/generate` or `/api/embed` endpoints → `tests/test_no_tools.py`: the
+  three real calls captured and checked (127.0.0.1, allowed endpoint, no tool keys, no
+  "tool" role), plus a scan of `vg09/*.py` for tool keys. Shown to bite: a request with
+  `tools`, and one to another host, both fail the check
+- [x] `CLAUDE.md` gains a hard rule citing D-020
+- [x] Full suite passes → 350/350
+
+**Out of scope:** —
+**Depends on:** —
+**Notes:** D-020 itself was written with the spec (2026-10-05).
+
+---
+
+### T-074 — Fetching reaches only the source hosts; ids cannot write outside `data/`
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-074-reach`  ·  **Phase:** 3
+
+**Goal:** fetched data cannot make the app contact other hosts or write elsewhere on disk.
+
+**Why:** `docs/DESIGN.md` § Security baseline, behaviour 4.
+
+**Acceptance criteria**
+- [x] Every outgoing request in ingest is listed with its host, in the ticket; any host
+  outside Hugging Face, arXiv, YouTube and Ollama on 127.0.0.1 is removed or explained →
+  read from the code 2026-10-05:
+  - `huggingface.co/api/daily_papers` (`hf_papers.fetch_day`)
+  - `www.youtube.com` channel listings and video pages via yt-dlp (`youtube.py`,
+    `youtube_backfill.py`); audio for Whisper comes from YouTube's own video servers
+    (googlevideo.com), which yt-dlp is sent to by YouTube
+  - YouTube captions via youtube-transcript-api
+  - Ollama on `127.0.0.1:11434` (`answer.py`, `retrieval.py`, `store.py`)
+  - **Removed:** Streamlit's usage statistics, on by default (`gatherUsageStats = true`),
+    now `false` in `.streamlit/config.toml`, confirmed with `streamlit config show`
+  - **Explained, kept:** the browser loads the Instrument Sans font from
+    fonts.googleapis.com. Google sees the machine's address and that the page loaded,
+    nothing about questions or sources. Self-hosting the font would remove it; not done
+- [x] arXiv and video ids are validated against their real formats before they become
+  file names; tests show `../`, absolute paths and odd characters are rejected →
+  `tests/test_reach.py`, 6 tests, failing first (the Whisper one tried a real download of
+  `../evil`). Also found: the HF feed date became a folder name unchecked; it must now be
+  YYYY-MM-DD. Every id and date in `data/raw/` already matched; a real day (2026-10-02,
+  50 papers) normalizes 50 of 50. Test fixtures `vid1`/`1000.1` got well-formed ids
+- [x] Full suite passes → 346/346
+
+**Out of scope:** limiting what the Python process itself may do (no sandbox, D-020).
+**Depends on:** —
+
+---
+
+### T-073 — Mark source excerpts as untrusted data, and measure injection attempts
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-073-prompt-injection`  ·  **Phase:** 3
+
+**Goal:** instructions hidden in a paper or a transcript are less likely to steer the
+answer, and how often they still do is known.
+
+**Why:** I (2026-10-05): prompt injection must be mitigated. D-020.
+
+**Acceptance criteria**
+- [x] Each excerpt in the prompt sits between explicit begin/end markers with its number;
+  marker look-alikes inside source text are neutralised; tests cover both → **changed in
+  the work:** the markers are `<<<BEGIN>>>`/`<<<END>>>` without a number, which stays on
+  the `[N]` line inside; numbered `<<<SOURCE N …>>>` markers made the model cite "Source
+  N" (93 and 103 times per measurement), which never becomes a chip
+- [x] The system prompt says the excerpts are untrusted data, never instructions, and that
+  the answer contains no HTML and no links; the extra tokens are measured and taken off
+  the chunk budget (as T-061 did); `docs/DESIGN.md`'s budget arithmetic matches → 179 →
+  327 tokens for the first version, 304 shipped; 330 reserved; budget 11717 → 11560
+- [x] A script plants at least 4 fake documents with different injection attempts
+  (ignore instructions, write HTML, add a link, claim a false fact) next to real ones and
+  runs each question 5 times through the real pipeline, before and after the change; the
+  results are committed, failures included → 6 attacks × 5 runs; steered 2/30 before,
+  4/30 and 1/30 for two rejected prompt versions, 0/30 shipped:
+  `docs/eval-results/2026-10-05-t073-prompt-injection.md`
+- [x] The demo questions still answer with citations after the change (real run) → all
+  four `done=stop`, no retries, generation 12.6–21.1 s
+- [x] The system prompt asks for a citation in every list item and every paragraph, not
+  only "every claim"; measured with the citation-placement script (3 questions × 4 runs,
+  before and after, same data) as the share of answers with all citations in the last
+  unit — baseline 2026-10-05: 3/12 on the 2026-10-02 code, 2/12 on main → fresh
+  baseline on the branch's main 1/12; shipped 0/12, and 0 of 42 answers without any [N]
+- [x] Every cited source gets a short sentence on what it says, not a bare "Yes" with one
+  link; checked on my "Has Anthropic been mentioned in the last 8 days?", which
+  answered "Yes" alone once on 2026-10-05 → 4 of 4 runs: 189–227 words, 16–18 citations
+- [x] Full suite passes → 340/340
+
+**Out of scope:** re-running the graded evaluation (me, 2026-10-05); an in-app
+notice when citations are bunched at the end (only if the wording does not help).
+**Depends on:** T-072 (so a test that makes the model write HTML is already harmless).
+**Notes:** the citation criterion added 2026-10-05 at my choice, after their test
+showed one answer with every citation in its last sentence; the measurement showed it
+happened as often before the day's changes as after.
+
+---
+
+### T-072 — Render the model's answer as text; only the app's own chips are HTML
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-072-escape-answer`  ·  **Phase:** 3
+
+**Goal:** nothing the model writes can become live HTML in the browser.
+
+**Why:** found 2026-10-05: `app.py` renders `render_citation_chips()`' output with
+`unsafe_allow_html=True`, and the answer text is passed through unescaped.
+
+**Acceptance criteria**
+- [x] The answer is HTML-escaped before chips are inserted; tests with
+  `<img src=x onerror=…>`, `<script>`, `<a href="javascript:…">` and markdown
+  `[x](javascript:…)` show them rendered as text → `AnswerRenderingSafetyTests`, 6 tests,
+  written first and failing (8 failures) before the change
+- [x] A chip's `href` is only built from an `https://` URL on huggingface.co, arxiv.org or
+  youtube.com; anything else gets no chip; tests → including `http://huggingface.co` and
+  `huggingface.co.evil.example`
+- [x] Citations, quote links and ordinary markdown (bold, lists) still render; checked in
+  a real browser with one injected answer and one real answer → injected `<img onerror>`,
+  `javascript:` link and `[site](https://evil.example)` shown as text, page title unchanged,
+  0 links besides the chip; the backtick case gives 2 live chips; the app on this branch
+  answered "What has happened in AI the last 4 days in regards to image generation?" with
+  5 chips in a numbered list, no chip HTML as text
+- [x] Full suite passes → 332/332
+
+**Out of scope:** the prompt (T-073).
+**Depends on:** —
+**Notes:** **Plan changed while in progress (2026-10-05),** with my approval: I
+then saw chips shown as raw HTML; the cause was the model's backticks (KB-034).
+Escaping the text alone would not fix that, so the answer is now rendered by the app with
+markdown-it-py (HTML, links, images and autolinks off), chips go only into text tokens,
+and the result is one HTML block on one line. markdown-it-py 4.2.0 was already pinned in
+`requirements.txt` (a dependency of rich, via Streamlit); using it directly was approved by
+I (CLAUDE.md: ask before adding a dependency).
+
+---
+
+### T-071 — The app listens only on this machine
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-071-localhost-only`  ·  **Phase:** 3
+
+**Goal:** no other machine can reach Since while it runs.
+
+**Why:** found 2026-10-05: `.streamlit/config.toml` has no `server.address`, so Streamlit
+listens on every interface, and this machine has a public IP. Anyone could reach the app,
+including the Sources page that starts fetches and writes files.
+
+**Acceptance criteria**
+- [x] `server.address = "127.0.0.1"` in `.streamlit/config.toml`, with the reason; XSRF
+  protection not disabled
+- [x] Started with `Since.bat`: `netstat` shows the port bound to `127.0.0.1` only, and the
+  browser opens and answers a question → done with `streamlit run app.py`, the command
+  `Since.bat` runs, reading the same config: `127.0.0.1:8501 LISTENING` only; Streamlit
+  prints one URL, `http://127.0.0.1:8501`; `http://<LAN IPv4>:8501` refused; in a real
+  browser "Has Anthropic been mentioned in the last week?" answered with 7 citation chips.
+- [x] Before the change, the same `netstat` check is recorded → `0.0.0.0:8501` and
+  `[::]:8501 LISTENING`; Streamlit printed a Network URL (<LAN IPv4>) and an External
+  URL (<public IPv4>, the router's public IPv4, not on this machine). The machine has
+  global IPv6 addresses, which `[::]` covered. What stopped outside
+  connections was the firewall alone
+- [x] README says the app is reachable only from the machine it runs on
+
+**Out of scope:** Ollama (already `127.0.0.1`, checked 2026-10-05).
+**Depends on:** —
+
+---
+
 ### T-070 — Presentation day: demo questions in the running app, then defense-prep
 
 **Status:** todo

@@ -52,8 +52,7 @@ to report.
 2. An ingest command that catches up since the last successful run
 3. A simple chat UI that answers with sources, including an empty state when no data exists
 4. An evaluation script and a results table committed to the repo
-5. Live demonstration and presentation for the course (no written report — I,
-   2026-10-02)
+5. A live demonstration and presentation, and `docs/OVERVIEW.md` describing the project
 
 Anything beyond this is bonus and belongs in § Parked.
 
@@ -72,6 +71,7 @@ Anything beyond this is bonus and belongs in § Parked.
 ## Known limitations — state these, don't hide them
 
 1. Only ingests while the PC is on. "24/7" is interpreted as *always caught up when you
+   ask*, not literal uptime
 2. YouTube channel RSS lists only the latest ~15 videos, so a long absence from a very
    active channel can miss videos
 3. YouTube may block caption requests; the fallback is title + description, which gives
