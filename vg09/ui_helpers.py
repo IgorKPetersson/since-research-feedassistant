@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import re
 from datetime import date
+from html import escape as escape_html
 from pathlib import Path
 
 from vg09.citations import Citation
@@ -103,6 +104,9 @@ def citation_source_type(url: str) -> str:
     if "youtube.com" in url:
         return "video"
     return "unknown"
+
+
+_SOURCE_TYPE_WORD = {"paper": "Paper", "video": "Video", "unknown": "Source"}  # T-062
 
 
 _TEXT_SOURCE_LABELS = {
@@ -242,9 +246,8 @@ def render_citation_chips(
     the answer with a small HTML chip, in the UI's one accent colour (`ACCENT_COLOR`
     - T-045 dropped T-042's original per-source-type chip colouring, by my explicit
     decision: source type is still visible via the unchanged PAPER/VIDEO badge on each
-    source card, chips themselves now just point there), linking to that source's card
-    anchor (`#cite-<card index>`, 1-based, matching the order source cards are
-    rendered in below). A bracket already reported as unlinked or a descriptive range
+    source card), opening the cited source in a new tab (T-062; until then it scrolled
+    to that source's card below). A bracket already reported as unlinked or a descriptive range
     is left exactly as written - those are explained by their own notices already,
     not citations to chip-ify. A number inside an otherwise-resolved bracket that
     still can't be mapped to a real citation (shouldn't happen, but not assumed) is
@@ -255,9 +258,13 @@ def render_citation_chips(
     `descriptive_ranges` lists it already returned, rather than re-deciding it - only
     extracts which individual numbers to link, a rendering concern, not a
     citation-resolution one (unchanged since T-042)."""
-    doc_id_to_card_index: dict[str, int] = {}
-    for i, c in enumerate(citations, start=1):
-        doc_id_to_card_index.setdefault(c.doc_id, i)
+    # T-062: a chip now opens the cited excerpt itself in a new tab (a video at that
+    # excerpt's own `&t=` moment), with "Paper: <title>" as its tooltip - one click to
+    # the source instead of two. It is still only drawn for a document that has a
+    # source card, so a chip never points at something the list below leaves out.
+    doc_id_to_citation: dict[str, Citation] = {}
+    for c in citations:
+        doc_id_to_citation.setdefault(c.doc_id, c)
 
     unlinked_set = set(unlinked_references)
     descriptive_set = set(descriptive_ranges)
@@ -272,11 +279,17 @@ def render_citation_chips(
             candidate = source_map.get(n)
             if candidate is None:
                 continue
-            doc_id = candidate.metadata.get("doc_id")
-            card_index = doc_id_to_card_index.get(doc_id)
-            if card_index is None:
+            citation = doc_id_to_citation.get(candidate.metadata.get("doc_id"))
+            if citation is None:
                 continue
-            chips.append(f'<a class="citation-chip" href="#cite-{card_index}">{n}</a>')
+            url = candidate.metadata.get("url") or citation.url
+            kind = _SOURCE_TYPE_WORD[citation_source_type(url)]
+            label = escape_html(f"{kind}: {citation.title}", quote=True)
+            chips.append(
+                f'<a class="citation-chip" href="{escape_html(url, quote=True)}" '
+                f'target="_blank" rel="noopener noreferrer" '
+                f'title="{label}" aria-label="{label}">{n}</a>'
+            )
         return "".join(chips) if chips else raw
 
     return _BRACKET_RE.sub(replace, answer)

@@ -14,6 +14,37 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-062 — A citation number opens its paper or video directly
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-062-chip-links`  ·  **Phase:** 3
+
+**Goal:** one click on a number in the answer opens the cited paper or video, and hovering
+over it says what it is.
+
+**Why:** my request (2026-10-05): a number that only scrolls to the source list
+needs a second click to reach the source.
+
+**Acceptance criteria**
+- [x] A chip links to the cited excerpt's own URL (for a video, the `&t=` moment of that
+  excerpt) and opens in a new tab → 2 tests; 275/275 pass
+- [x] A chip carries "Paper: <title>" or "Video: <title>" as its tooltip and accessible
+  name, with the title HTML-escaped → unit test with a title containing `"` and `<`
+- [x] The source list below the answer is unchanged → `app.py`'s cards untouched; heading
+  and cards present in the browser
+- [x] In the browser: hovering a chip shows the title, clicking it opens the source in a
+  new tab, and the app's own tab stays on the answer → `target`, `rel`, `title` and
+  `aria-label` survive Streamlit's rendering (read from the live DOM); clicking chip 1
+  opened huggingface.co/papers/2610.02826 in a second tab while the app's tab stayed;
+  video chips 9 and 11 for one video carried `&t=0` and `&t=1297`. The native tooltip
+  itself was not seen (it does not appear in automated screenshots)
+
+**Out of scope:** changing the source cards; styling the tooltip beyond the browser's own.
+**Depends on:** —
+**Notes:** the source list stays as it is (2026-10-05).
+
+---
+
 ### T-061 — Tell the model today's date and the time range already applied
 
 **Status:** done

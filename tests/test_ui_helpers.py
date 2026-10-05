@@ -255,17 +255,39 @@ class BuildRetrievalRanksTests(unittest.TestCase):
 
 
 class RenderCitationChipsTests(unittest.TestCase):
-    def test_a_resolved_single_number_becomes_one_chip_linking_to_its_card(self):
+    def test_a_resolved_single_number_becomes_one_chip_opening_its_source(self):
+        """T-062: a chip opens the source itself in a new tab, not the card below."""
         chunk = make_chunk("doc1", "https://huggingface.co/papers/1")
         citation = make_citation("doc1", "https://huggingface.co/papers/1")
         result = render_citation_chips(
             "NeoHorse is mentioned in [1].", {1: chunk}, [citation],
             unlinked_references=[], descriptive_ranges=[],
         )
-        self.assertIn('href="#cite-1"', result)
+        self.assertIn('href="https://huggingface.co/papers/1"', result)
+        self.assertIn('target="_blank"', result)
+        self.assertIn('rel="noopener noreferrer"', result)
         self.assertIn('class="citation-chip"', result)
         self.assertIn(">1<", result)
         self.assertNotIn("[1]", result)
+
+    def test_a_video_chip_opens_the_cited_excerpts_own_moment(self):
+        chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc&t=95")
+        citation = make_citation("vid1", "https://www.youtube.com/watch?v=abc&t=12")
+        result = render_citation_chips(
+            "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertIn('href="https://www.youtube.com/watch?v=abc&amp;t=95"', result)
+
+    def test_a_chip_names_its_source_type_and_title_escaped(self):
+        chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc")
+        citation = make_citation("vid1", "https://www.youtube.com/watch?v=abc")
+        citation.title = 'The "Best" <Model>'
+        result = render_citation_chips(
+            "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
+        )
+        expected = 'Video: The &quot;Best&quot; &lt;Model&gt;'
+        self.assertIn(f'title="{expected}"', result)
+        self.assertIn(f'aria-label="{expected}"', result)
 
     def test_video_citation_also_gets_the_one_shared_chip_class(self):
         """T-045: chips dropped T-042's per-source-type colouring by my explicit
@@ -287,8 +309,8 @@ class RenderCitationChipsTests(unittest.TestCase):
         result = render_citation_chips(
             "[17, 18]", {17: c1, 18: c2}, citations, unlinked_references=[], descriptive_ranges=[],
         )
-        self.assertIn('href="#cite-1"', result)
-        self.assertIn('href="#cite-2"', result)
+        self.assertIn('href="https://huggingface.co/papers/1"', result)
+        self.assertIn('href="https://huggingface.co/papers/2"', result)
 
     def test_unlinked_bracket_is_left_as_plain_text_not_a_chip(self):
         result = render_citation_chips(
@@ -304,7 +326,7 @@ class RenderCitationChipsTests(unittest.TestCase):
         self.assertEqual(result, "All 20 sources [1-20].")
         self.assertNotIn("citation-chip", result)
 
-    def test_two_numbers_citing_the_same_document_link_to_the_same_card(self):
+    def test_two_numbers_citing_the_same_document_both_become_chips(self):
         chunk_a = make_chunk("doc1", "https://huggingface.co/papers/1")
         chunk_b = make_chunk("doc1", "https://huggingface.co/papers/1")  # a second chunk, same doc
         citation = make_citation("doc1", "https://huggingface.co/papers/1")
@@ -312,7 +334,7 @@ class RenderCitationChipsTests(unittest.TestCase):
             "First [1], then again [2].", {1: chunk_a, 2: chunk_b}, [citation],
             unlinked_references=[], descriptive_ranges=[],
         )
-        self.assertEqual(result.count('href="#cite-1"'), 2)
+        self.assertEqual(result.count('href="https://huggingface.co/papers/1"'), 2)
 
     def test_no_brackets_at_all_is_unchanged(self):
         result = render_citation_chips(
