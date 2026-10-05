@@ -214,7 +214,7 @@ Because an agent starts every session with no memory, the work ran on written re
 
 - **80 tickets** with checkable acceptance criteria ([`TICKETS.md`](TICKETS.md))
 - **20 decisions** with the alternatives rejected ([`DECISIONS.md`](DECISIONS.md))
-- **35 knowledge-base entries** on how the tools really behave ([`kb/`](kb/INDEX.md))
+- **38 knowledge-base entries** on how the tools really behave ([`kb/`](kb/INDEX.md))
 - **A handoff note per session** and an index of each session's transcript
   ([`HANDOFF.md`](HANDOFF.md), [`sessions/`](sessions/))
 

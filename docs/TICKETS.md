@@ -94,7 +94,7 @@ before this change; `docs/OVERVIEW.md` (T-076) says so.
 
 ### T-077 — Deck: slides for RAG and the stack, security, and testing
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-048-slidev-deck` (the deck's branch)  ·  **Phase:** 3
 
 **Goal:** the deck shows how Since is built and protected, not only what it does.
@@ -102,15 +102,17 @@ before this change; `docs/OVERVIEW.md` (T-076) says so.
 **Why:** I (2026-10-05): the deck never says RAG, the stack, the security or the
 
 **Acceptance criteria**
-- [ ] One slide names the pipeline as RAG and splits it into retrieval (date filter, then
+- [x] One slide names the pipeline as RAG and splits it into retrieval (date filter, then
   vector search), augmentation (excerpts inside a fixed token budget) and generation
-- [ ] One slide lists the stack with a one-line reason each, citing its D-0NN in the notes
-- [ ] One slide on security states only what T-071–T-074 verified, including the
-  injection runs' real outcome
-- [ ] One slide on testing: the unit test count from a real run, the graded evaluation,
-  the frozen dataset, the fresh-clone test; no CI claimed
-- [ ] Swedish without dashes (my standing preference); `npm run build` passes;
-  every slide checked by screenshot
+- [x] One slide lists the stack with a one-line reason each, citing its D-0NN in the notes
+- [x] One slide on security states only what T-071–T-074 verified, including the
+  injection runs' real outcome → plus an example question about network exposure
+- [x] One slide on testing: the unit test count from a real run, the graded evaluation,
+  the frozen dataset, the fresh-clone test; no CI claimed → 351
+- [x] Swedish without dashes; `npm run build` passes;
+  every slide checked by screenshot → also corrected: slide 2's "ungefär 100" papers a
+  weekday to the measured 20 till 60, the search time to "2 s" (measured 0,9–3,9 s), and
+  the build slide's counts to 80 tickets, 20 decisions, 38 KB entries
 
 **Out of scope:** the overview document (T-076).
 **Depends on:** T-071–T-075.
