@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-060 — Start the app with a double-click
 
-**Status:** review
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-060-launcher`  ·  **Phase:** 3
 
 **Goal:** the app is opened by double-clicking a file or a desktop shortcut, not by typing
@@ -29,8 +29,8 @@ opening is easy; a terminal command is not something to hand a customer.
 - [x] `Since.bat` in the repository root starts the app from the project's `.venv`
   whatever the current directory is, and the browser opens on the app → started with
   `Start-Process` from `%TEMP%` (what a double-click does), `/_stcore/health` answered
-  `ok`. **Not seen by the agent:** the browser opening, and a literal double-click in
-  Explorer — I am asked to confirm
+  `ok`. I confirmed the browser opened (2026-10-05): two tabs, one per test start.
+  A literal double-click in Explorer was not done by the agent
 - [x] If `.venv` is missing, the window says so in one sentence and points at the README,
   instead of closing → checked with a copy of the file in an empty folder (rather than
   renaming the real venv): the sentence, then "Press any key", exit code 1
