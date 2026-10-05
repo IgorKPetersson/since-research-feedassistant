@@ -106,12 +106,21 @@ def date_context(today: date, date_range: tuple[date, date] | None) -> str:
     sources dated 2026-10-05 as being from the future, even though retrieval had already
     selected exactly those. When a range was applied, saying so stops the model from
     redoing the date filtering with its own, wrong, idea of the calendar."""
-    line = f"Today's date is {today.isoformat()}."
+    # T-066: weekdays included - without them the model called Sunday 2026-10-04 a
+    # Tuesday in one answer and a Friday in another.
+    # Named from a fixed list, not strftime's %A, which follows the system locale and
+    # would give "måndag" on a Swedish Windows (answers are always English, D-013).
+    line = f"Today is {_WEEKDAY_NAMES[today.weekday()]}, {today.isoformat()}."
     if date_range is not None:
+        start, end = date_range
         line += (f" The sources above were selected for the time range the question asks "
-                 f"about ({date_range[0].isoformat()} to {date_range[1].isoformat()}); "
+                 f"about ({_WEEKDAY_NAMES[start.weekday()]} {start.isoformat()} to "
+                 f"{_WEEKDAY_NAMES[end.weekday()]} {end.isoformat()}); "
                  f"do not discard a source because of its date.")
     return line
+
+
+_WEEKDAY_NAMES = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 
 def build_user_message(question: str, source_map: dict[int, Candidate],

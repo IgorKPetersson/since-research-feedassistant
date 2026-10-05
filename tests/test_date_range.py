@@ -245,6 +245,67 @@ class EnglishNoDiscernibleRangeTests(unittest.TestCase):
         )
 
 
+MONDAY = date(2026, 10, 5)  # T-066: the probe run's real date, a Monday
+
+
+class T066PhrasesFromTheProbeRunTests(unittest.TestCase):
+    """T-066: every phrase here was ignored, or misread, by the 2026-10-05 probe run."""
+
+    def check(self, question: str, start: date, end: date, today: date = MONDAY):
+        self.assertEqual(extract_date_range(question, today), (start, end), question)
+
+    def test_between_two_dates_is_the_whole_span_not_the_first_day(self):
+        sep = lambda d: date(2026, 9, d)  # noqa: E731
+        for q in ("What happened in AI between September 20 and September 25?",
+                  "What happened between September 20 and 25?",
+                  "What happened from September 20 to September 25?",
+                  "What happened September 20-25?",
+                  "What happened Sept 20 - 25?",
+                  "Vad hände mellan den 20 och den 25 september?",
+                  "Vad hände mellan den 20 september och den 25 september?"):
+            self.check(q, sep(20), sep(25))
+
+    def test_yesterday(self):
+        for q in ("What were the most important papers yesterday?", "Vad hände igår?",
+                  "Vad hände i går?"):
+            self.check(q, date(2026, 10, 4), date(2026, 10, 4))
+
+    def test_a_weekday_is_the_most_recent_one(self):
+        for q in ("What was new on Friday?", "What was new last Friday?",
+                  "What was new Friday?", "Vad var nytt i fredags?"):
+            self.check(q, date(2026, 10, 2), date(2026, 10, 2))
+
+    def test_the_weekday_of_today_is_today_unless_it_says_last(self):
+        self.check("What came out on Monday?", MONDAY, MONDAY)
+        self.check("What came out last Monday?", date(2026, 9, 28), date(2026, 9, 28))
+
+    def test_since_a_weekday(self):
+        self.check("Did anyone mention Gemini 4 since Friday?", date(2026, 10, 2), MONDAY)
+        self.check("Har någon nämnt Gemini 4 sedan i fredags?", date(2026, 10, 2), MONDAY)
+        self.check("Any news since Monday?", MONDAY, MONDAY)
+
+    def test_since_a_month_or_a_date(self):
+        self.check("How has reasoning in small models progressed since September?",
+                   date(2026, 9, 1), MONDAY)
+        self.check("Vad har hänt sedan september?", date(2026, 9, 1), MONDAY)
+        self.check("What changed since September 20?", date(2026, 9, 20), MONDAY)
+        self.check("What changed since yesterday?", date(2026, 10, 4), MONDAY)
+
+    def test_since_a_month_still_ahead_this_year_means_last_year(self):
+        self.check("What happened since November?", date(2025, 11, 1), MONDAY)
+
+    def test_in_a_month_is_that_whole_month(self):
+        self.check("What came out in August?", date(2026, 8, 1), date(2026, 8, 31))
+        self.check("Vad kom ut i augusti?", date(2026, 8, 1), date(2026, 8, 31))
+        self.check("What happened during September?", date(2026, 9, 1), date(2026, 9, 30))
+
+    def test_this_month_runs_from_its_first_day(self):
+        self.check("What came out this month?", date(2026, 10, 1), MONDAY)
+
+    def test_a_single_date_still_works(self):
+        self.check("What happened on September 16?", date(2026, 9, 16), date(2026, 9, 16))
+
+
 class DetectRecencyRankingTests(unittest.TestCase):
     """T-022: real ranking questions from docs/eval-questions.md (F01/F03/F06) vs.
     real window questions that also contain the word "senaste" (F02/F04/F05/F07/F11/

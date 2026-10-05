@@ -83,13 +83,19 @@ class BuildUserMessageTests(unittest.TestCase):
         """T-061: without it the model assumed a training-era "today" and rejected
         2026 sources as being from the future."""
         message = build_user_message("q", {}, today=date(2026, 10, 5))
-        self.assertIn("Today's date is 2026-10-05.", message)
-        self.assertLess(message.index("Today's date"), message.index("Question: q"))
+        # T-066: with the weekday - the model called 2026-10-04 a Tuesday and a Friday.
+        self.assertIn("Today is Monday, 2026-10-05.", message)
+        self.assertLess(message.index("Today is"), message.index("Question: q"))
+
+    def test_an_applied_range_names_its_weekdays(self):
+        message = build_user_message("q", {}, today=date(2026, 10, 5),
+                                     date_range=(date(2026, 10, 2), date(2026, 10, 5)))
+        self.assertIn("Friday 2026-10-02 to Monday 2026-10-05", message)
 
     def test_an_applied_date_range_is_stated_so_the_model_does_not_refilter(self):
         message = build_user_message("q", {}, today=date(2026, 10, 5),
                                      date_range=(date(2026, 9, 28), date(2026, 10, 5)))
-        self.assertIn("2026-09-28 to 2026-10-05", message)
+        self.assertIn("Monday 2026-09-28 to Monday 2026-10-05", message)
         self.assertIn("do not discard a source because of its date", message)
 
     def test_without_a_date_range_no_range_is_claimed(self):

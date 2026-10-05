@@ -110,8 +110,147 @@ def _last_n_days(today: date, n: int) -> DateRange:
     return today - timedelta(days=n - 1), today
 
 
+# T-066: phrases the 2026-10-05 probe run showed real questions use and this module
+# ignored ("yesterday", "on Friday", "since Monday", "since September") or misread
+# ("between September 20 and September 25" became September 20 alone). Same closed
+# vocabulary approach as above, both languages.
+_EN_MONTH_ABBREVIATIONS = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "jun": 6, "jul": 7, "aug": 8,
+    "sep": 9, "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+_ANY_MONTH = {**_MONTH_NAMES, **_EN_MONTH_NAMES, **_EN_MONTH_ABBREVIATIONS}
+_ANY_MONTH_RE = "(" + "|".join(sorted(_ANY_MONTH, key=len, reverse=True)) + r")\.?"
+_FULL_MONTH_RE = "(" + "|".join(sorted({**_MONTH_NAMES, **_EN_MONTH_NAMES}, key=len, reverse=True)) + ")"
+_WEEKDAYS = {
+    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4,
+    "saturday": 5, "sunday": 6,
+    "måndag": 0, "mandag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4,
+    "lördag": 5, "lordag": 5, "söndag": 6, "sondag": 6,
+}
+_EN_WEEKDAY_RE = "(monday|tuesday|wednesday|thursday|friday|saturday|sunday)"
+# "i fredags" - Swedish for the most recent Friday before today.
+_SV_PAST_WEEKDAY_RE = r"i\s+(m[aå]ndag|tisdag|onsdag|torsdag|fredag|l[oö]rdag|s[oö]ndag)s"
+_DAY = r"(\d{1,2})(?:st|nd|rd|th)?"
+_YESTERDAY_RE = r"(yesterday|i\s*g[aå]r)"
+
+
+def _day_in_past_year(month: int, day: int, today: date) -> date | None:
+    """This year's date, or last year's if this year's is still ahead of `today`."""
+    try:
+        d = date(today.year, month, day)
+        return d if d <= today else date(today.year - 1, month, day)
+    except ValueError:
+        return None  # not a real calendar date - don't guess
+
+
+def _month_span(month: int, today: date) -> DateRange:
+    """The whole calendar month: this year's, or last year's if it hasn't begun yet."""
+    year = today.year if month <= today.month else today.year - 1
+    next_first = date(year + (month == 12), month % 12 + 1, 1)
+    return date(year, month, 1), next_first - timedelta(days=1)
+
+
+def _weekday_back(today: date, weekday: int, strictly_before: bool) -> date:
+    days = (today.weekday() - weekday) % 7
+    if days == 0 and strictly_before:
+        days = 7
+    return today - timedelta(days=days)
+
+
+def _start_of(text: str, today: date) -> date | None:
+    """The date a "since ..." phrase starts from, or None if what follows isn't one."""
+    if re.match(_YESTERDAY_RE + r"\b", text):
+        return today - timedelta(days=1)
+    m = re.match(_SV_PAST_WEEKDAY_RE + r"\b", text)
+    if m:
+        return _weekday_back(today, _WEEKDAYS[m.group(1)], True)
+    m = re.match(r"(?:last\s+)?" + _EN_WEEKDAY_RE + r"\b|(m[aå]ndag|tisdag|onsdag|torsdag|fredag|l[oö]rdag|s[oö]ndag)\b", text)
+    if m:
+        name = m.group(1) or m.group(2)
+        return _weekday_back(today, _WEEKDAYS[name], text.startswith("last"))
+    m = re.match(_ANY_MONTH_RE + r"\s+" + _DAY + r"\b", text) or \
+        re.match(r"(?:den\s+)?" + _DAY + r"\s+(?:of\s+)?" + _ANY_MONTH_RE + r"\b", text)
+    if m:
+        a, b = m.group(1), m.group(2)
+        month, day = (_ANY_MONTH[a], int(b)) if a in _ANY_MONTH else (_ANY_MONTH[b], int(a))
+        return _day_in_past_year(month, day, today)
+    m = re.match(_FULL_MONTH_RE + r"\b", text)
+    if m:
+        return _month_span(_ANY_MONTH[m.group(1)], today)[0]
+    return None
+
+
+def _two_date_range(q: str, today: date) -> DateRange | None:
+    """"between September 20 and 25", "September 20-25", "from Sept 20 to Sept 25",
+    "mellan den 20 och den 25 september". The year comes from the start date."""
+    sep = r"\s*(?:and|to|through|until|och|till|-|–)\s*"
+    m = re.search(r"\b(?:between|from)\s+" + _ANY_MONTH_RE + r"\s+" + _DAY + sep
+                  + r"(?:" + _ANY_MONTH_RE + r"\s+)?" + _DAY + r"\b", q) or \
+        re.search(r"\b" + _ANY_MONTH_RE + r"\s+" + _DAY + r"\s*(?:-|–|to|through|until)\s*"
+                  + r"(?:" + _ANY_MONTH_RE + r"\s+)?" + _DAY + r"\b", q)
+    if m:
+        first_month, first_day, second_month, second_day = m.groups()
+        start_month = _ANY_MONTH[first_month]
+        end_month = _ANY_MONTH[second_month] if second_month else start_month
+    else:
+        m = re.search(r"\b(?:mellan|between|from)\s+(?:den\s+)?" + _DAY + r"(?:\s+" + _ANY_MONTH_RE
+                      + r")?" + sep + r"(?:den\s+)?" + _DAY + r"\s+" + _ANY_MONTH_RE + r"\b", q)
+        if not m:
+            return None
+        first_day, first_month, second_day, second_month = m.groups()
+        end_month = _ANY_MONTH[second_month]
+        start_month = _ANY_MONTH[first_month] if first_month else end_month
+    start = _day_in_past_year(start_month, int(first_day), today)
+    if start is None:
+        return None
+    try:
+        end = date(start.year + (end_month < start_month), end_month, int(second_day))
+    except ValueError:
+        return None
+    return (start, end) if start <= end else None
+
+
+def _phrases_checked_first(q: str, today: date) -> DateRange | None:
+    """Two-date ranges and "since ..." - checked before the single-date patterns
+    below, which would otherwise take the first date of a range as the whole range."""
+    span = _two_date_range(q, today)
+    if span:
+        return span
+    m = re.search(r"\b(?:since|sedan|sen)\s+(.*)", q)
+    if m:
+        start = _start_of(m.group(1), today)
+        if start is not None:
+            return start, today
+    return None
+
+
+def _phrases_checked_last(q: str, today: date) -> DateRange | None:
+    """Single days and whole months that the patterns above don't cover."""
+    if re.search(r"\b" + _YESTERDAY_RE + r"\b", q):
+        d = today - timedelta(days=1)
+        return d, d
+    m = re.search(r"\b" + _SV_PAST_WEEKDAY_RE + r"\b", q)
+    if m:
+        d = _weekday_back(today, _WEEKDAYS[m.group(1)], True)
+        return d, d
+    m = re.search(r"\b(last\s+)?" + _EN_WEEKDAY_RE + r"\b", q)
+    if m:
+        d = _weekday_back(today, _WEEKDAYS[m.group(2)], bool(m.group(1)))
+        return d, d
+    if re.search(r"\bthis\s+month\b|\bdenna\s+m[aå]nad\b", q):
+        return today.replace(day=1), today
+    m = re.search(r"\b(?:in|during|i|under)\s+" + _FULL_MONTH_RE + r"\b(?!\s+\d)", q)
+    if m:
+        return _month_span(_ANY_MONTH[m.group(1)], today)
+    return None
+
+
 def extract_date_range(question: str, today: date) -> DateRange | None:
     q = question.lower()
+
+    first = _phrases_checked_first(q, today)
+    if first:
+        return first
 
     # Absolute date: "den 16 september" - resolves to this year unless that's still in
     # the future relative to `today`, in which case it must mean last year.
@@ -210,7 +349,7 @@ def extract_date_range(question: str, today: date) -> DateRange | None:
     if re.search(r"\btoday\b", q):
         return today, today
 
-    return None
+    return _phrases_checked_last(q, today)
 
 
 _TIME_UNIT_AFTER_SENASTE = r"(veckan|veckorna|dagarna|m[aå]naden|m[aå]naderna)"

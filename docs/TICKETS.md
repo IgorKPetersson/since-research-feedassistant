@@ -14,6 +14,43 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-066 — Understand everyday date phrases, and tell the model the weekday
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-066-date-phrases`  ·  **Phase:** 3
+
+**Goal:** "yesterday", "on Friday", "since Monday", "since September", "in August" and
+"between September 20 and 25" filter to the dates they mean, and the model knows which
+weekday each date is.
+
+**Why:** the 2026-10-05 probe run (18 questions): five of those phrases were ignored, so
+the whole store was searched, and "between September 20 and September 25" became
+September 20 alone. The model called Sunday 2026-10-04 a Tuesday and a Friday.
+
+**Acceptance criteria**
+- [x] English and Swedish: two-date ranges (between/from/–, "mellan den 20 och den 25
+  september"), "yesterday"/"igår", weekdays ("on Friday", "last Friday", "i fredags"),
+  "since" + yesterday/weekday/date/month, "in"/"during"/"i" + month, "this month" →
+  10 new tests; questions naming no range still give None (12-question sweep)
+- [x] The date line says "Today is Monday, 2026-10-05" and names the range's weekdays,
+  from a fixed English list (not the system locale) → 2 tests; real cost re-measured at
+  66 tokens with the longest weekday names, inside T-061's 70 reserved
+- [x] The probe's failed questions resolve correctly against the real store → "between
+  September 20 and 25": 2026-09-20..25, sources cited from all six days (was one day);
+  "on Friday": 2026-10-02; "since Friday": 2026-10-02..05; "since September":
+  2026-09-01..10-05; "yesterday": Sunday 2026-10-04, correctly answered as having no
+  papers
+- [x] Full suite passes → 317/317
+
+**Out of scope:** years ("everything from 2025"); "next week" (nothing is in the future);
+calendar-aligned weeks (the rolling 7-day window stays, T-043).
+**Depends on:** T-061.
+**Notes:** "since Monday" asked on a Monday means today only — the literal reading.
+"What was new on Friday?" retrieved the right 32 sources, but the answer cited none of
+them — an answer-quality finding, not a date one.
+
+---
+
 ### T-065 — The quote check must not flag a quoted title
 
 **Status:** done
