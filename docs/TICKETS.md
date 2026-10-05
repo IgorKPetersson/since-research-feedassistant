@@ -123,7 +123,7 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 
 ### T-075 — Record D-020 and show that the model has no tools
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-075-no-tools`  ·  **Phase:** 3
 
 **Goal:** the "no tools" guarantee is written down and checked, not just true by accident.
@@ -131,11 +131,14 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 **Why:** D-020; it is the main bound on what a prompt injection can do.
 
 **Acceptance criteria**
-- [ ] A unit test asserts that every Ollama request the app builds (`answer.py`,
+- [x] A unit test asserts that every Ollama request the app builds (`answer.py`,
   `retrieval.py`, `store.py`) has no `tools`/`functions` field and uses only the
-  `/api/chat`, `/api/generate` or `/api/embed` endpoints
-- [ ] `CLAUDE.md` gains a hard rule citing D-020
-- [ ] Full suite passes
+  `/api/chat`, `/api/generate` or `/api/embed` endpoints → `tests/test_no_tools.py`: the
+  three real calls captured and checked (127.0.0.1, allowed endpoint, no tool keys, no
+  "tool" role), plus a scan of `vg09/*.py` for tool keys. Shown to bite: a request with
+  `tools`, and one to another host, both fail the check
+- [x] `CLAUDE.md` gains a hard rule citing D-020
+- [x] Full suite passes → 350/350
 
 **Out of scope:** —
 **Depends on:** —

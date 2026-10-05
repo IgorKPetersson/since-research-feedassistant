@@ -55,6 +55,11 @@ If you think one of these is wrong, say so and stop. Don't route around it.
   embedding function must never be used: it silently truncates at 256 tokens with no error,
   and the library's own "document too long" safety check is dead code that can never fire.
   See KB-006.
+- The language model never gets tools: no `tools`, function calling, file, shell or
+  network access in any Ollama request. Fetched text is untrusted, and without tools a
+  prompt injection can change an answer's words but never act on the machine. The app and
+  Ollama listen on `127.0.0.1` only, and nothing the model writes is rendered as HTML.
+  See D-020; `tests/test_no_tools.py` enforces the first part.
 
 These are the first hard rules the project has, derived from real Phase 0 findings — add
 more here as Phase 1 code creates situations that need them, not before.
