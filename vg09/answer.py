@@ -177,7 +177,8 @@ def _chat_once(messages: list[dict], model: str) -> tuple[str, str, str, int]:
 
 
 def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MODEL,
-                    date_range: tuple[date, date] | None = None) -> AnswerResult:
+                    date_range: tuple[date, date] | None = None,
+                    today: date | None = None) -> AnswerResult:
     """The real answer-generation call. A `done_reason == "length"` first attempt is
     repeated up to `MAX_RETRIES` times (T-039/D-014); if the last attempt is still cut
     off it is returned flagged as incomplete, not silently presented as finished, and
@@ -193,7 +194,9 @@ def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MO
     source_map = number_sources(chunks)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": build_user_message(question, source_map,
+        # `today` is the real date unless a caller fixes it: T-069's frozen evaluation
+        # tells the model the dataset's anchor, 2026-09-17, not the wall-clock date.
+        {"role": "user", "content": build_user_message(question, source_map, today=today,
                                                        date_range=date_range)},
     ]
 

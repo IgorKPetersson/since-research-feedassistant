@@ -14,6 +14,41 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-069 — Re-run the date-aware vs plain evaluation against the frozen dataset
+
+**Status:** review
+**Size:** M  ·  **Branch:** `t/T-069-frozen-eval`  ·  **Phase:** 3
+
+**Goal:** the report's evaluation numbers describe the app as it is after T-061–T-068,
+measured on the same frozen dataset the answer key was written for.
+
+**Why:** T-061 (date line), T-066 (date phrases, weekdays), T-067 (candidate pool) and
+T-068 (source words) all change what arm A retrieves or what the model is told. The live
+store now runs to 2026-10-05 and holds 5 papers on or before 2026-09-16 that the frozen
+set does not (1189 vs 1184), so the answer key does not apply to it.
+
+**Acceptance criteria**
+- [x] The frozen archive is unpacked to `data/eval_frozen/raw/` and matches
+  `docs/eval-dataset-manifest.txt` exactly (1279 files) before anything runs → checked by
+  the script before building, and again afterwards: "matches the frozen manifest exactly"
+- [x] A separate store is built from it in `data/eval_frozen/chroma_store/`; the live
+  `data/raw/` and `data/chroma_store/` are not touched → live: 1795 files and 2985 chunks
+  before and after
+- [x] Arm A mirrors the app (date range, ranking, source filter, the range passed to the
+  answer); both arms are told the anchor (2026-09-17) as today → `generate_answer()` gains
+  `today`; the report's anchor is 2026-09-17; the source filter fired in 4 of 15 arm-A
+  runs (questions 7, 8, 11, 12)
+- [x] The 15 questions × 2 arms run, output in `docs/eval-results/`, with the same layout
+  and grading boxes as T-032's → `2026-10-05-1443-t069-frozen-date-aware-vs-plain.md`; 30
+  runs, 0 retries, 0 cut off
+- [ ] I grade it — the agent does not grade (T-032's rule) → **waiting for me**
+
+**Out of scope:** changing the questions or the answer key; grading.
+**Depends on:** T-067, T-068.
+**Notes:** I approved the re-run (2026-10-05).
+
+---
+
 ### T-068 — A question that names papers or videos searches only that source
 
 **Status:** done

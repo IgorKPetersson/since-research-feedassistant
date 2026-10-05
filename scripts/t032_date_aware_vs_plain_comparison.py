@@ -29,6 +29,7 @@ from vg09.answer import generate_answer
 from vg09.citations import build_citations
 from vg09.date_range import detect_recency_ranking, resolve_date_range
 from vg09.retrieval import retrieve
+from vg09.source_filter import detect_source
 from vg09.store import latest_feed_date
 
 OUTPUT_DIR = Path("docs/eval-results")
@@ -38,10 +39,15 @@ OUTPUT_DIR = Path("docs/eval-results")
 ARM_STATS: list[tuple[int, bool]] = []
 
 
-def render_arm(label: str, question: str, date_range, ranking: bool) -> str:
-    retrieval = retrieve(question, date_range=date_range, ranking=ranking)
+def render_arm(label: str, question: str, date_range, ranking: bool,
+               source: str | None = None) -> str:
+    # T-069: arm A mirrors app.py as it is now - the source filter (T-068), and the
+    # applied range and the anchor as "today" in the prompt (T-061/T-066). Both arms
+    # get the anchor as today, so only retrieval differs between them.
+    anchor = latest_feed_date()
+    retrieval = retrieve(question, date_range=date_range, ranking=ranking, source=source)
     start = time.monotonic()
-    result = generate_answer(question, retrieval.chunks)
+    result = generate_answer(question, retrieval.chunks, date_range=date_range, today=anchor)
     elapsed = time.monotonic() - start
     citations = build_citations(result.answer, result.source_map)
     ARM_STATS.append((result.retries, result.incomplete))
@@ -52,7 +58,8 @@ def render_arm(label: str, question: str, date_range, ranking: bool) -> str:
           f"retries={result.retries}")
 
     lines = [f"### {label}", ""]
-    lines.append(f"**Tolkat läge:** {describe_mode(date_range, ranking)}")
+    source_note = {"hf": " · endast papers", "youtube": " · endast videor"}.get(source, "")
+    lines.append(f"**Tolkat läge:** {describe_mode(date_range, ranking)}{source_note}")
     lines.append(f"**Kandidater övervägda:** {retrieval.candidates_considered}  ·  "
                  f"**Chunks paketerade:** {len(retrieval.chunks)}  ·  "
                  f"**prompt_eval_count:** {result.prompt_eval_count} ({pct:.0f}% av num_ctx)  ·  "
@@ -96,7 +103,7 @@ def render_question(n: int, question: str, facit: str) -> str:
     date_range = resolve_date_range(question, today)
     ranking = detect_recency_ranking(question)
     lines.append(render_arm("Läge A — Datummedveten (produktionens beteende)",
-                             question, date_range, ranking))
+                             question, date_range, ranking, detect_source(question)))
     lines.append("")
 
     lines.append(render_arm("Läge B — Ren likhetssökning (inget datumfilter, ingen rankning)",
@@ -114,13 +121,13 @@ def render_question(n: int, question: str, facit: str) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
+def main(file_label: str = "t032-date-aware-vs-plain", title_note: str = "") -> None:
     questions = load_questions_with_facit()
     assert len(questions) == 15, f"expected 15 real questions, found {len(questions)}"
 
     today = latest_feed_date()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUTPUT_DIR / f"{datetime.now():%Y-%m-%d-%H%M}-t032-date-aware-vs-plain.md"
+    out_path = OUTPUT_DIR / f"{datetime.now():%Y-%m-%d-%H%M}-{file_label}.md"
 
     sections = []
     for i, n in enumerate(questions, start=1):
@@ -146,6 +153,7 @@ def main() -> None:
         "",
         f"**{totals}**",
         "",
+        *([title_note, ""] if title_note else []),
         "---",
         "",
     ]
