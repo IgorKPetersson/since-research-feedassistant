@@ -105,13 +105,27 @@ fråga ─ datumfönster ur frågan ─ datumfilter ─ likhetssökning ─ qwen
 
 15 frågor, bedömda för hand mot facit. Ingen modell har satt betyg.
 
+**A datumfilter mot B ren likhetssökning, tre oberoende bedömda körningar:**
+
+| Körning | A bättre | B bättre | Likvärdiga | Båda fel |
+|---|---|---|---|---|
+| 2026-09-20 (T-032) | 7 | 1 | 4 | 3 |
+| 2026-09-22 (T-032) | 8 | 0 | 5 | 2 |
+| 2026-10-05 (T-069) | 7 | 1 | 5 | 2 |
+
+**A `qwen3:30b-a3b` mot B `qwen3:8b`:**
+
 | Jämförelse | A bättre | B bättre | Likvärdiga | Båda fel |
 |---|---|---|---|---|
-| A datumfilter mot B ren likhetssökning | 8 | 0 | 5 | 2 |
-| A `qwen3:30b-a3b` mot B `qwen3:8b` | 4 | 0 | 9 | 2 |
+| 2026-09-23 (T-033) | 4 | 0 | 9 | 2 |
 
-- Datumfiltret var bättre på 8 av 15 frågor och aldrig sämre. Påståendet håller på den
-  här frågemängden.
+- I tre oberoende bedömda körningar vann det datummedvetna läget 7–8 frågor och förlorade
+  högst 1. Mönstret höll. Den enda förlusten i T-069 (fråga 06) var ett rangordningsfel,
+  inte ett fel i datumfiltret: A lyfte två generella benchmarks över SWE-Bench Pro
+  Verified, som facit pekar ut.
+- T-069:s läge A är hela produktionens beteende (datumfilter, källfilter och 200
+  kandidater), så den körningen är inte ett rent mått på datumpåståendet. Det är körningen
+  2026-09-22.
 - Den större modellen var bättre på 4 frågor, och på 9 gick det lika bra med den mindre.
   Den mindre var dessutom långsammare i snitt och bytte en gång till kinesiska mitt i
   ett svar.
