@@ -302,6 +302,28 @@ class RenderCitationChipsTests(unittest.TestCase):
         self.assertNotIn("chip-video", result)
         self.assertNotIn("chip-paper", result)
 
+    def test_a_quoted_video_chip_links_to_the_quote_and_says_so(self):
+        """T-063: the quote is spoken at 9:50; the link starts two seconds early."""
+        chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc&t=572")
+        chunk.metadata["start_seconds"] = 572.04
+        citation = make_citation("vid1", chunk.metadata["url"])
+        result = render_citation_chips(
+            "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
+            quote_seconds={1: 590.48},
+        )
+        self.assertIn('href="https://www.youtube.com/watch?v=abc&amp;t=588"', result)
+        self.assertIn("(the quote, at 9:48)", result)
+
+    def test_an_unquoted_video_chip_says_where_the_excerpt_starts(self):
+        chunk = make_chunk("vid1", "https://www.youtube.com/watch?v=abc&t=572")
+        chunk.metadata["start_seconds"] = 572.04
+        citation = make_citation("vid1", chunk.metadata["url"])
+        result = render_citation_chips(
+            "[1]", {1: chunk}, [citation], unlinked_references=[], descriptive_ranges=[],
+        )
+        self.assertIn('href="https://www.youtube.com/watch?v=abc&amp;t=572"', result)
+        self.assertIn("(excerpt from 9:32, about 1.5 minutes long)", result)
+
     def test_comma_bracket_becomes_one_chip_per_number(self):
         c1, c2 = make_chunk("doc1", "https://huggingface.co/papers/1"), \
             make_chunk("doc2", "https://huggingface.co/papers/2")

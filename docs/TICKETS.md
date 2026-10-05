@@ -14,6 +14,44 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-063 — A quoted video sentence links to the second it is spoken
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-063-quote-timestamps`  ·  **Phase:** 3
+
+**Goal:** when an answer quotes a video word for word, its number opens the video where
+the quote is spoken, not at the start of the excerpt around it.
+
+**Why:** found by me (2026-10-05): "Has Claude Code been mentioned in the last
+week?" quoted a sentence spoken at 9:50 behind a link to 9:32, the excerpt's start. An
+excerpt is about 1.5 minutes (median gap between excerpts 84 s, 90th percentile 94 s).
+
+**Acceptance criteria**
+- [x] Quoted passages of 4+ words are found in the answer (straight or curly quotes, an
+  ellipsis splitting a passage) and located in the video's own transcript lines; the
+  link starts 2 seconds before that line (my choice) → 12 tests in
+  `tests/test_quote_links.py`, real segments from the reported video
+- [x] A quote not in the cited excerpt is looked up in the whole video, because the model
+  can put a verbatim quote under the wrong excerpt number of the same video (found in
+  the browser: 9:50 words cited as the 14:56 excerpt) → unit test
+- [x] A quote not found in that video, or a paraphrase, leaves the excerpt's start, and the
+  tooltip says "(excerpt from 9:32, about 1.5 minutes long)"; a located quote says
+  "(the quote, at 9:48)" → 2 tests in `RenderCitationChipsTests`
+- [x] The reported case resolves to the right moment → against the real store, my
+  answer text gives 590.44 s (9:50) and a link to `&t=588`; in the browser the
+  same question gave chip 25 → `&t=594` (quote spoken at 9:56, checked in the transcript)
+- [x] Full suite passes → 288/288
+
+**Out of scope:** shorter excerpts (would need a re-index and a new evaluation); linking a
+paraphrase to a precise moment; checking that a quote attributed to a source is really in
+it (see Notes).
+**Depends on:** T-062.
+**Notes:** The browser run also showed the model claiming "the identical statement" in a
+second video (`lnB4Zckx_34`) that never mentions Claude Code. The link fell back
+correctly, but the answer's claim was false — a separate problem, raised with me.
+
+---
+
 ### T-062 — A citation number opens its paper or video directly
 
 **Status:** done

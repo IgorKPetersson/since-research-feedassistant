@@ -33,6 +33,7 @@ from vg09 import ingest_job, sources, sources_page
 from vg09.answer import generate_answer
 from vg09.citations import build_citations
 from vg09.date_range import detect_recency_ranking, resolve_date_range
+from vg09.quote_links import quote_times
 from vg09.retrieval import NUM_CTX, retrieve
 from vg09.store import corpus_stats, is_empty, latest_feed_date
 from vg09.ui_helpers import (
@@ -227,6 +228,7 @@ def ask_page() -> None:
     chip_answer = render_citation_chips(
         result.answer, result.source_map, citations.citations,
         citations.unlinked_references, citations.descriptive_ranges,
+        quote_seconds=quote_times(result.answer, result.source_map),  # T-063
     )
     st.markdown(chip_answer, unsafe_allow_html=True)
 

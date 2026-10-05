@@ -19,6 +19,7 @@ from html import escape as escape_html
 from pathlib import Path
 
 from vg09.citations import Citation
+from vg09.quote_links import LEAD_SECONDS, with_timestamp
 from vg09.retrieval import Candidate
 
 # T-045: "Since" - what's happened since you last checked. Display-only rename -
@@ -107,6 +108,18 @@ def citation_source_type(url: str) -> str:
 
 
 _SOURCE_TYPE_WORD = {"paper": "Paper", "video": "Video", "unknown": "Source"}  # T-062
+
+# T-063: the median gap between consecutive excerpts of one video, measured over the
+# whole store on 2026-10-05 (84 s; 90th percentile 94 s).
+EXCERPT_MINUTES = "1.5"
+
+
+def _clock(seconds: float) -> str:
+    """9:48, or 1:02:05 past an hour - how YouTube itself shows a time."""
+    total = int(seconds)
+    hours, rest = divmod(total, 3600)
+    minutes, secs = divmod(rest, 60)
+    return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes}:{secs:02d}"
 
 
 _TEXT_SOURCE_LABELS = {
@@ -241,6 +254,7 @@ def render_citation_chips(
     citations: list[Citation],
     unlinked_references: list[str],
     descriptive_ranges: list[str],
+    quote_seconds: dict[int, float] | None = None,
 ) -> str:
     """T-042/T-045: replaces every resolved `[N]`/`[N, M]`/`[N-M]` citation marker in
     the answer with a small HTML chip, in the UI's one accent colour (`ACCENT_COLOR`
@@ -284,7 +298,16 @@ def render_citation_chips(
                 continue
             url = candidate.metadata.get("url") or citation.url
             kind = _SOURCE_TYPE_WORD[citation_source_type(url)]
-            label = escape_html(f"{kind}: {citation.title}", quote=True)
+            where = ""
+            # T-063: a quoted video sentence is linked to where it is spoken; otherwise
+            # the link is the excerpt's start, and the tooltip says how far it runs.
+            if quote_seconds and n in quote_seconds:
+                url = with_timestamp(url, quote_seconds[n])
+                where = f" (the quote, at {_clock(max(0, quote_seconds[n] - LEAD_SECONDS))})"
+            elif candidate.metadata.get("start_seconds") is not None:
+                where = (f" (excerpt from {_clock(candidate.metadata['start_seconds'])}, "
+                         f"about {EXCERPT_MINUTES} minutes long)")
+            label = escape_html(f"{kind}: {citation.title}{where}", quote=True)
             chips.append(
                 f'<a class="citation-chip" href="{escape_html(url, quote=True)}" '
                 f'target="_blank" rel="noopener noreferrer" '
