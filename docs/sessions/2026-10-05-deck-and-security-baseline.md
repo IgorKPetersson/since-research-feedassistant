@@ -82,6 +82,17 @@ markers carry no number, and why the deck lives on its own branch.
    - 10.3 No-tools test and CLAUDE.md hard rule
      · outcome: done, shown to catch a planted `tools` field
 
+## 12. Continued 2026-10-06: Enter hint, overview, deck slides  [T-080, T-076, T-077]
+   - 12.1 Streamlit's Enter hint stayed while focus stayed in the field (40 s measured)
+     · outcome: hidden with CSS (T-080), chosen over a page script
+   - 12.2 `docs/OVERVIEW.md` written
+     · outcome: public docs describe Since as a product; core docs fixed
+   - 12.3 Old run-of-show `docs/presentation.md`
+     · outcome: deleted on the deck branch
+   - 12.4 Deck: RAG, stack, security and testing slides; slide 2's "~100 papers" was wrong
+     (measured 22–60 a weekday)
+     · outcome: T-077 done on the deck branch; KB-038 corrects KB-032
+
 ## 11. Open
    - T-076 overview (English), T-077 deck slides, T-070 day-of checks: todo
    - Deck branch not merged; KB-032 correction and INDEX merge pending: unresolved

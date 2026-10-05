@@ -28,6 +28,40 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-06 — Overview on main, deck slides done, waiting for my look at the deck
+
+**Tickets:** T-076, T-077, T-080  ·  **Tree:** docs/sessions/2026-10-05-deck-and-security-baseline.md § 12
+
+**Done this session:**
+- T-080: Streamlit's "Press Enter to submit form" hidden (it stayed while focus stayed in
+  the field). On `main`.
+- T-076: `docs/OVERVIEW.md` in English, linked from the top of the README. On `main`.
+- Public docs describe Since as a product; GOAL, DESIGN, DECISIONS and PLAN
+  cleaned too. TICKETS, HANDOFF and session logs left as written.
+- T-077 on `t/T-048-slidev-deck`: RAG, stack, security and testing slides; 16 slides;
+  `npm run build` passes. `main` merged into the deck branch; KB-038 supersedes KB-032.
+  The old `docs/presentation.md` is deleted on that branch.
+
+**In progress / half-finished:**
+- **The deck branch is not merged.** T-048's last criterion is my look at the
+
+**Learned (not obvious from the code):**
+- The deck said ~100 papers a weekday; the data says 22–60 (2026-09-21 to 2026-10-05).
+  Check every number against the data, even ones written earlier.
+  course (memory `since-is-a-product`). Do not refer I to what they said days
+
+**Blocked / needs me:**
+- Look at the deck (`git checkout t/T-048-slidev-deck`, then `npm run dev` in
+  `presentation/`), then merge it to `main`.
+- T-070 on the presentation day: ask the demo questions in the app, then `defense-prep`.
+
+**Next session should start with:**
+- Ask I to look at the deck, one step at a time; start it for them.
+
+**Doc updates made:** OVERVIEW.md · KB-038 (deck branch) · TICKETS T-076, T-077, T-080
+
+---
+
 ## 2026-10-05 (evening) — Slidev deck, security baseline, chips-as-HTML, injection measured
 
 **Tickets:** T-048, T-070–T-079  ·  **Tree:** docs/sessions/2026-10-05-deck-and-security-baseline.md
