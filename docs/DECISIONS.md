@@ -818,6 +818,33 @@ cannot produce acceptably.
 
 ---
 
+## D-020 — The model never gets tools, and the app is reachable only from its own machine
+**Status:** accepted
+
+**Decision:** The language model only ever returns text. It is given no function calling,
+no tools, no file, shell or network access, now or later, without a new decision. The app
+(Streamlit) and the model server (Ollama) listen on `127.0.0.1` only. Text the app fetches
+is treated as untrusted data: the model is told so, and nothing it writes is rendered as
+HTML.
+
+**Why:** my explicit requirement (2026-10-05): the app must not be able to reach their
+computer, and prompt injection must be mitigated. Fetched abstracts and transcripts are
+written by strangers; with no tools, an injection can change an answer's text but cannot
+act. That bound is stronger than any prompt wording, which a small local model may ignore.
+
+**Rejected:** Docker or another sandbox around the app — GOAL non-goal, and "meaningless
+for a local app" (me); authentication — non-goal, unnecessary when only the local
+machine can connect; letting the model call tools (e.g. a web search) — it would turn
+every injection into a possible action.
+
+**Cost:** no agentic features (the model cannot fetch more on its own); the app cannot be
+used from a phone on the same network.
+
+**Would change our mind:** a feature that truly needs a tool, which would then need its own
+confirmation step (Y/N before any action) and a new decision.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

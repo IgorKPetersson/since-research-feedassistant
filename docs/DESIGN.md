@@ -567,6 +567,58 @@ by the Whisper fallback, but slow — the progress line must show it); the job p
 dying without updating its status file (the status carries the process id and a
 heartbeat time, and a stale one is reported as interrupted, not as running).
 
+## Security baseline (T-071–T-075, D-020)
+
+**Problem:** I require that nothing outside the machine can reach the app, and
+that text the app reads cannot take control of it (2026-10-05). An audit that day found:
+Streamlit listens on every interface (no `server.address`) on a machine with a public IP;
+the model's answer is rendered with `unsafe_allow_html=True`, so HTML the model writes
+(for instance because a fetched abstract or transcript told it to) reaches the browser
+live; the prompt does not mark source excerpts as data. Ollama already listens on
+`127.0.0.1` only.
+
+**Serves:** `docs/GOAL.md` — local-first, "no interests sent to someone else's cloud"; the
+course's VG expectation that security is addressed.
+
+**Threat model, in one paragraph:** the app runs for one person on their own machine. The
+untrusted input is the content it fetches: paper titles and abstracts, video titles,
+descriptions and transcripts. An attacker who controls that content can try to (a) steer
+the model's answer (prompt injection), (b) get HTML or links rendered in the browser, (c)
+make the app reach other hosts or write outside `data/`. A second attacker is anyone on
+the network who could reach the app's port. The model is never given tools (D-020), so
+an injection can change *text*, never *actions* — that is the main guarantee, and the
+rest of this section narrows what text can do.
+
+**Behaviour:**
+1. *Network (T-071):* Streamlit binds `127.0.0.1` only (`.streamlit/config.toml`
+   `server.address`), XSRF protection stays on. Verified with `netstat` in a real run.
+2. *Rendering (T-072):* the model's answer is HTML-escaped before the citation chips are
+   inserted; only chips the app builds are HTML. A chip's `href` is only ever an
+   `https://` URL to huggingface.co, arxiv.org or youtube.com, built by the app.
+3. *Prompt (T-073):* each excerpt is wrapped in explicit begin/end markers; the system
+   prompt says the excerpts are untrusted data to be quoted or summarised, never
+   instructions, and that the answer contains no HTML and no links. Planted documents
+   with injection attempts are run through the real pipeline several times and the
+   outcome recorded, failures included.
+4. *Reach (T-074):* fetching goes only to the fixed source hosts; file names built from
+   arXiv and video ids are validated so they cannot leave `data/`.
+5. *Documentation (T-075, T-076, T-077):* D-020, an English `docs/OVERVIEW.md` with a
+   security section, and deck slides for RAG/stack, security and tests.
+
+**Not included:** Docker or any sandbox (GOAL non-goal; meaningless for a local app, me,
+2026-10-05); authentication (non-goal; the app is only reachable from the machine);
+re-running the graded evaluation after the prompt change (I 2026-10-05 — stated
+openly instead).
+
+**Verification:** per ticket; the decisive checks are the `netstat` bind address in a real
+run, an injected `<img onerror>`/`<a href="javascript:…">` answer rendering as text in a
+real browser, and the planted-injection runs' recorded results.
+
+**Risks:** the prompt change shifts answers, so T-069's graded numbers describe the app
+before it (stated in OVERVIEW and on the deck); a small local model can still follow an
+injection sometimes — the rendering and no-tools guarantees bound the damage to wrong
+text, which the citation chips and the quote check (T-064) help a reader catch.
+
 ## What we deliberately don't build
 
 - <…>

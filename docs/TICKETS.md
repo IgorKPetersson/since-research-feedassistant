@@ -14,6 +14,180 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-077 — Deck: slides for RAG and the stack, security, and testing
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-048-slidev-deck` (the deck's branch)  ·  **Phase:** 3
+
+**Goal:** the deck shows how Since is built and protected, not only what it does.
+
+**Why:** I (2026-10-05): the deck never says RAG, the stack, the security or the
+
+**Acceptance criteria**
+- [ ] One slide names the pipeline as RAG and splits it into retrieval (date filter, then
+  vector search), augmentation (excerpts inside a fixed token budget) and generation
+- [ ] One slide lists the stack with a one-line reason each, citing its D-0NN in the notes
+- [ ] One slide on security states only what T-071–T-074 verified, including the
+  injection runs' real outcome
+- [ ] One slide on testing: the unit test count from a real run, the graded evaluation,
+  the frozen dataset, the fresh-clone test; no CI claimed
+- [ ] Swedish without dashes (my standing preference); `npm run build` passes;
+  every slide checked by screenshot
+
+**Out of scope:** the overview document (T-076).
+**Depends on:** T-071–T-075.
+**Notes:** may replace the current "Allt körs på min dator" slide rather than add to it.
+
+---
+
+### T-076 — `docs/OVERVIEW.md`: purpose, design, security, tests and results in English
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-076-overview`  ·  **Phase:** 3
+
+how it works, how it is protected, how it was tested and what the results were.
+
+**Why:** a code repo alone does not explain purpose and results; one document should be
+the starting point and walk-through. English, because the app is international.
+
+**Acceptance criteria**
+- [ ] `docs/OVERVIEW.md` has: purpose and problem, the claim tested, how it works (RAG,
+  with a diagram), stack with reasons, security (threat model and measures, D-020),
+  testing, results (the three graded runs and the model comparison), limitations, how to
+  try it, and a map of where to read more in the repo
+- [ ] Every number links to the file it comes from
+- [ ] It states that the graded evaluation predates the T-073 prompt change
+- [ ] README links to it in its first lines
+- [ ] Read through by me
+
+**Out of scope:** rewriting README's install steps.
+**Depends on:** T-071–T-075 (its security section reports their results).
+**Notes:** reverses the 2026-10-02 "no written report" only in part: there is still no
+separate report, but the overview plays that role in the repo (see GOAL item 5 note).
+
+---
+
+### T-075 — Record D-020 and show that the model has no tools
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-075-no-tools`  ·  **Phase:** 3
+
+**Goal:** the "no tools" guarantee is written down and checked, not just true by accident.
+
+**Why:** D-020; it is the main bound on what a prompt injection can do.
+
+**Acceptance criteria**
+- [ ] A unit test asserts that every Ollama request the app builds (`answer.py`,
+  `retrieval.py`, `store.py`) has no `tools`/`functions` field and uses only the
+  `/api/chat`, `/api/generate` or `/api/embed` endpoints
+- [ ] `CLAUDE.md` gains a hard rule citing D-020
+- [ ] Full suite passes
+
+**Out of scope:** —
+**Depends on:** —
+**Notes:** D-020 itself was written with the spec (2026-10-05).
+
+---
+
+### T-074 — Fetching reaches only the source hosts; ids cannot write outside `data/`
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-074-reach`  ·  **Phase:** 3
+
+**Goal:** fetched data cannot make the app contact other hosts or write elsewhere on disk.
+
+**Why:** `docs/DESIGN.md` § Security baseline, behaviour 4.
+
+**Acceptance criteria**
+- [ ] Every outgoing request in ingest is listed with its host, in the ticket; any host
+  outside Hugging Face, arXiv, YouTube and Ollama on 127.0.0.1 is removed or explained
+- [ ] arXiv and video ids are validated against their real formats before they become
+  file names; tests show `../`, absolute paths and odd characters are rejected
+- [ ] Full suite passes
+
+**Out of scope:** limiting what the Python process itself may do (no sandbox, D-020).
+**Depends on:** —
+
+---
+
+### T-073 — Mark source excerpts as untrusted data, and measure injection attempts
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-073-prompt-injection`  ·  **Phase:** 3
+
+**Goal:** instructions hidden in a paper or a transcript are less likely to steer the
+answer, and how often they still do is known.
+
+**Why:** I (2026-10-05): prompt injection must be mitigated. D-020.
+
+**Acceptance criteria**
+- [ ] Each excerpt in the prompt sits between explicit begin/end markers with its number;
+  marker look-alikes inside source text are neutralised; tests cover both
+- [ ] The system prompt says the excerpts are untrusted data, never instructions, and that
+  the answer contains no HTML and no links; the extra tokens are measured and taken off
+  the chunk budget (as T-061 did); `docs/DESIGN.md`'s budget arithmetic matches
+- [ ] A script plants at least 4 fake documents with different injection attempts
+  (ignore instructions, write HTML, add a link, claim a false fact) next to real ones and
+  runs each question 5 times through the real pipeline, before and after the change; the
+  results are committed, failures included
+- [ ] The demo questions still answer with citations after the change (real run)
+- [ ] Full suite passes
+
+**Out of scope:** re-running the graded evaluation (me, 2026-10-05).
+**Depends on:** T-072 (so a test that makes the model write HTML is already harmless).
+
+---
+
+### T-072 — Render the model's answer as text; only the app's own chips are HTML
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-072-escape-answer`  ·  **Phase:** 3
+
+**Goal:** nothing the model writes can become live HTML in the browser.
+
+**Why:** found 2026-10-05: `app.py` renders `render_citation_chips()`' output with
+`unsafe_allow_html=True`, and the answer text is passed through unescaped.
+
+**Acceptance criteria**
+- [ ] The answer is HTML-escaped before chips are inserted; tests with
+  `<img src=x onerror=…>`, `<script>`, `<a href="javascript:…">` and markdown
+  `[x](javascript:…)` show them rendered as text
+- [ ] A chip's `href` is only built from an `https://` URL on huggingface.co, arxiv.org or
+  youtube.com; anything else gets no chip; tests
+- [ ] Citations, quote links and ordinary markdown (bold, lists) still render; checked in
+  a real browser with one injected answer and one real answer
+- [ ] Full suite passes
+
+**Out of scope:** the prompt (T-073).
+**Depends on:** —
+
+---
+
+### T-071 — The app listens only on this machine
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-071-localhost-only`  ·  **Phase:** 3
+
+**Goal:** no other machine can reach Since while it runs.
+
+**Why:** found 2026-10-05: `.streamlit/config.toml` has no `server.address`, so Streamlit
+listens on every interface, and this machine has a public IP. Anyone could reach the app,
+including the Sources page that starts fetches and writes files.
+
+**Acceptance criteria**
+- [ ] `server.address = "127.0.0.1"` in `.streamlit/config.toml`, with the reason; XSRF
+  protection not disabled
+- [ ] Started with `Since.bat`: `netstat` shows the port bound to `127.0.0.1` only, and the
+  browser opens and answers a question
+- [ ] Before the change, the same `netstat` check is recorded, so the ticket shows what it
+  was
+- [ ] README says the app is reachable only from the machine it runs on
+
+**Out of scope:** Ollama (already `127.0.0.1`, checked 2026-10-05).
+**Depends on:** —
+
+---
+
 ### T-070 — Presentation day: demo questions in the running app, then defense-prep
 
 **Status:** todo
