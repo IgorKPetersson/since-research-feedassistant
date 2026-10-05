@@ -16,7 +16,8 @@ edited in place — it is superseded by a new one and marked.
 - HF Daily Papers API — fetching and shape of the papers feed
 - Local model (Ollama) — running models on the RTX 4090
 - Local model (faster-whisper) — GPU audio transcription, CUDA setup on Windows
-- Retrieval (`vg09.retrieval`, `vg09.date_range`) — measurement methodology
+- Local model behaviour — date awareness, citation accuracy
+- Retrieval (`vg09.retrieval`, `vg09.date_range`) — measurement methodology, candidate ranking
 - Vector store (ChromaDB) — embedded local store, date-range filtering
 - UI (Streamlit / markdown rendering) — rendering free-text into markdown safely
 - UI (Streamlit) — theming and custom CSS injection
@@ -54,6 +55,9 @@ edited in place — it is superseded by a new one and marked.
 | [KB-026](KB-026-chroma-client-goes-stale-when-another-process-writes-the-store.md) | A Chroma `PersistentClient` goes stale when another process writes the store: queries fail with "Error finding id" during and after the write while counts still look right; dropping the cached client fixes it without a restart | Vector store (ChromaDB) — one store, two processes | verified | 2026-10-02 |
 | [KB-027](KB-027-first-question-after-a-whisper-update-hung-on-ollama-once.md) | The first question about a minute after an update that used Whisper waited 120s on Ollama once, then worked; cause not established | Local model (Ollama) — sharing the GPU with Whisper | provisional | 2026-10-02 |
 | [KB-028](KB-028-whisper-cuda-libraries-must-be-found-in-the-running-interpreter.md) | If Whisper's CUDA libraries aren't on PATH the first transcription raises `RuntimeError` and the second hangs with no CPU or GPU activity; the lookup assumed `<repo>/.venv` and now uses the running interpreter's site-packages | Local model (faster-whisper) — CUDA setup on Windows | verified | 2026-10-02 |
+| [KB-029](KB-029-qwen3-discards-current-sources-as-future-without-todays-date.md) | Without today's date in the prompt, qwen3 assumes "2023 or 2024" and discards correctly retrieved sources dated today as "from the future"; it also gets weekdays wrong when given only the date | Local model behaviour — date awareness | verified | 2026-10-05 |
+| [KB-030](KB-030-qwen3-credits-verbatim-quotes-to-the-wrong-source.md) | The model quotes word for word but often credits the quote to the wrong video or excerpt (4 of 5 in one answer); it quotes loosely, so exact match rejects correct quotes — 3-word-sequence share ≥ 0.6 separates them | Local model behaviour — citation accuracy | verified | 2026-10-05 |
+| [KB-031](KB-031-news-video-wording-crowds-papers-out-of-a-small-candidate-pool.md) | "What's new this week?" ranks news-video chunks so high that 60 candidates held no papers (first paper ranked 71st); 200 fills the budget; "papers yesterday" got 0 papers even at 400 | Retrieval — bge-m3 ranking under the per-document limit | verified | 2026-10-05 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 

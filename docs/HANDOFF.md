@@ -28,6 +28,71 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-05 — Self-update on open, answer fixes from real use, frozen re-evaluation
+
+**Tickets:** T-059–T-069  ·  **Tree:** docs/sessions/2026-10-05-self-update-answer-fixes-frozen-eval.md
+
+The session ran out of tokens right after its last answer, before the wrap-up. This note,
+the tree and KB-029–031 were written from the transcript in the next session, the same
+day. No code or data was lost: everything was committed and pushed.
+
+**Done this session:**
+- T-059 (D-018): the app starts an update when it opens and nothing has been fetched today,
+  with a setting on the Sources page to turn it off. T-060: `Since.bat` starts the app with
+  a double-click; the browser opened.
+- T-061: the model is told today's date and the applied range. "What has happened with AI
+  today?" had answered that the day's papers were "from the future" (KB-029).
+- T-062: a citation number links straight to its paper or video, title on hover; the
+  source list stays. T-063: a quoted video sentence links to the second it is spoken.
+- T-064/T-065: a warning under the answer when a quote is not in its credited source
+  (KB-030); quoted titles no longer flagged.
+- 18-question probe → T-066 (date phrases like "yesterday", "since Monday", "between X and
+  Y"; weekday given to the model), T-067 (candidate pool 60 → 200, KB-031), T-068 (a
+  question naming papers or videos searches only that source).
+- T-069: date-aware vs plain re-run against the frozen dataset in a separate store, graded:
+  A better 7, B better 1, equivalent 5, both wrong 2. PLAN.md, the ticket and
+  `docs/presentation.md` (three runs side by side, "never worse" dropped) updated.
+- Data caught up to 2026-10-05.
+
+**In progress / half-finished:**
+- Nothing in code. T-048 and T-056 are `review` (below).
+
+**Learned (not obvious from the code):**
+- KB-029: without today's date the model assumes 2023/2024 and discards current sources.
+  Retrieval was right, so no unit test could see it; found in the app.
+- KB-030: the model quotes accurately but credits quotes to the wrong source (4 of 5 in one
+  answer); exact matching rejects correct loose quotes.
+- KB-031: news-video wording crowds papers out of retrieval; a bigger pool helps but
+  doesn't fix F14 (semantic gap, in PLAN.md's risk register).
+- Dead end, not built: 15-second video excerpts so every link is precise. It needs a
+  reindex and a graded re-run for a link nicety.
+- Dead end, rejected: a Windows scheduled task for daily updates. It runs while the app is
+  closed, which GOAL rules out (D-018).
+- `retrieve()`'s `n_results` default is bound when the function is defined, so changing
+  `CANDIDATE_POOL_SIZE` at runtime (e.g. in an eval script) does not change it; pass it in.
+
+**Blocked / needs me:**
+- **T-048 / Phase 3 "Report and presentation":** the only unchecked Phase 3 item. Waiting on
+  the outline for the presentation. Then the demo questions are asked in the
+  running app and `defense-prep` is run.
+- **"24/7"** in `docs/GOAL.md`: the reading ("always caught up when you ask") is not
+  confirmed.
+- **T-056:** the stale-data marker has never been seen in a browser. With T-059 it only
+  shows if self-update is off and the data is over 2 days old.
+- **Probe findings, not ticketed. Do they get tickets?** The model
+  guesses channel names (it is never told the channel); "the three latest videos" picks
+  the wrong ones; an old "next week" is read as the future; one answer had the right
+  sources but no citations; Palantir is not linked to "Palunteer" (F12).
+
+**Next session should start with:**
+- Ask I for the presentation outline (one question, nothing else), then rework
+  `docs/presentation.md` to it under T-048.
+
+**Doc updates made:** D-018 · KB-029, KB-030, KB-031 · PLAN.md risk register and Phase 3 ·
+TICKETS T-059–T-069 · presentation.md results section
+
+---
+
 ## 2026-10-02 (evening) — Finishing pass, data caught up, Sources page built
 
 **Tickets:** T-048–T-058  ·  **Tree:** docs/sessions/2026-10-02-finishing-pass-and-sources-page.md
