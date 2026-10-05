@@ -22,6 +22,7 @@ edited in place — it is superseded by a new one and marked.
 - UI (Streamlit / markdown rendering) — rendering free-text into markdown safely
 - UI (Streamlit) — theming and custom CSS injection
 - UI — typeface (Google Fonts)
+- Presentation (Slidev) — dev server, production build
 
 ## Entries
 
@@ -58,6 +59,8 @@ edited in place — it is superseded by a new one and marked.
 | [KB-029](KB-029-qwen3-discards-current-sources-as-future-without-todays-date.md) | Without today's date in the prompt, qwen3 assumes "2023 or 2024" and discards correctly retrieved sources dated today as "from the future"; it also gets weekdays wrong when given only the date | Local model behaviour — date awareness | verified | 2026-10-05 |
 | [KB-030](KB-030-qwen3-credits-verbatim-quotes-to-the-wrong-source.md) | The model quotes word for word but often credits the quote to the wrong video or excerpt (4 of 5 in one answer); it quotes loosely, so exact match rejects correct quotes — 3-word-sequence share ≥ 0.6 separates them | Local model behaviour — citation accuracy | verified | 2026-10-05 |
 | [KB-031](KB-031-news-video-wording-crowds-papers-out-of-a-small-candidate-pool.md) | "What's new this week?" ranks news-video chunks so high that 60 candidates held no papers (first paper ranked 71st); 200 fills the budget; "papers yesterday" got 0 papers even at 400 | Retrieval — bge-m3 ranking under the per-document limit | verified | 2026-10-05 |
+| [KB-032](KB-032-slidev-remote-false-exposes-the-server-on-every-interface.md) | `slidev --remote false` enables remote access with the password "false" and binds every interface, a public IP included; plain `slidev` listens on localhost only | Presentation (Slidev) — dev server | verified | 2026-10-05 |
+| [KB-033](KB-033-slidev-52-build-breaks-with-vite-8-3-2.md) | Slidev 52.20.1 + a fresh install (vite 8.3.2) fails `slidev build` in lightningcss on Slidev's own CSS; an older lockfile (vite 8.3.1) builds — install with `npm ci` | Presentation (Slidev) — production build | provisional | 2026-10-05 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 
