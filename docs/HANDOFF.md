@@ -28,6 +28,64 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-05 (evening) — Slidev deck, security baseline, chips-as-HTML, injection measured
+
+**Tickets:** T-048, T-070–T-079  ·  **Tree:** docs/sessions/2026-10-05-deck-and-security-baseline.md
+
+**Done this session:**
+- Recovered the previous session (it ran out of tokens): its tree, KB-029–031, handoff.
+- T-048 rewritten (D-019): a Slidev deck in Since's own design, 13 slides, Swedish without
+  dashes, slides first then the app live. **On branch `t/T-048-slidev-deck`, not merged.**
+- Security baseline (D-020, DESIGN § Security baseline), all on `main`:
+  - T-071: the app listens on 127.0.0.1 only (it was 0.0.0.0 and [::]).
+  - T-072: the app renders the answer itself (markdown-it-py, HTML/links off); chips only
+    in text; only https chips to the source hosts. Fixed chips shown as HTML text.
+  - T-073: sources between `<<<BEGIN>>>`/`<<<END>>>`, declared untrusted data; a citation
+    in every item and a sentence per source. Injections steered 2/30 → 0/30.
+  - T-074: ids and feed dates validated before they become paths; Streamlit usage
+    statistics off.
+  - T-075: a test that no Ollama request carries tools; CLAUDE.md hard rule.
+- T-078: "research" no longer narrows to papers. T-079: "over the 5 days" etc. understood.
+- 350 unit tests pass. Everything except the deck is merged to `main` and pushed.
+
+**In progress / half-finished:**
+- **Deck branch `t/T-048-slidev-deck`:** has KB-032 and KB-033 and its own INDEX rows. Main
+  has KB-034–037 since. Merging needs the INDEX rows combined. KB-032 says the dev server
+  was exposed on "a public address (<public IPv4>)"; that is the router's IPv4, not the
+  machine's. It was the local network (Node has an inbound allow rule on Private), and
+  possibly global IPv6. Supersede KB-032 with a corrected entry on that branch.
+- The deck's numbers predate T-071–T-079; T-077 adds RAG/stack, security and testing slides.
+
+**Learned (not obvious from the code):**
+- KB-034: a backtick pair in the model's answer turned chips into visible HTML text
+  (CommonMark code span). Rare; reproduced in both parsers.
+- KB-035: numbered source markers made the model write "Source N" instead of [N]; every
+  unit test still passed.
+- KB-036: blunt injections fail on qwen3; a quiet "editor's correction" works; naming
+  corrections in the prompt made it worse.
+- KB-037: Streamlit's defaults listen everywhere and send usage statistics.
+- KB-033: Slidev 52.20.1 builds only with a known-good lockfile (`npm ci`).
+- Measuring the 2026-10-02 code against main in a worktree answered "who changed this?":
+  nobody; citation bunching happened as often before.
+- **Process lessons:** never start a dev server with a flag you have not checked
+  (`--remote false` exposed Slidev). Measure instead of explaining
+  away.
+
+**Blocked / needs me:**
+- T-076 `docs/OVERVIEW.md` (English): purpose, RAG, stack, security, tests,
+  results, limitations.
+- The graded evaluation predates T-073 and T-078 (questions 7 and 11); not re-run. Say so in OVERVIEW and the deck.
+- Google Fonts is loaded by the browser from Google; self-hosting the font would remove it.
+
+**Next session should start with:**
+- Write T-076, `docs/OVERVIEW.md`, from the tickets, D-020, the T-069 and T-073 results.
+
+**Doc updates made:** D-019, D-020 · KB-032–037 (032/033 on the deck branch) · DESIGN §
+Security baseline and the budget (11560) · TICKETS T-048, T-070–T-079 · PLAN Phase 3 ·
+CLAUDE.md hard rule · GOAL item 5 · README (localhost only)
+
+---
+
 ## 2026-10-05 — Self-update on open, answer fixes from real use, frozen re-evaluation
 
 **Tickets:** T-059–T-069  ·  **Tree:** docs/sessions/2026-10-05-self-update-answer-fixes-frozen-eval.md
