@@ -144,6 +144,7 @@ def query_candidates(
     question: str,
     date_range: tuple[date, date] | None,
     n_results: int = CANDIDATE_POOL_SIZE,
+    source: str | None = None,
 ) -> list[Candidate]:
     """Real Chroma similarity search, in Chroma's own relevance order. `date_range`,
     when given, filters by `feed_date_ordinal` ($gte/$lte, KB-004) - never by the
@@ -153,15 +154,18 @@ def query_candidates(
     collection = get_collection()
     query_embedding = embed_question(question)
 
-    where = None
+    conditions = []
     if date_range is not None:
         start, end = date_range
-        where = {
-            "$and": [
-                {"feed_date_ordinal": {"$gte": start.toordinal()}},
-                {"feed_date_ordinal": {"$lte": end.toordinal()}},
-            ]
-        }
+        conditions += [
+            {"feed_date_ordinal": {"$gte": start.toordinal()}},
+            {"feed_date_ordinal": {"$lte": end.toordinal()}},
+        ]
+    if source is not None:  # T-068: "hf" or "youtube", from vg09.source_filter
+        conditions.append({"source": source})
+    # Chroma refuses an "$and" of a single condition.
+    where = None if not conditions else conditions[0] if len(conditions) == 1 \
+        else {"$and": conditions}
 
     result = collection.query(
         query_embeddings=[query_embedding],
@@ -245,6 +249,7 @@ def retrieve(
     date_range: tuple[date, date] | None,
     ranking: bool,
     n_results: int = CANDIDATE_POOL_SIZE,
+    source: str | None = None,
 ) -> RetrievalResult:
     """The full pipeline: similarity search (optionally date-filtered) -> order
     (similarity or recency) -> dedup by document (T-027) -> pack to T-008's measured
@@ -253,7 +258,7 @@ def retrieve(
     script) decide those via `vg09.date_range.resolve_date_range()`/
     `detect_recency_ranking()`, or override them directly for a "plain retrieval"
     comparison run."""
-    candidates = query_candidates(question, date_range, n_results)
+    candidates = query_candidates(question, date_range, n_results, source=source)
     ordered = order_candidates(candidates, ranking)
     deduped = dedup_by_doc(ordered)
     packed, total_tokens, dropped = pack_to_budget(deduped)

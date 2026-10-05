@@ -63,8 +63,12 @@ def describe_retrieval_mode(
     date_range: tuple[date, date] | None,
     ranking: bool,
     manual_override: tuple[date, date] | None,
+    source: str | None = None,
 ) -> str:
-    """Human-readable description of which of T-022's mechanisms actually fired for
+    """T-068: a source filter is appended with its reason, so narrowing a search to
+    papers or videos is never silent.
+
+    Human-readable description of which of T-022's mechanisms actually fired for
     this answer - shown in the UI so the user can always see which one, not just the
     answer text. Priority matches `vg09.date_range.resolve_date_range()`: a manual
     override always wins over whatever was (or wasn't) interpreted. English text per
@@ -72,13 +76,21 @@ def describe_retrieval_mode(
     unchanged."""
     if manual_override is not None:
         start, end = manual_override
-        return f"Date filter (manually set): {start} – {end}"
-    if date_range is not None:
+        mode = f"Date filter (manually set): {start} – {end}"
+    elif date_range is not None:
         start, end = date_range
-        return f"Date filter (interpreted from the question): {start} – {end}"
-    if ranking:
-        return "Mode: sorted by most recent (ranking, no date filter)"
-    return "No date filter — unbounded search"
+        mode = f"Date filter (interpreted from the question): {start} – {end}"
+    elif ranking:
+        mode = "Mode: sorted by most recent (ranking, no date filter)"
+    else:
+        mode = "No date filter — unbounded search"
+    return mode + _SOURCE_NOTE.get(source, "")
+
+
+_SOURCE_NOTE = {
+    "hf": " · Papers only (the question mentions papers)",
+    "youtube": " · Videos only (the question mentions videos)",
+}
 
 
 # T-042: one example question per docs/GOAL.md question type ("what's new", "did X

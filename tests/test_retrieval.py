@@ -233,6 +233,31 @@ class QueryCandidatesTests(unittest.TestCase):
             ]},
         )
 
+    def test_a_source_alone_filters_by_source(self):
+        """T-068: a question naming papers or videos searches only that source."""
+        collection = self._mock_collection()
+        with (
+            patch("vg09.retrieval.get_collection", return_value=collection),
+            patch("vg09.retrieval.embed_batch", return_value=[[0.1, 0.2]]),
+        ):
+            query_candidates("papers?", date_range=None, n_results=10, source="hf")
+        self.assertEqual(collection.query.call_args.kwargs["where"], {"source": "hf"})
+
+    def test_a_source_and_a_date_range_combine(self):
+        collection = self._mock_collection()
+        start, end = date(2026, 9, 10), date(2026, 9, 16)
+        with (
+            patch("vg09.retrieval.get_collection", return_value=collection),
+            patch("vg09.retrieval.embed_batch", return_value=[[0.1, 0.2]]),
+        ):
+            query_candidates("videos last week", date_range=(start, end), n_results=10,
+                             source="youtube")
+        self.assertEqual(collection.query.call_args.kwargs["where"], {"$and": [
+            {"feed_date_ordinal": {"$gte": start.toordinal()}},
+            {"feed_date_ordinal": {"$lte": end.toordinal()}},
+            {"source": "youtube"},
+        ]})
+
     def test_never_calls_query_texts(self):
         """CLAUDE.md hard rule: query_texts= would silently invoke Chroma's default
         embedder (KB-006). This asserts the actual call signature, not just intent."""

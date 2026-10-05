@@ -14,6 +14,40 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-068 — A question that names papers or videos searches only that source
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-068-source-words`  ·  **Phase:** 3
+
+**Goal:** "papers", "research", "videos", "YouTube" and their Swedish forms narrow the
+search to that source, and the answer's caption says so.
+
+**Why:** the 2026-10-05 probe run: "What were the most important papers yesterday?"
+retrieved no papers even from 400 candidates; news videos won on the text.
+
+**Acceptance criteria**
+- [x] `vg09.source_filter.detect_source()`: paper words → "hf", video words → "youtube",
+  both or neither → None; "video" as a topic ("video generation", "text-to-video",
+  "video model") is not a source word → 4 tests, including eval questions 3, 7 and 12
+- [x] `retrieve()`/`query_candidates()` take `source`, combined with the date filter in
+  one `where` → 2 tests
+- [x] The caption under the answer adds "Papers only (the question mentions papers)" or
+  "Videos only (…)" → test
+- [x] Real runs: "most important papers this week" → 33 papers, 0 videos; "the three
+  latest videos" → 35 video excerpts, 0 papers
+- [x] Full suite passes → 325/325
+
+**Out of scope:** guaranteeing a mix when no source is named; the eval re-run (T-069).
+**Depends on:** T-067.
+**Notes:** Affects eval questions 7, 8, 11 (→ papers; their expected answers are papers
+only) and 12 (→ videos; expected answer is a video). "Har Palantir nämnts i någon
+video?" now searches only videos, but still misses the 2026-09-16 "Palunteer" caption —
+a misspelling the embedding doesn't match; found here, not caused here. "research" means
+papers: the app's own example "What's new in AI agent research this week?" now searches
+papers only.
+
+---
+
 ### T-067 — Fetch enough candidates that the per-document limit can't empty the answer
 
 **Status:** done

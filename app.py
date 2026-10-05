@@ -34,6 +34,7 @@ from vg09.answer import generate_answer
 from vg09.citations import build_citations
 from vg09.date_range import detect_recency_ranking, resolve_date_range
 from vg09.quote_links import misattributed_quotes, quote_times
+from vg09.source_filter import detect_source
 from vg09.retrieval import NUM_CTX, retrieve
 from vg09.store import corpus_stats, is_empty, latest_feed_date
 from vg09.ui_helpers import (
@@ -162,6 +163,7 @@ def ask_page() -> None:
     interpreted_range = resolve_date_range(question, today, manual_override=None)
     date_range = resolve_date_range(question, today, manual_override=manual_range)
     ranking = detect_recency_ranking(question)
+    source = detect_source(question)  # T-068: "papers" or "videos" narrows the search
 
     # --- Pipeline strip (T-042/T-044): filled in progressively, real data per stage,
     # as each stage actually completes - not one spinner wrapping the whole call.
@@ -188,10 +190,10 @@ def ask_page() -> None:
         # mode (neither has a bounded window) - describe_retrieval_mode() right below
         # still tells those two apart in full.
         date_range_slot.metric("Date range", format_date_range_short(date_range))
-    st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range))
+    st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range, source=source))
 
     try:
-        retrieval = retrieve(question, date_range=date_range, ranking=ranking)
+        retrieval = retrieve(question, date_range=date_range, ranking=ranking, source=source)
         candidates_slot.metric("Candidates", retrieval.candidates_considered)
         dedup_slot.metric("After dedup", retrieval.candidates_after_dedup)
         packed_slot.metric("Packed", len(retrieval.chunks))

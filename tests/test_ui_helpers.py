@@ -93,6 +93,14 @@ class DescribeRetrievalModeTests(unittest.TestCase):
     def test_unfiltered_when_nothing_fired(self):
         result = describe_retrieval_mode(None, ranking=False, manual_override=None)
         self.assertIn("No date filter", result)
+        self.assertNotIn("only", result)
+
+    def test_a_source_filter_is_named_with_its_reason(self):
+        """T-068: narrowing to one source is never silent."""
+        self.assertIn("Papers only (the question mentions papers)",
+                      describe_retrieval_mode(None, False, None, source="hf"))
+        self.assertIn("Videos only (the question mentions videos)",
+                      describe_retrieval_mode(None, False, None, source="youtube"))
 
 
 class VisualIdentityTests(unittest.TestCase):
