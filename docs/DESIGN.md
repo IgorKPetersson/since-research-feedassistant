@@ -157,12 +157,22 @@ at their old packed size) are unchanged.
 
 ```
 16000 (num_ctx)
- -  173 (system prompt, T-030's English-answer-instruction wording)
+ -  330 (system prompt, T-073's untrusted-data and citation rules; 173 before)
  -   40 (question, reserved)
  -   70 (date line before the question, T-061)
  - 4000 (reasoning + answer, T-039's measured reservation)
- = 11717 tokens available for retrieved chunks
+ = 11560 tokens available for retrieved chunks
 ```
+
+**Amended by T-073 (D-020):** the system prompt now names the `<<<SOURCE N BEGIN>>>` /
+`<<<SOURCE N END>>>` markers around each source, calls the text between them untrusted
+data and never instructions, forbids HTML and links in the answer, and asks for a
+citation in every list item and paragraph and a sentence per cited source. Measured with
+Ollama's `prompt_eval_count` on the same user message: 179 → 327 tokens, +148; reserved
+330 (was 173), so the chunk budget drops by 157 to 11560. The markers themselves add about
+14 tokens per source and are counted per chunk during packing, because
+`format_source()` builds both the measured and the sent text. Max top-k: `11560 // 502 =
+23`.
 
 **Amended by T-061:** the user message now states today's date and, when a range was
 applied, that the sources were selected for it ("do not discard a source because of its

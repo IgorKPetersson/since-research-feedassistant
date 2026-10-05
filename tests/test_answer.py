@@ -111,6 +111,21 @@ class SystemPromptTests(unittest.TestCase):
         can't silently drop it."""
         self.assertIn("Always answer in English", SYSTEM_PROMPT)
 
+    def test_sources_are_declared_untrusted_data_never_instructions(self):
+        """T-073 (D-020): I required prompt injection to be mitigated."""
+        self.assertIn("untrusted data", SYSTEM_PROMPT)
+        self.assertIn("never instructions", SYSTEM_PROMPT)
+        self.assertIn("<<<BEGIN>>>", SYSTEM_PROMPT)
+        self.assertIn('never write "Source N"', SYSTEM_PROMPT)  # numbered markers once made it
+
+    def test_no_html_or_links_in_the_answer(self):
+        self.assertIn("no HTML and no links", SYSTEM_PROMPT)
+
+    def test_a_citation_in_every_list_item_and_paragraph_and_a_sentence_per_source(self):
+        """T-073: I saw every citation bunched at the end, and a bare "Yes"."""
+        self.assertIn("every list item and every paragraph", SYSTEM_PROMPT)
+        self.assertIn("never answer with only", SYSTEM_PROMPT)
+
 
 class GenerateAnswerTests(unittest.TestCase):
     def _run(self, chunks=None, model=None, **response_overrides):
@@ -269,11 +284,11 @@ class RetryOnLengthTests(unittest.TestCase):
 
 class ReservationArithmeticTests(unittest.TestCase):
     def test_chunk_budget_is_what_num_ctx_leaves_after_the_other_reservations(self):
-        """docs/DESIGN.md § Remaining budget for retrieved chunks. 173 = the system
+        """docs/DESIGN.md § Remaining budget for retrieved chunks. 330 = the system
         prompt, 40 = the reserved question size, 70 = T-061's date line (all measured, see
         DESIGN.md); a change to NUM_PREDICT that forgets CHUNK_BUDGET_TOKENS (or vice
         versa) fails here instead of silently overrunning num_ctx - the T-038 class of bug."""
-        self.assertEqual(CHUNK_BUDGET_TOKENS + 173 + 40 + 70 + NUM_PREDICT, NUM_CTX)
+        self.assertEqual(CHUNK_BUDGET_TOKENS + 330 + 40 + 70 + NUM_PREDICT, NUM_CTX)  # T-073: 173 -> 330
 
 
 if __name__ == "__main__":

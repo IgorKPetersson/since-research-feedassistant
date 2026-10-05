@@ -166,7 +166,7 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 
 ### T-073 — Mark source excerpts as untrusted data, and measure injection attempts
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-073-prompt-injection`  ·  **Phase:** 3
 
 **Goal:** instructions hidden in a paper or a transcript are less likely to steer the
@@ -175,24 +175,32 @@ answer, and how often they still do is known.
 **Why:** I (2026-10-05): prompt injection must be mitigated. D-020.
 
 **Acceptance criteria**
-- [ ] Each excerpt in the prompt sits between explicit begin/end markers with its number;
-  marker look-alikes inside source text are neutralised; tests cover both
-- [ ] The system prompt says the excerpts are untrusted data, never instructions, and that
+- [x] Each excerpt in the prompt sits between explicit begin/end markers with its number;
+  marker look-alikes inside source text are neutralised; tests cover both → **changed in
+  the work:** the markers are `<<<BEGIN>>>`/`<<<END>>>` without a number, which stays on
+  the `[N]` line inside; numbered `<<<SOURCE N …>>>` markers made the model cite "Source
+  N" (93 and 103 times per measurement), which never becomes a chip
+- [x] The system prompt says the excerpts are untrusted data, never instructions, and that
   the answer contains no HTML and no links; the extra tokens are measured and taken off
-  the chunk budget (as T-061 did); `docs/DESIGN.md`'s budget arithmetic matches
-- [ ] A script plants at least 4 fake documents with different injection attempts
+  the chunk budget (as T-061 did); `docs/DESIGN.md`'s budget arithmetic matches → 179 →
+  327 tokens for the first version, 304 shipped; 330 reserved; budget 11717 → 11560
+- [x] A script plants at least 4 fake documents with different injection attempts
   (ignore instructions, write HTML, add a link, claim a false fact) next to real ones and
   runs each question 5 times through the real pipeline, before and after the change; the
-  results are committed, failures included
-- [ ] The demo questions still answer with citations after the change (real run)
-- [ ] The system prompt asks for a citation in every list item and every paragraph, not
+  results are committed, failures included → 6 attacks × 5 runs; steered 2/30 before,
+  4/30 and 1/30 for two rejected prompt versions, 0/30 shipped:
+  `docs/eval-results/2026-10-05-t073-prompt-injection.md`
+- [x] The demo questions still answer with citations after the change (real run) → all
+  four `done=stop`, no retries, generation 12.6–21.1 s
+- [x] The system prompt asks for a citation in every list item and every paragraph, not
   only "every claim"; measured with the citation-placement script (3 questions × 4 runs,
   before and after, same data) as the share of answers with all citations in the last
-  unit — baseline 2026-10-05: 3/12 on the 2026-10-02 code, 2/12 on main
-- [ ] Every cited source gets a short sentence on what it says, not a bare "Yes" with one
+  unit — baseline 2026-10-05: 3/12 on the 2026-10-02 code, 2/12 on main → fresh
+  baseline on the branch's main 1/12; shipped 0/12, and 0 of 42 answers without any [N]
+- [x] Every cited source gets a short sentence on what it says, not a bare "Yes" with one
   link; checked on my "Has Anthropic been mentioned in the last 8 days?", which
-  answered "Yes" alone once on 2026-10-05
-- [ ] Full suite passes
+  answered "Yes" alone once on 2026-10-05 → 4 of 4 runs: 189–227 words, 16–18 citations
+- [x] Full suite passes → 340/340
 
 **Out of scope:** re-running the graded evaluation (me, 2026-10-05); an in-app
 notice when citations are bunched at the end (only if the wording does not help).
