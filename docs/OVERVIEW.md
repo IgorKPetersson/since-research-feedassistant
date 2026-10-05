@@ -6,9 +6,9 @@ questions about them with sources: what is new, whether a topic came up, and how
 has developed over the last weeks. Everything runs on one machine with a local model: no
 account, no cloud service, no server.
 
-This document is the starting point for a reviewer. It says why the project exists, how it
-works, how it is protected, how it was tested and what the results were. Every number
-links to the file it comes from. Installation is in the [README](../README.md).
+Below: why Since exists, how it works, how it is protected, how it was tested and what the
+results were. Every number links to the file it comes from. Installation is in the
+[README](../README.md).
 
 **Contents:** [Problem](#the-problem) · [Claim](#the-claim-tested) ·
 [How it works](#how-it-works-retrieval-augmented-generation-with-time-first) ·
@@ -199,7 +199,8 @@ The project keeps what it learns about its tools in a knowledge base
   never found (eval question 12).
 - **One question type still fails:** asking for both papers and videos on a broad topic
   returned only videos in every run (eval question 14).
-- **Catching up needs the computer on.** The app updates when it opens; "24/7" is read as
+- **Catching up needs the computer on.** There is no background service: the app fetches
+  what it missed when it opens, so it is caught up when you ask, not around the clock.
 
 ## Try it
 
