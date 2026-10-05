@@ -14,6 +14,31 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-070 — Presentation day: demo questions in the running app, then defense-prep
+
+**Status:** todo
+**Size:** S  ·  **Branch:** — (docs-only)  ·  **Phase:** 3
+
+**Goal:** the demo shown live has been rehearsed in the real app on the day's data, and
+I have practised against hard questions.
+
+**Why:** the two checks moved out of T-048 when it became the Slidev deck (2026-10-05).
+A pipeline run is not the app (process lesson, 2026-10-02 handoff).
+
+**Acceptance criteria**
+- [ ] On the presentation day or the day before, after the app's own update, each demo
+  question in the deck's speaker notes is asked in the browser; answer, citations and
+  time are recorded in the ticket. Any question whose answer no longer matches its slide
+  is replaced, and the slide updated
+- [ ] `defense-prep` is run against the finished deck, and the questions it raises that
+  the deck's "likely questions" note lacks are added to it
+
+**Out of scope:** changing the app.
+**Depends on:** T-048.
+**Notes:** the ticket's date is set by my presentation date, not yet known.
+
+---
+
 ### T-069 — Re-run the date-aware vs plain evaluation against the frozen dataset
 
 **Status:** done
@@ -725,35 +750,46 @@ as records of past runs; reducing the number of requests retrieval makes.
 
 ---
 
-### T-048 — Draft the live demonstration and presentation
+### T-048 — Presentation as a Slidev deck in Since's own design
 
-**Status:** review
-**Size:** S  ·  **Branch:** — (docs-only)  ·  **Phase:** 3
+**Status:** in-progress
+**Size:** M  ·  **Branch:** `t/T-048-slidev-deck`  ·  **Phase:** 3
 
-**Goal:** I have a run-of-show for the course's live demonstration that they can
-edit and present from — `docs/GOAL.md` Definition of done item 5.
+**Goal:** I can present Since from a slide deck that looks like the app, with
+speaker notes, a timeline as its carrying visual, and the central claim as a chart —
+`docs/GOAL.md` Definition of done item 5.
 
-**Why:** the only Definition of done item not met. I asked for a draft
-(2026-10-02); the deliverable is a live demo and presentation, not a written report.
+**Why:** the only Definition of done item not met. The deliverable is a live demo and
+presentation, not a written report (2026-10-02). Slidev chosen as the tool, with
+honesty about failures and Since's own look (2026-10-05, D-019).
 
 **Acceptance criteria**
-- [x] `docs/presentation.md` exists, in Swedish, with a pre-demo checklist, timed
-- [x] Every number in it is traceable to a file in the repo, listed in its last section
-- [x] Demo questions cover the three question types plus F12 as the known failure, and
-  their expected answers come from a real run → `scripts/t048_verify_demo_questions.py`,
-  2026-10-02, after the same day's catch-up (1609 papers, 62 videos, 2852 chunks, through
-  2026-10-02): all four `stop`, no retries, retrieval 3.1–7.1s, generation 5.5–14.0s.
-  The original F05/F10 questions were replaced because the catch-up moved the date
-  windows they depended on
-- [ ] I have confirmed length, language and audience, and edited the draft
-- [ ] The demo questions have been asked in the running UI, not only through the
-  pipeline functions, on the data current on the day
+- [ ] `presentation/` holds a Slidev deck (`slides.md`, `package.json` with exact
+  versions, lockfile); `npm install` then `npm run build` succeed from a clean folder,
+  and `npm run dev` shows it in a browser
+- [ ] The deck uses Since's identity, not Slidev's default: accent `#A26B16`, Instrument
+  Sans, `docs/assets/since-mark.svg`, and a light theme → checked by screenshots of every
+  slide, reviewed by me
+- [ ] A timeline ("what has happened since…") is the visual thread: on the cover and
+  reused to frame the demo, the date-aware claim and the close
+- [ ] The date-aware vs plain result is a chart of the three graded runs
+  (2026-09-20, 2026-09-22, 2026-10-05: A better 7/8/7, B better 1/0/1), not a table
+- [ ] Structure follows my choice: problem → the app (real screenshots of Since
+  taken from the running app) → the AI chain → what we measured → "AI gets it wrong: what
+  we saw" (KB-029, KB-030, KB-031, F14) → lessons → questions. Every slide has speaker
+  notes in Swedish with timing; every number cites its source file in the notes
+- [ ] The two unverified-number habits of the earlier deck are not repeated: no number
 
-**Out of scope:** slides; investigating KB-023; running `defense-prep`.
-
-**Depends on:** T-032, T-033 (the graded results it reports).
-**Notes:** Length (about 10 minutes), language and audience are assumptions, stated at
-the top of the draft.
+**Out of scope:** asking the demo questions in the app on the day and `defense-prep`
+(T-070); a demo video; changing the app.
+**Depends on:** T-032, T-033, T-069 (the graded results it reports).
+**Notes:** **Rewritten 2026-10-05** at my request. It was "Draft the live
+demonstration and presentation", status `review`, with `docs/presentation.md` as a
+run-of-show (three criteria met: Swedish draft with timed sections, numbers traceable,
+demo questions verified by `scripts/t048_verify_demo_questions.py` on 2026-10-02). The
+two unmet criteria (I editing the draft; asking the questions in the running UI)
+moved: the first is replaced by me reviewing the deck, the second went to T-070.
+`docs/presentation.md` stays as the source of the content until the deck replaces it.
 
 ---
 

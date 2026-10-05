@@ -795,6 +795,29 @@ open the app mainly to ask one quick question and the update gets in the way.
 
 ---
 
+## D-019 — The presentation is a Slidev deck in its own `presentation/` folder
+**Status:** accepted
+
+**Decision:** The course presentation is built with Slidev (Node/npm), pinned to exact
+versions in `presentation/package.json` with a committed lockfile. It lives apart from the
+Python app: nothing in `vg09/`, `app.py` or the README's install steps depends on it.
+
+**Why:** my explicit decision (2026-10-05), accepting the new dependency. My
+previous course project was presented from a Slidev deck and well received; slides as
+Markdown live in the repo, diff like code, and carry speaker notes and a presenter view.
+
+**Rejected:** a `.pptx` (binary, no diffs, I prefers working on look in code);
+`docs/presentation.md` alone (a run-of-show, not something to present from); a hosted
+slide artifact (not in the repo).
+
+**Cost:** Node and `node_modules` for whoever builds the deck; a second toolchain in a
+Python repo, confined to one folder.
+
+**Would change our mind:** if the course requires a file format Slidev's export (PDF/PPTX)
+cannot produce acceptably.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

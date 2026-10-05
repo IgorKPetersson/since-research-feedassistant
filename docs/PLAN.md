@@ -165,9 +165,9 @@ Phase 2 declared complete; Phase 3 opened the same session, by explicit go-ahead
   HF+YouTube backfill including the Whisper fallback path, real `bge-m3` embedding, real
   browser question) reached a real answer with real citations end to end — nothing in the
   README needed fixing
-- [ ] Live demonstration and presentation — run `defense-prep` — **T-048** (draft in
-  `docs/presentation.md`, waiting on my outline). No written report: the
-  deliverable is a live demo and presentation (me, 2026-10-02)
+- [ ] Live demonstration and presentation — **T-048** (Slidev deck in Since's own design,
+  D-019), **T-070** (demo questions in the running app on the day, then `defense-prep`).
+  No written report: the deliverable is a live demo and presentation (me, 2026-10-02)
 
 **Exit criteria:** every item in the Definition of done in `docs/GOAL.md` is met.
 **Checkpoint:** I review. Project complete.
