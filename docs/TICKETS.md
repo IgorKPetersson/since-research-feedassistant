@@ -14,6 +14,29 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-079 — Understand "over the 5 days", "the previous 5 days" and "de 5 senaste dagarna"
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-079-date-phrases`  ·  **Phase:** 3
+
+**Goal:** these phrasings get the same date filter as "the last 5 days".
+
+**Why:** my test (2026-10-05): "How has research on coding agents developed over
+the 5 days?" got "No date filter"; the model then made up its own window and said no
+source fell inside it. Adding "last" worked.
+
+**Acceptance criteria**
+- [x] "over/during/in/within/for the N days/weeks/months" and "previous N …" give the last-N
+  window; "the 5 days before/after X" does not → tests (`T079PhrasesFromTheHumansTestTests`),
+  failing first
+- [x] Swedish "de N senaste dagarna/veckorna/månaderna" works like "senaste N …" → tests
+- [x] Full suite passes → 335/335
+
+**Out of scope:** any phrase not seen in a real question.
+**Depends on:** T-066.
+
+---
+
 ### T-078 — "research" is a topic, not a source: it no longer narrows the search to papers
 
 **Status:** done
@@ -166,6 +189,9 @@ answer, and how often they still do is known.
   only "every claim"; measured with the citation-placement script (3 questions × 4 runs,
   before and after, same data) as the share of answers with all citations in the last
   unit — baseline 2026-10-05: 3/12 on the 2026-10-02 code, 2/12 on main
+- [ ] Every cited source gets a short sentence on what it says, not a bare "Yes" with one
+  link; checked on my "Has Anthropic been mentioned in the last 8 days?", which
+  answered "Yes" alone once on 2026-10-05
 - [ ] Full suite passes
 
 **Out of scope:** re-running the graded evaluation (me, 2026-10-05); an in-app

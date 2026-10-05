@@ -270,15 +270,19 @@ def extract_date_range(question: str, today: date) -> DateRange | None:
     # "senaste/de senaste <N> veckorna/dagarna/manaderna" - a number is required here;
     # a bare plural with no number ("senaste veckorna") does NOT match this pattern and
     # falls through to the "no discernible range" case at the end, deliberately.
-    m = re.search(r"senaste\s+" + _NUM + r"\s+veckorna", q)
+    # T-079: the number may also come first, "de 5 senaste dagarna".
+    m = (re.search(r"senaste\s+" + _NUM + r"\s+veckorna", q)
+         or re.search(r"\b" + _NUM + r"\s+senaste\s+veckorna", q))
     if m:
         return _last_n_days(today, _parse_number(m.group(1)) * 7)
 
-    m = re.search(r"senaste\s+" + _NUM + r"\s+dagarna", q)
+    m = (re.search(r"senaste\s+" + _NUM + r"\s+dagarna", q)
+         or re.search(r"\b" + _NUM + r"\s+senaste\s+dagarna", q))
     if m:
         return _last_n_days(today, _parse_number(m.group(1)))
 
-    m = re.search(r"senaste\s+" + _NUM + r"\s+m[aå]naderna", q)
+    m = (re.search(r"senaste\s+" + _NUM + r"\s+m[aå]naderna", q)
+         or re.search(r"\b" + _NUM + r"\s+senaste\s+m[aå]naderna", q))
     if m:
         n = _parse_number(m.group(1))
         return _subtract_months(today, n), today
@@ -322,15 +326,21 @@ def extract_date_range(question: str, today: date) -> DateRange | None:
     # "the last/past N weeks/days/months" - a number is required here; a bare plural
     # with no number ("recent weeks") does NOT match and falls through, deliberately -
     # the same ambiguous-by-design case as Swedish's "senaste veckorna".
-    m = re.search(r"\b(?:last|past)\s+" + _EN_NUM + r"\s+weeks\b", q)
+    # T-079: "previous" too, and "over/during/in/within the N days" without "last" (my
+    # "developed over the 5 days"), but not "the 5 days before/after X".
+    lead = (r"\b(?:(?:last|past|previous)\s+"
+            r"|(?:over|during|in|within|for)\s+the\s+)")
+    not_anchored = r"(?!\s+(?:before|after|leading|following|of)\b)"
+
+    m = re.search(lead + _EN_NUM + r"\s+weeks\b" + not_anchored, q)
     if m:
         return _last_n_days(today, _parse_number_en(m.group(1)) * 7)
 
-    m = re.search(r"\b(?:last|past)\s+" + _EN_NUM + r"\s+days\b", q)
+    m = re.search(lead + _EN_NUM + r"\s+days\b" + not_anchored, q)
     if m:
         return _last_n_days(today, _parse_number_en(m.group(1)))
 
-    m = re.search(r"\b(?:last|past)\s+" + _EN_NUM + r"\s+months\b", q)
+    m = re.search(lead + _EN_NUM + r"\s+months\b" + not_anchored, q)
     if m:
         return _subtract_months(today, _parse_number_en(m.group(1))), today
 
