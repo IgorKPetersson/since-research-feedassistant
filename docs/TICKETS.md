@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-069 — Re-run the date-aware vs plain evaluation against the frozen dataset
 
-**Status:** review
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-069-frozen-eval`  ·  **Phase:** 3
 
 **Goal:** the report's evaluation numbers describe the app as it is after T-061–T-068,
@@ -41,11 +41,20 @@ set does not (1189 vs 1184), so the answer key does not apply to it.
 - [x] The 15 questions × 2 arms run, output in `docs/eval-results/`, with the same layout
   and grading boxes as T-032's → `2026-10-05-1443-t069-frozen-date-aware-vs-plain.md`; 30
   runs, 0 retries, 0 cut off
-- [ ] I grade it — the agent does not grade (T-032's rule) → **waiting for me**
+- [x] I grade it — the agent does not grade (T-032's rule) → graded 2026-10-05:
+  **A better 7, B better 1, equivalent 5, both wrong 2** (T-032's last run: 8/0/5/2)
 
 **Out of scope:** changing the questions or the answer key; grading.
 **Depends on:** T-067, T-068.
-**Notes:** I approved the re-run (2026-10-05).
+**Notes:** I approved the re-run (2026-10-05). My notes on the grading:
+- B's single win (F06) came from A ranking "Benchmark Radar" and a news video's "Real
+  Suite" above SWE-Bench Pro Verified, which the answer key calls the wrong ranking — not
+  a date-filter failure.
+- F14 failed the same way for the sixth time across three runs: both arms cited only
+  YouTube, no HF paper, even at 200 candidates instead of 60. That rules out pool size and
+  confirms the semantic gap; recorded in `docs/PLAN.md`'s risk register.
+- The grading file first had F06 as "both wrong" and F15 as "equivalent"; my
+  list (B better, A better) is the correct one, and the file was set to match it.
 
 ---
 
