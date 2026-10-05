@@ -341,3 +341,34 @@ class StalenessNoteTests(unittest.TestCase):
 
         self.assertEqual(staleness_note(date(2026, 9, 17), date(2026, 10, 2)), "15 days old")
         self.assertEqual(staleness_note(date(2026, 9, 29), date(2026, 10, 2)), "3 days old")
+
+
+class UpdateNoteTests(unittest.TestCase):
+    """D-018: the header follows the background update and says why one failed."""
+
+    def test_nothing_to_say_when_idle_or_done(self):
+        from vg09.ui_helpers import update_note
+
+        self.assertIsNone(update_note({"state": "idle"}))
+        self.assertIsNone(update_note({"state": "done", "finished": "2026-10-05T09:00:00"}))
+
+    def test_a_running_update_shows_its_current_step(self):
+        from vg09.ui_helpers import update_note
+
+        self.assertEqual(update_note({"state": "running", "detail": "Hugging Face Daily Papers"}),
+                         "Updating… Hugging Face Daily Papers")
+
+    def test_ollama_refusing_the_connection_is_named_in_plain_words(self):
+        from vg09.ui_helpers import update_note
+
+        # The shape requests gives a refused connection, as recorded by ingest_job.
+        error = ("index: HTTPConnectionPool(host='127.0.0.1', port=11434): Max retries "
+                 "exceeded with url: /api/embed (Caused by NewConnectionError(...))")
+        note = update_note({"state": "done_with_errors", "errors": [error]})
+        self.assertTrue(note.startswith("Ollama isn't running"))
+
+    def test_any_other_failure_points_to_the_sources_page(self):
+        from vg09.ui_helpers import update_note
+
+        note = update_note({"state": "done_with_errors", "errors": ["youtube: blocked"]})
+        self.assertEqual(note, "The last update had problems. See Sources")

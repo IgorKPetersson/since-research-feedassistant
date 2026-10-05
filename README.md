@@ -85,9 +85,13 @@ For each video, real captions are tried first. If YouTube blocks them, the audio
 transcribed locally with Whisper, and if that fails too, the video's title and
 description are used alone (weaker, but never a hard failure).
 
-Fetching happens only when you press Update now. There is no scheduler (a deliberate
-choice; see "Known limitations" below). The header shows how far the data reaches and
-marks it when it is more than two days old.
+**The app updates itself when you open it.** The first time you open it each day, the
+update starts in the background on its own; the header says "Updating…" until it has
+finished, and you can ask questions meanwhile. Turn this off on the Sources page ("Update
+when the app opens") if you'd rather update only with Update now. There is no scheduler,
+so nothing is fetched while the app is closed (see "Known limitations" below). The
+header shows how far the data reaches, marks it when it is more than two days old, and
+says so in plain words if the last update failed.
 
 ### From the terminal instead
 
@@ -141,9 +145,10 @@ comparison (T-033). See
 
 ## Known limitations
 
-- **Fetching only happens while your machine is on and you start it.** There's no scheduler
-  and no always-on service by design (see "Non-goals" in `docs/GOAL.md`) — "always caught
-  up" means the next time you press Update now, not continuous background updates.
+- **Fetching only happens while the app is open.** There's no scheduler and no always-on
+  service by design (see "Non-goals" in `docs/GOAL.md`, D-018) — "always caught up" means
+  caught up shortly after you open the app, not continuous background updates. After a
+  long break the first update can take 10+ minutes.
 - **Questions are refused for a few seconds at the end of an update**, while the new
   content is written to the search index. The app says so and you ask again.
 - **At most 5 YouTube channels**, a deliberate limit to keep updates short.

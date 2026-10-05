@@ -102,6 +102,33 @@ def start() -> None:
         )
 
 
+def should_start_on_open(config: sources_config.Sources, job: dict, today: date) -> bool:
+    """D-018: whether opening the app should start an update. Judged by when the last
+    update finished, not by the newest item's date: Hugging Face posts nothing at
+    weekends, so a Monday would otherwise start an update on every opening.
+
+    A first start (nothing saved yet) is left to the Sources page, where the user
+    chooses the sources before anything is fetched. An update that finished today with
+    errors is not retried here; Update now does that once the cause is fixed."""
+    if not config.update_on_open or not config.saved:
+        return False
+    if job["state"] == "running":
+        return False
+    finished = job.get("finished")
+    return not (finished and finished[:10] == today.isoformat())
+
+
+def start_on_open(today: date | None = None) -> bool:
+    """Start an update if `should_start_on_open()` says so. True when one was started."""
+    if not should_start_on_open(sources_config.load(), status(), today or date.today()):
+        return False
+    try:
+        start()
+    except AlreadyRunning:  # another tab got there a moment earlier
+        return False
+    return True
+
+
 def is_writing_store() -> bool:
     """True while a running job is in the stage that writes to the store. Chroma's
     embedded store can't be queried from the app while another process writes to it

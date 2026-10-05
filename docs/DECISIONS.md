@@ -765,6 +765,36 @@ back to the page showing the exact terminal commands for the chosen sources.
 
 ---
 
+## D-018 — The app starts an update by itself when it is opened and nothing has been fetched today
+**Status:** accepted
+
+**Decision:** When a new browser session opens the app, it starts the background update
+(D-017's job) on its own if: the setting "Update when the app opens" is on (the default),
+sources have been chosen (not a first start), no update is running, and no update has
+finished today. The setting lives in `data/sources.json` as `update_on_open`; a file
+without it reads as on. Update now stays. The header shows "Updating…" while it runs and
+says in plain words when the last update failed.
+
+**Why:** my explicit decision (2026-10-05), on the grounds that the product is
+worthless if the data does not keep itself current. `docs/GOAL.md` promises "always caught
+up when you ask"; a button that has to be remembered did not deliver that — the data
+stopped on 2026-09-17 and again on 2026-10-02 without the user noticing.
+
+**Rejected:** a Windows scheduled task, updating daily with the app closed — rejected
+because it still breaks GOAL's non-goal "no scheduler" and stays parked; it can be added if
+a user asks for updates without opening the app. Triggering on the newest item's date
+instead of the last finished update — rejected because Hugging Face posts nothing at
+weekends, so Monday morning would start an update on every opening.
+
+**Cost:** an extra background update on the first opening of each day, a few minutes, most
+of it YouTube. `data/sources.json` gains a field (additive; older files still load). The
+header re-reads the job status every few seconds while the app is open.
+
+**Would change our mind:** if the update on opening slows answering noticeably, or if users
+open the app mainly to ask one quick question and the update gets in the way.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

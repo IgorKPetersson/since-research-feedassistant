@@ -167,14 +167,31 @@ STALE_AFTER_DAYS = 2  # a weekend with no new papers is normal (KB-002); more is
 
 def staleness_note(latest: date | None, today: date) -> str | None:
     """T-056: the header's warning that the data has fallen behind, or None while it is
-    recent. The app never fetches by itself (no scheduler, by design), so without this
-    the only sign of old data is a date the reader has to compare with today's."""
+    recent. The app only fetches while it is open (D-018: no scheduler), so after a
+    long break this is the sign of old data until the update on opening has finished."""
     if latest is None:
         return None
     days = (today - latest).days
     if days <= STALE_AFTER_DAYS:
         return None
     return f"{days} days old"
+
+
+def update_note(job: dict) -> str | None:
+    """D-018: the header's word on the background update - what it is doing while it
+    runs, and in plain words why the last one failed. None when there is nothing to say.
+    An error is recorded as "<stage>: <exception text>" by `vg09.ingest_job`."""
+    if job["state"] == "running":
+        return f"Updating… {job.get('detail', 'Starting')}"
+    if job["state"] == "interrupted":
+        return "The last update stopped before it finished"
+    if job["state"] != "done_with_errors":
+        return None
+    errors = job.get("errors", [])
+    # Every Ollama call goes to 127.0.0.1:11434; a refused connection names the port.
+    if any("11434" in e for e in errors):
+        return "Ollama isn't running, so new items aren't searchable yet. Start Ollama, then press Update now on Sources"
+    return "The last update had problems. See Sources"
 
 
 def build_retrieval_ranks(chunks: list[Candidate]) -> dict[str, int]:

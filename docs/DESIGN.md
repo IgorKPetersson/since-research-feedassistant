@@ -524,13 +524,20 @@ original Definition of done, added by explicit instruction (2026-10-02).
 6. With no data and no saved configuration, the app opens on Sources with the four
    default channels pre-selected as suggestions.
 7. The header marks the data as stale when the latest feed date is more than two days old.
+8. **Update on opening (T-059, D-018):** the first page load of each browser session
+   starts the same background update when the setting "Update when the app opens" is on
+   (default), sources have been saved, nothing is running and no update finished today.
+   The header follows the job every 3 seconds ("Updating… <step>"), reloads its counts
+   when the job finishes without rerunning the page, and says in plain words when the
+   last update failed ("Ollama isn't running" for a refused connection to port 11434).
 
-**Not included:** scheduled ingest (still a non-goal); choosing individual papers or
+**Not included:** scheduled ingest with the app closed (still a non-goal, D-018); choosing individual papers or
 filtering Hugging Face by topic; sources other than HF Daily Papers and YouTube;
 more than one ingest job at a time.
 
 **Design impact:**
-- `data/sources.json` (new, user-local, gitignored): `{"hf": {"enabled", "backfill_weeks"},
+- `data/sources.json` (new, user-local, gitignored): `{"update_on_open" (T-059; absent
+  reads as true), "hf": {"enabled", "backfill_weeks"},
   "youtube": {"backfill_weeks", "channels": [{"handle", "url"}]}}`. Read and written
   only through `vg09/sources.py`. When the file is missing, `vg09/channels.py`'s four
   channels are the defaults, so the terminal commands in the README keep working.

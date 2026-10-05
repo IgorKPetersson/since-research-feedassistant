@@ -181,6 +181,14 @@ def render() -> None:
     else:
         st.markdown(f"The data is up to date through {latest}.")
     st.caption(UPDATE_WARNING)
+    update_on_open = st.toggle(
+        "Update when the app opens", value=config.update_on_open,
+        help="Starts an update the first time the app is opened each day. "
+             "Turn off to update only when you press Update now.",
+    )
+    if update_on_open != config.update_on_open:
+        config.update_on_open = update_on_open
+        sources.save(config)
     if st.button("Update now", type="primary", disabled=running):
         sources.save(config)  # from here on the list is the user's own, not a suggestion
         try:

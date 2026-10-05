@@ -34,6 +34,8 @@ class Sources:
     hf_weeks: int = DEFAULT_HF_WEEKS
     youtube_weeks: int = DEFAULT_YOUTUBE_WEEKS
     channels: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_CHANNELS))
+    # D-018: start an update when the app is opened and nothing was fetched today.
+    update_on_open: bool = True
     saved: bool = False  # False: no file yet, these are the defaults offered as a start
 
 
@@ -46,12 +48,15 @@ def load() -> Sources:
         hf_weeks=raw["hf"]["backfill_weeks"],
         youtube_weeks=raw["youtube"]["backfill_weeks"],
         channels={c["handle"]: c["url"] for c in raw["youtube"]["channels"]},
+        # Absent in files written before D-018: those read as on, the default.
+        update_on_open=raw.get("update_on_open", True),
         saved=True,
     )
 
 
 def save(sources: Sources) -> None:
     payload = {
+        "update_on_open": sources.update_on_open,
         "hf": {"enabled": sources.hf_enabled, "backfill_weeks": sources.hf_weeks},
         "youtube": {
             "backfill_weeks": sources.youtube_weeks,

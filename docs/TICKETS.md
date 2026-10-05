@@ -14,6 +14,74 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-060 — Start the app with a double-click
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-060-launcher`  ·  **Phase:** 3
+
+**Goal:** the app is opened by double-clicking a file or a desktop shortcut, not by typing
+a command in a terminal.
+
+**Why:** my request (2026-10-05). An update on opening (T-059) only helps if
+opening is easy; a terminal command is not something to hand a customer.
+
+**Acceptance criteria**
+- [ ] `Since.bat` in the repository root starts the app from the project's `.venv`
+  whatever the current directory is, and the browser opens on the app → checked by
+  double-clicking it in Explorer
+- [ ] If `.venv` is missing, the window says so in one sentence and points at the README,
+  instead of closing → checked by running it with the venv renamed
+- [ ] README's "Start the app" section leads with the double-click and says how to put a
+  shortcut on the desktop
+- [ ] A desktop shortcut exists on the author's machine and opens the app
+
+**Out of scope:** an installer; an icon file; detecting an already-running app.
+**Depends on:** —
+**Notes:** D-018.
+
+---
+
+### T-059 — Update by itself when the app opens, with a setting to turn it off
+
+**Status:** done
+**Size:** M  ·  **Branch:** `t/T-059-update-on-open`  ·  **Phase:** 3
+
+**Goal:** opening the app is enough to get current data; nobody has to remember Update now.
+
+**Why:** my decision (2026-10-05, D-018): data fell behind twice without the user
+noticing, and GOAL promises "always caught up when you ask".
+
+**Acceptance criteria**
+- [x] A pure function decides whether to start, and refuses when: the setting is off; no
+  sources have been saved (first start); a job is running; a job finished today. It
+  starts when the last job was interrupted or finished on an earlier day → 9 tests in
+  `StartOnOpenTests`, 270/270 pass
+- [x] `update_on_open` round-trips through `data/sources.json`; a file without it loads as
+  on → 2 tests; the author's real pre-T-059 file loaded as on in the browser
+- [x] The Sources page has a toggle "Update when the app opens", saved on change → in the
+  browser: off wrote `"update_on_open": false`, on wrote `true`
+- [x] The header says "Updating…" with the current step while a job runs, and the counts
+  change after it finishes, without a page reload and without wiping an answer on screen
+  → in the browser: a tab opened before the update showed "Updating… YouTube: checking
+  @NateBJones" without a reload; a question asked during the update was answered (18.6s)
+  and stayed on screen after the update finished and "Updating…" cleared. The update
+  found nothing new, so a change in the counts was not seen
+- [x] When the last update ended with errors, the header says so in plain words, and an
+  Ollama connection failure reads "Ollama isn't running" → 4 tests in `UpdateNoteTests`;
+  not seen in a browser (Ollama was not stopped)
+- [x] Opening the app in a fresh browser session with no update today starts one; opening
+  a second tab does not start another → in the browser: with today's finish in the status
+  file, opening started nothing; with the finish set to yesterday, a new tab started job
+  pid 13696 at 13:20:20, and a further tab left the same pid and start time; with the
+  setting off, a new tab started nothing. The status file was restored after each test
+
+**Out of scope:** scheduled updates with the app closed (parked, D-018); a per-source
+update schedule.
+**Depends on:** T-055, T-056.
+**Notes:** D-018.
+
+---
+
 ### T-058 — At most five YouTube channels, with the reason shown on the page
 
 **Status:** done

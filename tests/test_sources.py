@@ -4,6 +4,7 @@ directory in every test - the user's real data/sources.json is never read or wri
 
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -41,6 +42,17 @@ class SourcesFileTests(unittest.TestCase):
         self.assertEqual((loaded.hf_weeks, loaded.youtube_weeks), (2, 6))
         self.assertEqual(loaded.channels, {"somechannel": "https://www.youtube.com/@somechannel/videos"})
         self.assertTrue(loaded.saved)
+
+    def test_update_on_open_round_trips(self):
+        save(Sources(update_on_open=False))
+        self.assertFalse(load().update_on_open)
+
+    def test_a_file_written_before_update_on_open_existed_loads_it_as_on(self):
+        save(Sources())
+        raw = json.loads(self.path.read_text(encoding="utf-8"))
+        del raw["update_on_open"]
+        self.path.write_text(json.dumps(raw), encoding="utf-8")
+        self.assertTrue(load().update_on_open)
 
     def test_an_empty_saved_channel_list_stays_empty_and_is_not_replaced_by_defaults(self):
         save(Sources(channels={}))

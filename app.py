@@ -50,6 +50,7 @@ from vg09.ui_helpers import (
     render_citation_chips,
     staleness_note,
     text_source_label,
+    update_note,
 )
 
 _SOURCE_TYPE_LABEL = {"paper": "PAPER", "video": "VIDEO", "unknown": "SOURCE"}
@@ -61,18 +62,41 @@ st.html(CUSTOM_CSS)
 # same line to its right - no big centered title, no subtitle line. Rendered before
 # the empty-data check, not after: an empty store's real 0/0/0 counts are still real,
 # honest data, not hidden - the empty-state message below is additional, not instead.
-# T-056: when the data has fallen behind, the same line says by how many days. ---
+# T-056: when the data has fallen behind, the same line says by how many days.
+# D-018: the first run of each browser session starts an update if none finished
+# today, and the header follows it. ---
+if "update_on_open_checked" not in st.session_state:
+    st.session_state["update_on_open_checked"] = True
+    ingest_job.start_on_open()
 ingest_job.refresh_store_if_updated()  # before anything reads the store (T-056)
 stats = corpus_stats()
-latest = latest_feed_date()
-stale = staleness_note(latest, date.today())
-stale_html = f' · <span class="app-stale">{stale}</span>' if stale else ""
-st.markdown(
-    f'<div class="app-header"><span class="app-brand">{logo_mark_html()}'
-    f'<span class="app-name">{APP_NAME}</span></span>'
-    f'<span class="app-stats">{format_corpus_summary(stats, latest)}{stale_html}</span></div>',
-    unsafe_allow_html=True,
-)
+st.session_state["header_counts"] = (stats, latest_feed_date())
+st.session_state["header_seen_finish"] = ingest_job.status().get("finished")
+
+
+@st.fragment(run_every=3)
+def _header() -> None:
+    """Reruns on its own every few seconds, so "Updating…" and the new counts appear
+    without a page reload - a full rerun would wipe an answer on screen. Between full
+    reruns the counts are read again only when an update has finished: they are a
+    scan of every chunk's metadata."""
+    job = ingest_job.status()
+    ingest_job.refresh_store_if_updated()
+    if st.session_state["header_seen_finish"] != job.get("finished"):
+        st.session_state["header_seen_finish"] = job.get("finished")
+        st.session_state["header_counts"] = (corpus_stats(), latest_feed_date())
+    counts, latest = st.session_state["header_counts"]
+    notes = [n for n in (staleness_note(latest, date.today()), update_note(job)) if n]
+    notes_html = "".join(f' · <span class="app-stale">{n}</span>' for n in notes)
+    st.markdown(
+        f'<div class="app-header"><span class="app-brand">{logo_mark_html()}'
+        f'<span class="app-name">{APP_NAME}</span></span>'
+        f'<span class="app-stats">{format_corpus_summary(counts, latest)}{notes_html}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+_header()
 
 
 def _fill_question(text: str) -> None:

@@ -44,6 +44,47 @@ class IngestJobTestCase(unittest.TestCase):
                                               encoding="utf-8")
 
 
+class StartOnOpenTests(IngestJobTestCase):
+    """D-018: opening the app starts an update only when nothing was fetched today."""
+
+    TODAY = date(2026, 10, 5)
+
+    def decide(self, job: dict, **config) -> bool:
+        return ingest_job.should_start_on_open(Sources(saved=True, **config), job, self.TODAY)
+
+    def test_never_updated_starts(self):
+        self.assertTrue(self.decide({"state": "idle"}))
+
+    def test_finished_on_an_earlier_day_starts(self):
+        self.assertTrue(self.decide({"state": "done", "finished": "2026-10-04T23:59:00"}))
+
+    def test_interrupted_starts_again(self):
+        self.assertTrue(self.decide({"state": "interrupted", "started": "2026-10-05T08:00:00"}))
+
+    def test_finished_today_does_not_start(self):
+        self.assertFalse(self.decide({"state": "done", "finished": "2026-10-05T00:01:00"}))
+
+    def test_finished_today_with_errors_is_not_retried(self):
+        self.assertFalse(self.decide({"state": "done_with_errors",
+                                      "finished": "2026-10-05T09:00:00", "errors": ["x"]}))
+
+    def test_running_does_not_start(self):
+        self.assertFalse(self.decide({"state": "running"}))
+
+    def test_setting_off_does_not_start(self):
+        self.assertFalse(self.decide({"state": "idle"}, update_on_open=False))
+
+    def test_first_start_with_nothing_saved_is_left_to_the_sources_page(self):
+        self.assertFalse(ingest_job.should_start_on_open(Sources(), {"state": "idle"}, self.TODAY))
+
+    def test_start_on_open_launches_one_job_and_a_second_tab_launches_none(self):
+        save(Sources())
+        with patch("vg09.ingest_job.subprocess.Popen") as mock_popen:
+            self.assertTrue(ingest_job.start_on_open(self.TODAY))
+            self.assertFalse(ingest_job.start_on_open(self.TODAY))
+        self.assertEqual(mock_popen.call_count, 1)
+
+
 class StatusTests(IngestJobTestCase):
     def test_no_status_file_is_idle(self):
         self.assertEqual(ingest_job.status(), {"state": "idle"})
