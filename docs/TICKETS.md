@@ -14,6 +14,30 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-081 — Project documents refer to me in first person
+
+**Status:** done
+**Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** every place in the repo that described me, the owner, in the third person
+says "I", "me" or "my" instead.
+
+**Why:** my decision (2026-10-06). The documents are written by the project owner.
+
+**Acceptance criteria**
+- [x] No third-person reference to me left in any tracked file
+- [x] Short forms are rewritten too: instructions, decisions, approvals and the
+  "Blocked / needs" heading in the handoff notes
+- [x] Kept as they are: generic wording about any reader and source content in eval
+  results and samples
+- [x] Three places that meant any user of the app say "the user" (`app.py`,
+  `vg09/ui_helpers.py`, `docs/skill-template.md`)
+- [x] No file changes its number of lines; full suite passes → 351/351
+
+**Out of scope:** rewriting the working documents' style beyond this wording.
+
+---
+
 ### T-080 — Hide Streamlit's "Press Enter to submit form" hint
 
 **Status:** done
@@ -21,7 +45,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 **Goal:** no leftover hint under the question field after a question is sent.
 
-**Why:** I (2026-10-05): after typing and pressing Enter, "Press Enter to submit
+**Why:** I noticed (2026-10-05): after typing and pressing Enter, "Press Enter to submit
 form" stays. Measured: Streamlit shows it while focus is in the field, and after Enter
 focus stays there, so it stood for 40 s and counting, long after the answer. Not a change
 of the day; it has been so since T-051 made Enter submit. I chose to hide it
@@ -99,7 +123,8 @@ before this change; `docs/OVERVIEW.md` (T-076) says so.
 
 **Goal:** the deck shows how Since is built and protected, not only what it does.
 
-**Why:** I (2026-10-05): the deck never says RAG, the stack, the security or the
+**Why:** the deck never said RAG, the stack, the security or the
+tests (2026-10-05).
 
 **Acceptance criteria**
 - [x] One slide names the pipeline as RAG and splits it into retrieval (date filter, then
@@ -220,7 +245,7 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
 **Goal:** instructions hidden in a paper or a transcript are less likely to steer the
 answer, and how often they still do is known.
 
-**Why:** I (2026-10-05): prompt injection must be mitigated. D-020.
+**Why:** I decided (2026-10-05): prompt injection must be mitigated. D-020.
 
 **Acceptance criteria**
 - [x] Each excerpt in the prompt sits between explicit begin/end markers with its number;
@@ -253,7 +278,7 @@ answer, and how often they still do is known.
 **Out of scope:** re-running the graded evaluation (me, 2026-10-05); an in-app
 notice when citations are bunched at the end (only if the wording does not help).
 **Depends on:** T-072 (so a test that makes the model write HTML is already harmless).
-**Notes:** the citation criterion added 2026-10-05 at my choice, after their test
+**Notes:** the citation criterion added 2026-10-05 at my choice, after my test
 showed one answer with every citation in its last sentence; the measurement showed it
 happened as often before the day's changes as after.
 
@@ -293,7 +318,7 @@ Escaping the text alone would not fix that, so the answer is now rendered by the
 markdown-it-py (HTML, links, images and autolinks off), chips go only into text tokens,
 and the result is one HTML block on one line. markdown-it-py 4.2.0 was already pinned in
 `requirements.txt` (a dependency of rich, via Streamlit); using it directly was approved by
-I (CLAUDE.md: ask before adding a dependency).
+me (CLAUDE.md: ask before adding a dependency).
 
 ---
 
@@ -912,8 +937,8 @@ its documents. Today neither `Document` nor chunk metadata records the channel.
 **Out of scope:** the page (T-056).
 **Depends on:** T-053.
 **Notes:** **A stored-format change** (`Document`, chunk metadata) — additive, same
-shape as D-007. I approved it 2026-10-02, with the condition that their current
-four channels and all current data stay as they are unless they choose to change them.
+shape as D-007. I approved it 2026-10-02, with the condition that my current
+four channels and all current data stay as they are unless I choose to change them.
 A pending video retried later gets no channel (its marker doesn't record one) and would
 show up under no channel in `channel_stats()`; there are none today.
 
@@ -955,7 +980,7 @@ show up under no channel in `channel_stats()`; there are none today.
 and checkable tickets before any of it is built.
 
 **Why:** explicit instruction (2026-10-02), after I saw that a cloned repo
-carries their own four channels in code.
+carries my own four channels in code.
 
 **Acceptance criteria**
 - [x] `docs/DESIGN.md` § Sources page; D-017; tickets T-053–T-057 with dependencies
@@ -975,7 +1000,7 @@ still outstanding.
 **Goal:** typing a question and pressing Enter, or typing it and clicking Ask once,
 each runs the question.
 
-**Why:** reported by me from using the app (2026-10-02): they had to press Enter
+**Why:** reported by me from using the app (2026-10-02): I had to press Enter
 and then click Ask. The field and the button were a bare `st.text_input` plus
 `st.button`; the typed text is only committed on Enter or blur, and the rerun that
 commit triggers swallowed the click.
@@ -1101,7 +1126,7 @@ honesty about failures and Since's own look (2026-10-05, D-019).
 demonstration and presentation", status `review`, with `docs/presentation.md` as a
 run-of-show (three criteria met: Swedish draft with timed sections, numbers traceable,
 demo questions verified by `scripts/t048_verify_demo_questions.py` on 2026-10-02). The
-two unmet criteria (I editing the draft; asking the questions in the running UI)
+two unmet criteria (me editing the draft; asking the questions in the running UI)
 moved: the first is replaced by me reviewing the deck, the second went to T-070.
 `docs/presentation.md` stays as the source of the content until the deck replaces it.
 
@@ -2190,7 +2215,7 @@ size-comparison.md`)
 **Size:** M  ·  **Branch:** `t/T-033-model-size-comparison`  ·  **Phase:** 3
 
 **Goal:** the same 15 real questions, same retrieved context, run through both models in
-D-005's VRAM-differentiated pair — so I can judge for themselves whether the
+D-005's VRAM-differentiated pair — so I can judge for myself whether the
 larger-VRAM model earns its cost over the smaller one.
 
 **Why:** `docs/PLAN.md`'s Phase 3 exit criteria names this comparison explicitly
@@ -3129,7 +3154,7 @@ resolved:
    three count as correct.
 2. F04 assumed RealSWE (`2608.27831`, 2026-09-04) was the most recent pre-window coding-agent
    source; τ^τ-Bench (`2609.04611`, 2026-09-07) is more recent and also on-topic. Resolved by
-   I: both count.
+   me: both count.
 3. F07 assumed "nothing about text-to-video in the last month"; once "last month" used the
    same 30-day window as F02, FIRM-Video (`2608.21839`, 2026-08-27) fell inside it and
    contradicted that assumption. Corrected in the facit (not silently kept), per `CLAUDE.md`'s
@@ -4495,7 +4520,7 @@ in T-008.
 - [x] T-015 (initial 8-week backfill) added ahead of T-013 on my review, since catch-up
   needs a real starting watermark rather than an assumed one; T-013 and T-014 updated to
   depend on it
-- [x] T-014 rewritten on my review to reflect I writing the questions and the
+- [x] T-014 rewritten on my review to reflect me writing the questions and the
   agent verifying expected sources against the frozen backfilled dataset, rather than the
   agent drafting the questions
 - [x] `data/raw/` established as the durable normalized-document contract on my review:

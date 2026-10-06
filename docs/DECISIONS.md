@@ -805,7 +805,7 @@ Python app: nothing in `vg09/`, `app.py` or the README's install steps depends o
 **Why:** my explicit decision (2026-10-05), accepting the new dependency. Slides as
 Markdown live in the repo, diff like code, and carry speaker notes and a presenter view.
 
-**Rejected:** a `.pptx` (binary, no diffs, I prefers working on look in code);
+**Rejected:** a `.pptx` (binary, no diffs, I prefer working on look in code);
 `docs/presentation.md` alone (a run-of-show, not something to present from); a hosted
 slide artifact (not in the repo).
 

@@ -14,7 +14,9 @@ told today's date, why the candidate pool is 200, and what T-069's numbers mean.
      up when you ask"
      · outcome: update starts when the app opens, setting to turn it off, Update now
        kept — D-018. A daily Windows scheduled task was **rejected**: it runs while the app
-       is closed, which GOAL rules out (parked unless I reverses it)
+       is closed, which GOAL rules out (parked)
+   - 2.2 Starting from a terminal is not how a user would open it
+     · outcome: `Since.bat` double-click launcher (T-060); the browser opened
    - 2.3 Two browser tabs opened at launch
      · outcome: accepted as normal
 

@@ -30,7 +30,7 @@ which defects only a real run exposed.
        includes the overhead
 
 ## 4. Accent colour and contrast  [T-050]
-   - 4.1 Two options drawn side by side for me; they chose the darker accent
+   - 4.1 Two options drawn side by side; the darker accent chosen
    - 4.2 Follow-on: citation chips had dark text, which fails on the darker accent
      · outcome: chips now white; a test computes the contrast from the constant
 

@@ -89,7 +89,7 @@ In rough order of likelihood:
    dependency or the client layer
 4. Reproduce the exact call directly (`curl`, CLI, REPL) before changing our code
 5. If the dependency disagrees with our reference documentation: stop, fix the
-   documentation, write a knowledge-base entry, tell I
+   documentation, write a knowledge-base entry, tell me
 
 Never work around an infrastructure problem by changing application logic. That converts a
 five-minute environment issue into a permanent, plausible-looking bug.

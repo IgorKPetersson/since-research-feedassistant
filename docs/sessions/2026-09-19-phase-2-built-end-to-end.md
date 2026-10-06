@@ -74,7 +74,8 @@ in this codebase, or why F02/F06 still miss in the eval measurement.
      pointed `vg09.store.STORE_PATH` at a fresh temp dir first
      · outcome: real production data never at risk
 
-   - 10.1 I ran the UI themselves, found truncation + multi-number citations broken
+## 10. T-028: bugs found in the running UI  [T-028]
+   - 10.1 Running the UI found truncation + multi-number citations broken
      · outcome: exactly the kind of finding only real use surfaces - three real repro runs of
        the same question measured reasoning alone at 61.5-92.1% of the 2000 cap
    - 10.2 Citation fix: bracket split on comma, each number resolved independently, unless

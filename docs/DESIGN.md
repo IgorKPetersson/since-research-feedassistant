@@ -616,7 +616,7 @@ rest of this section narrows what text can do.
 
 **Not included:** Docker or any sandbox (GOAL non-goal; meaningless for a local app, me,
 2026-10-05); authentication (non-goal; the app is only reachable from the machine);
-re-running the graded evaluation after the prompt change (I 2026-10-05 — stated
+re-running the graded evaluation after the prompt change (me, 2026-10-05 — stated
 openly instead).
 
 **Verification:** per ticket; the decisive checks are the `netstat` bind address in a real

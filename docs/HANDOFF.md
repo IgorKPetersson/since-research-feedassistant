@@ -48,7 +48,7 @@ code, and what should the next session do first.
 **Learned (not obvious from the code):**
 - The deck said ~100 papers a weekday; the data says 22–60 (2026-09-21 to 2026-10-05).
   Check every number against the data, even ones written earlier.
-  course (memory `since-is-a-product`). Do not refer I to what they said days
+- **Process:** Since is a product. Public text never addresses a reviewer.
 
 **Blocked / needs me:**
 - Look at the deck (`git checkout t/T-048-slidev-deck`, then `npm run dev` in
@@ -56,7 +56,7 @@ code, and what should the next session do first.
 - T-070 on the presentation day: ask the demo questions in the app, then `defense-prep`.
 
 **Next session should start with:**
-- Ask I to look at the deck, one step at a time; start it for them.
+- Look at the deck, then merge it.
 
 **Doc updates made:** OVERVIEW.md · KB-038 (deck branch) · TICKETS T-076, T-077, T-080
 
@@ -178,7 +178,7 @@ day. No code or data was lost: everything was committed and pushed.
   sources but no citations; Palantir is not linked to "Palunteer" (F12).
 
 **Next session should start with:**
-- Ask I for the presentation outline (one question, nothing else), then rework
+- Get the presentation outline, then rework
   `docs/presentation.md` to it under T-048.
 
 **Doc updates made:** D-018 · KB-029, KB-030, KB-031 · PLAN.md risk register and Phase 3 ·
@@ -241,8 +241,8 @@ TICKETS T-059–T-069 · presentation.md results section
   expect to rework it rather than polish it. The presentation is the only
   Definition of done item left.
 
-**Next session should start with:** check how old the data is and remind I
-(their standing request). Then ask whether they have read `docs/presentation.md`.
+**Next session should start with:** check how old the data is and run catch-up
+if needed. Then review `docs/presentation.md`.
 
 **Doc updates made:** D-017 · KB-024–028 (KB-023 superseded) · DESIGN § Sources page ·
 PLAN · TICKETS T-048–T-058 · README · presentation · session tree 2026-10-02
@@ -317,7 +317,7 @@ T-046, T-047  ·  **Tree:** docs/sessions/2026-09-24-phase-3-grading-ui-redesign
   (session tree § 10). Raise a numbering conflict as a question.
 - **Process lesson:** a live verification that starts a long real job (T-034's
   fresh-clone YouTube backfill) should be announced before it starts, not explained
-  after I notices it (session tree § 3.2).
+  afterwards (session tree § 3.2).
 - Dead end: `margin-top` to raise a flex item moves the row, not just the item (tree § 12.4).
 
 **Blocked / needs me:**
@@ -480,7 +480,7 @@ closed.
 report) waits for a go-ahead per `docs/PLAN.md`'s own gating rule — not started this
 session.
 
-**Next session should start with:** Phase 3, if and when I gives the go-ahead —
+**Next session should start with:** Phase 3, once it gets the go-ahead —
 turn `docs/PLAN.md`'s Phase 3 checkboxes into tickets with `ticket-write` first. One loose
 end worth remembering before Phase 3's evaluation script is built: D-013 means a strict
 re-grading of `docs/eval-questions.md`'s facit (written and graded in Swedish) now needs to

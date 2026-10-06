@@ -1,7 +1,7 @@
 # PLAN
 
 Phases are gated. **Each phase ends at a checkpoint where the agent stops and I
-reviews.** Do not start phase N+1 without explicit go-ahead.
+review.** Do not start phase N+1 without explicit go-ahead.
 
 Phase 2 complete (started 2026-09-19, closed 2026-09-20, by my explicit go-ahead both
 times). All of Phase 2's tickets (T-011, T-021–T-025, T-027, T-028) are `done`, its
@@ -26,7 +26,7 @@ drifted into Chinese mid-answer once despite D-013's English-answer instruction;
 were missed by both models in both comparisons - a retrieval gap, not a model-size effect).
 `docs/PLAN.md`'s own third Phase 3 checklist item, "Live demonstration and presentation —
 run `defense-prep`" (first written as "Report and presentation"; there is no written
-report, I 2026-10-02), is my own remaining work, not delegated. **Phase 3
+report, me 2026-10-02), is my own remaining work, not delegated. **Phase 3
 is not being declared complete here** - the demonstration and presentation remain, by
 explicit instruction.
 
