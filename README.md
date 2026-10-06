@@ -182,7 +182,8 @@ comparison (T-033). See
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](LICENSE).
+Copyright 2026 Igor Petersson. Licensed under the Apache License 2.0 — see
+[`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 ## More
 

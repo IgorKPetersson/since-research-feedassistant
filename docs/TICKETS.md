@@ -14,6 +14,24 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-083 — My name on the license: NOTICE file and copyright line
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** the project stays under Apache 2.0, and anyone who uses or builds on it keeps
+my name.
+
+**Why:** my decision (2026-10-06). Others may use Since and build their own things with
+it, but it is my work. `LICENSE` named no copyright owner.
+
+**Acceptance criteria**
+- [x] `NOTICE` in the repository root: "Since", "Copyright 2026 Igor Petersson"
+- [x] README's License section names me and points to `LICENSE` and `NOTICE`
+- [x] `LICENSE` itself unchanged
+
+---
+
 ### T-082 — The presentation stays on my machine, not in the repository
 
 **Status:** done
