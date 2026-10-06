@@ -1066,7 +1066,7 @@ as records of past runs; reducing the number of requests retrieval makes.
 
 ### T-048 — Presentation as a Slidev deck in Since's own design
 
-**Status:** in-progress
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-048-slidev-deck`  ·  **Phase:** 3
 
 **Goal:** I can present Since from a slide deck that looks like the app, with
@@ -1078,21 +1078,21 @@ presentation, not a written report (2026-10-02). Slidev chosen as the tool, with
 honesty about failures and Since's own look (2026-10-05, D-019).
 
 **Acceptance criteria**
-- [ ] `presentation/` holds a Slidev deck (`slides.md`, `package.json` with exact
+- [x] `presentation/` holds a Slidev deck (`slides.md`, `package.json` with exact
   versions, lockfile); `npm install` then `npm run build` succeed from a clean folder,
   and `npm run dev` shows it in a browser
-- [ ] The deck uses Since's identity, not Slidev's default: accent `#A26B16`, Instrument
+- [x] The deck uses Since's identity, not Slidev's default: accent `#A26B16`, Instrument
   Sans, `docs/assets/since-mark.svg`, and a light theme → checked by screenshots of every
   slide, reviewed by me
-- [ ] A timeline ("what has happened since…") is the visual thread: on the cover and
+- [x] A timeline ("what has happened since…") is the visual thread: on the cover and
   reused to frame the demo, the date-aware claim and the close
-- [ ] The date-aware vs plain result is a chart of the three graded runs
+- [x] The date-aware vs plain result is a chart of the three graded runs
   (2026-09-20, 2026-09-22, 2026-10-05: A better 7/8/7, B better 1/0/1), not a table
-- [ ] Structure follows my choice: problem → the app (real screenshots of Since
+- [x] Structure follows my choice: problem → the app (real screenshots of Since
   taken from the running app) → the AI chain → what we measured → "AI gets it wrong: what
   we saw" (KB-029, KB-030, KB-031, F14) → lessons → questions. Every slide has speaker
   notes in Swedish with timing; every number cites its source file in the notes
-- [ ] The two unverified-number habits of the earlier deck are not repeated: no number
+- [x] No number with a "?" ships; anything not verified is left out
 
 **Out of scope:** asking the demo questions in the app on the day and `defense-prep`
 (T-070); a demo video; changing the app.
