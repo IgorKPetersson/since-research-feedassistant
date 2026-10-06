@@ -14,6 +14,23 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-082 — The presentation stays on my machine, not in the repository
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** `presentation/` is not in the repository or its history, and still runs
+locally with `npm run dev`.
+
+**Why:** my decision (2026-10-06). The deck is for presenting, with internal notes; the
+people who use Since get the README and the overview.
+
+**Acceptance criteria**
+- [x] `presentation/` is in `.gitignore` and no commit contains it
+- [x] The folder is unchanged on disk and `npm run build` passes
+
+---
+
 ### T-081 — Project documents refer to me in first person
 
 **Status:** done
