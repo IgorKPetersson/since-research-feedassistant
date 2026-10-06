@@ -66,6 +66,7 @@ edited in place — it is superseded by a new one and marked.
 | [KB-036](KB-036-quiet-injections-work-where-blunt-ones-fail.md) | qwen3 ignored blunt injections (0/25) but a quiet "editor's correction" flipped 2/5 answers; naming corrections in the prompt made it 4/5; the shipped rule 0/5 | Local model behaviour — prompt injection | verified | 2026-10-05 |
 | [KB-037](KB-037-streamlit-defaults-listen-everywhere-and-send-usage-stats.md) | Streamlit by default binds 0.0.0.0 and [::] and sends usage statistics; both now set in config.toml | UI (Streamlit) — server and browser defaults | verified | 2026-10-05 |
 | [KB-038](KB-038-slidev-exposure-was-the-local-network-not-a-public-address.md) | Corrects KB-032: <public IPv4> is the router's public IPv4, not on the machine; Slidev was reachable from the local network (Node.js has an inbound allow rule on Private) and possibly over global IPv6, not over IPv4 from the internet | Presentation (Slidev) — dev server | verified | 2026-10-06 |
+| [KB-039](KB-039-claude-code-adds-attribution-and-caches-local-plugins-by-version.md) | Claude Code adds a Co-Authored-By line unless `attribution` is set; an invalid settings file is ignored whole without warning; a local plugin runs from a versioned cache, so edits need a reinstall | Tooling (Claude Code) — commits and plugins | verified | 2026-10-06 |
 
 _One row per entry, newest at the bottom, added in the same commit as the entry itself._
 

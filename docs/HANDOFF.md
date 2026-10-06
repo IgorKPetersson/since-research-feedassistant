@@ -28,6 +28,37 @@ code, and what should the next session do first.
 
 ---
 
+## 2026-10-06 (evening) — Clean history, license in my name, deck text reworked
+
+**Tickets:** T-048, T-077, T-081, T-082, T-083  ·  **Tree:** docs/sessions/2026-10-06-history-cleanup-license-deck-text.md
+
+**Done this session:**
+- The deck was reviewed and merged; then the presentation was taken out of the repository
+  and its history (T-082). It lives only in `presentation/` on my machine, in `.gitignore`.
+- Git history rewritten: no Claude co-author line and no third-person references to me in
+  any commit message or any old file version (T-081). Files and dates unchanged.
+- GitHub: the old `research-feed-assistant` is deleted. The repository is now
+  `since-research-feed-assistant`, private, and matches `main`.
+- License stays Apache 2.0; `NOTICE` and the README name me as copyright owner (T-083).
+- The workflow plugin no longer writes third-person references.
+- Slides 1–4 and 7–11 reworded and checked for overflow in the running deck.
+
+**In progress / half-finished:**
+- Nothing in the repository. The deck's edits are saved only on disk, not in git.
+
+**Learned (not obvious from the code):**
+- KB-039: Claude Code signs commits unless `attribution` is set; a local plugin runs from
+  a versioned cache.
+- `git filter-repo` removes the `origin` remote each time it runs; re-add it before pushing.
+
+**Blocked / needs me:**
+- If more tickets are added before the presentation, the "82 ärenden" on slide 11 changes.
+- T-070 on the presentation day: ask the demo questions in the app, then `defense-prep`.
+
+**Next session should start with:** check how old the data is and remind me to update it.
+
+---
+
 ## 2026-10-06 — Overview on main, deck slides done, waiting for my look at the deck
 
 **Tickets:** T-076, T-077, T-080  ·  **Tree:** docs/sessions/2026-10-05-deck-and-security-baseline.md § 12
