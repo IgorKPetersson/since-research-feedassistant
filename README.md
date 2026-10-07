@@ -49,7 +49,7 @@ claim tied back to a real, clickable source.
 ## Install
 
 ```
-git clone https://github.com/IgorKPetersson/research-feed-assistant.git
+git clone https://github.com/IgorKPetersson/since-research-feed-assistant.git
 cd research-feed-assistant
 python -m venv .venv
 .venv\Scripts\activate        # Windows;  on macOS/Linux: source .venv/bin/activate
