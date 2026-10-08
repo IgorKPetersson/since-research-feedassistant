@@ -330,6 +330,29 @@ class T079PhrasesFromTheHumansTestTests(unittest.TestCase):
         self.assertIsNone(extract_date_range("What happened in the 5 days before the launch?", self.TODAY))
 
 
+class T084SinceNDaysTests(unittest.TestCase):
+    """T-084: "since 3 days" got no date filter on 2026-10-08. Like "since yesterday",
+    the start day is included: N days back, up to today."""
+
+    TODAY = date(2026, 10, 8)
+
+    def check(self, question: str, start: date) -> None:
+        self.assertEqual(extract_date_range(question, self.TODAY), (start, self.TODAY), question)
+
+    def test_since_n_days(self):
+        for q in ("What is new in AI since 3 days?", "What is new in AI since 3 days ago?",
+                  "What is new since three days?", "Vad har hänt sedan 3 dagar?"):
+            self.check(q, date(2026, 10, 5))
+
+    def test_any_number(self):
+        self.check("What is new since 9 days?", date(2026, 9, 29))
+        self.check("What is new since 1 day ago?", date(2026, 10, 7))
+
+    def test_since_n_weeks(self):
+        self.check("What is new since 2 weeks ago?", date(2026, 9, 24))
+        self.check("Vad har hänt sedan två veckor?", date(2026, 9, 24))
+
+
 class DetectRecencyRankingTests(unittest.TestCase):
     """T-022: real ranking questions from docs/eval-questions.md (F01/F03/F06) vs.
     real window questions that also contain the word "senaste" (F02/F04/F05/F07/F11/

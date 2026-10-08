@@ -14,6 +14,43 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-084 — Understand "since 3 days" and "since 3 days ago"
+
+**Status:** review
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** a question like "What is new in AI since 3 days?" gets a real date range instead
+of searching the whole store.
+
+**Why:** found 2026-10-08. "What is new in AI since 3 days?" and "…since 3 days ago?" both
+showed Date range: None. Retrieval ran unfiltered, the model tried to filter by date itself
+and cited a video from outside the window it had worked out. `_start_of()` in
+`vg09/date_range.py` only accepts a date after "since" ("yesterday", "Monday", "Sept 20"),
+not a count of days.
+
+**Rule:** "since N days" and "since N days ago" start N days before today and end today,
+the same way "since yesterday" includes yesterday. So from Oct 8, "since 3 days" is
+Oct 5–8. "last N days" is unchanged (today plus the N-1 days before it).
+
+**Acceptance criteria**
+- [x] `extract_date_range("What is new in AI since 3 days?", date(2026, 10, 8))` returns
+  `(date(2026, 10, 5), date(2026, 10, 8))`; same for "since 3 days ago"; a test covers both
+- [x] Word numbers and weeks work too: "since three days", "since 2 weeks ago" (14 days
+  back); covered by tests
+- [x] Swedish "sedan 3 dagar" resolves the same way; covered by a test
+- [x] Every existing test in `tests/test_date_range.py` still passes
+- [ ] In the running app, "What is new in AI since 3 days?" shows a date range, not None
+
+**Out of scope:** "since the last 3 days" (already works through "last 3 days"); any
+change to how "last N days" counts.
+
+**Depends on:** —
+**Verified:** 354 tests pass (`.venv`). The running-app check is left for me to do.
+**Notes:** T-066 added the "since ..." patterns; T-079 is the most recent change to this
+file.
+
+---
+
 ### T-083 — My name on the license: NOTICE file and copyright line
 
 **Status:** done

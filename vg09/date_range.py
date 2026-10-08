@@ -132,6 +132,8 @@ _EN_WEEKDAY_RE = "(monday|tuesday|wednesday|thursday|friday|saturday|sunday)"
 _SV_PAST_WEEKDAY_RE = r"i\s+(m[aå]ndag|tisdag|onsdag|torsdag|fredag|l[oö]rdag|s[oö]ndag)s"
 _DAY = r"(\d{1,2})(?:st|nd|rd|th)?"
 _YESTERDAY_RE = r"(yesterday|i\s*g[aå]r)"
+_ANY_NUMBER_WORDS = {**_NUMBER_WORDS, **_EN_NUMBER_WORDS}
+_ANY_NUM = r"(\d+|" + "|".join(_ANY_NUMBER_WORDS) + r")"
 
 
 def _day_in_past_year(month: int, day: int, today: date) -> date | None:
@@ -161,6 +163,12 @@ def _start_of(text: str, today: date) -> date | None:
     """The date a "since ..." phrase starts from, or None if what follows isn't one."""
     if re.match(_YESTERDAY_RE + r"\b", text):
         return today - timedelta(days=1)
+    # T-084: "since 3 days (ago)", "sedan 2 veckor" - N days back, that day included,
+    # the same way "since yesterday" includes yesterday.
+    m = re.match(_ANY_NUM + r"\s+(days?|weeks?|dagar|dag|veckor|vecka)\b", text)
+    if m:
+        n = _ANY_NUMBER_WORDS[m.group(1)] if m.group(1) in _ANY_NUMBER_WORDS else int(m.group(1))
+        return today - timedelta(days=n * (7 if m.group(2).startswith(("week", "veck")) else 1))
     m = re.match(_SV_PAST_WEEKDAY_RE + r"\b", text)
     if m:
         return _weekday_back(today, _WEEKDAYS[m.group(1)], True)
