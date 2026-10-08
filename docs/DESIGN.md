@@ -288,7 +288,7 @@ chunks) must:
    instructions telling the model to cite sources, and not the question itself.
 3. **A single oversized chunk that can't fit even alone is dropped, not sent.** Better to
    answer with one fewer citation than to send a prompt already known to overflow.
-4. **Every real call still checks itself, per `CLAUDE.md`'s hard rule:** compare the
+4. **Every real call still checks itself, per the project's hard rule:** compare the
    response's real `prompt_eval_count` against `num_ctx` afterward and warn on truncation
    risk — this is a backstop for when 1-3 have a bug, not a replacement for them.
 
@@ -415,7 +415,7 @@ deterministic chunk ids (`{source}:{doc_id}:{index}`) — idempotent by construc
 
 **Never call `collection.query(query_texts=...)` or `collection.add(documents=...)` without
 also passing `embeddings=`/`query_embeddings=`.** Either silently invokes ChromaDB's default
-embedding function (CLAUDE.md hard rule: never use it — KB-006's 256-token silent
+embedding function (project hard rule: never use it — KB-006's 256-token silent
 truncation). Always embed via `vg09.store.embed_batch()` (explicit `bge-m3`,
 `num_ctx=8192`) first, then pass the vectors in directly. Caught by self-review while
 building T-012's smoke test, before it could have reached the real store.

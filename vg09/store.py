@@ -1,4 +1,4 @@
-"""ChromaDB storage (T-012): embed chunks with bge-m3 (explicit call, CLAUDE.md
+"""ChromaDB storage (T-012): embed chunks with bge-m3 (explicit call, the project rules
 hard rule - never Chroma's default embedder) and store with feed date as a
 numeric field for range filtering (KB-004: ISO date strings aren't guaranteed
 to compare correctly under Chroma's `$gte`/`$lte`; `date.toordinal()` is).

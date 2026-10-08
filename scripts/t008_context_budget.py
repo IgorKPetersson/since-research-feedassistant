@@ -55,7 +55,7 @@ def format_source(doc: dict, n: int) -> str:
 
 
 def _warn_if_truncation_risk(label: str, prompt_eval_count: int, num_ctx: int) -> None:
-    """CLAUDE.md hard rule: every call compares prompt_eval_count against the
+    """project hard rule: every call compares prompt_eval_count against the
     num_ctx that was sent. KB-005: an undersized num_ctx silently drops the
     FRONT of the prompt with no error - prompt_eval_count landing at or near
     num_ctx is the only signal that happened."""

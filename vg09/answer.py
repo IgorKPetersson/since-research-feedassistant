@@ -146,7 +146,7 @@ def _chat_once(messages: list[dict], model: str) -> tuple[str, str, str, int]:
     """One real `/api/chat` call -> (reasoning, answer, done_reason, prompt_eval_count).
     `think=True` always - never `False` (T-011/KB-007: `False` merges reasoning into
     the answer text with no way to cleanly split it back out). Checks `prompt_eval_count`
-    against `num_ctx` (CLAUDE.md's hard rule) on every call, so a retry gets the same
+    against `num_ctx` (the project's hard rule) on every call, so a retry gets the same
     check as the first attempt - `num_ctx` itself never varies by `model` (T-033: `qwen3:
     8b` gets the identical explicit 16000, not a silently different/default window just
     because it's the smaller model)."""

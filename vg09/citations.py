@@ -160,7 +160,7 @@ def build_citations(answer: str, source_map: dict[int, Candidate]) -> CitationRe
         returns None so the whole bracket falls back to being reported as one
         unlinked reference.
 
-        Deliberately returns bounds, not numbers: a deep-review finding (2026-09-22)
+        Deliberately returns bounds, not numbers: a independent review finding (2026-09-22)
         caught the previous version calling `list(range(start, end + 1))` before the
         descriptive-bracket size check ran, so a single pathological or hallucinated
         bracket (e.g. "[1-500000000]") in real model output would materialize a huge

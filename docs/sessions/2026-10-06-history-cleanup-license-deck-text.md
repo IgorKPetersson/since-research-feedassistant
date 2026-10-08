@@ -42,7 +42,7 @@ presentation is no longer in the repository, and where my name sits in the licen
    - 4.2 License: MIT or Apache 2.0
      · outcome: Apache 2.0 kept. `NOTICE` and the README carry "Copyright 2026 Igor
        Petersson"; `LICENSE` untouched
-   - 4.3 `CLAUDE.md` and `.claude/` stay in the repository
+   - 4.3 the project rules and `.claude/` stay in the repository
      · outcome: decided (reversed 2026-10-08, T-086)
 
 ## 5. Deck text, slide by slide

@@ -273,7 +273,7 @@ class QueryCandidatesTests(unittest.TestCase):
         ]})
 
     def test_never_calls_query_texts(self):
-        """CLAUDE.md hard rule: query_texts= would silently invoke Chroma's default
+        """project hard rule: query_texts= would silently invoke Chroma's default
         embedder (KB-006). This asserts the actual call signature, not just intent."""
         collection = self._mock_collection()
         with (

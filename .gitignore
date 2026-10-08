@@ -5,6 +5,6 @@ __pycache__/
 .playwright-mcp/
 presentation/
 
-# T-086: my agent instructions stay local
+# T-086: local tool configuration
 CLAUDE.md
 .claude/

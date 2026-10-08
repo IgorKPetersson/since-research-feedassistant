@@ -2,7 +2,7 @@
 
 **Area:** UI (Streamlit / markdown rendering)
 **Status:** verified
-**Date:** 2026-09-20  ·  **From:** T-029, Phase 2 `grill-me` review
+**Date:** 2026-09-20  ·  **From:** T-029, Phase 2 adversarial review review
 
 ## Claim
 A real, free-text title interpolated into a markdown link's `[text]` portion (e.g. a
@@ -14,7 +14,7 @@ only special inside the separate `(url)` destination portion, not inside `[text]
 ## Evidence
 Real title pulled from `data/raw/youtube/2026-09-16/S2VJU5DQqlU.json`: "He Built The
 Ultimate Spy Tool (Free and Open-Source)" — contains unescaped parens, was flagged in
-`grill-me`'s initial review as a plausible risk to a rendered citation link. Investigated
+the adversarial review's initial review as a plausible risk to a rendered citation link. Investigated
 against the CommonMark spec while implementing the fix (`vg09.ui_helpers.
 escape_markdown_link_text()`, T-029): `[text]`'s content is delimited purely by the outer
 `[`/`]` pair; parens inside it are ordinary characters with no special meaning there. Only

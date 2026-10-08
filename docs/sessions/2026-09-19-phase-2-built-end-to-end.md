@@ -6,10 +6,10 @@
 by bracketed number instead of `[Title, date]`, why there are two different `today` anchors
 in this codebase, or why F02/F06 still miss in the eval measurement.
 
-## 1. T-014 closed: F14/F15 (cross-source questions), then a grill-me of all Phase 1
+## 1. T-014 closed: F14/F15 (cross-source questions), then an adversarial review of all Phase 1
    - 1.1 Two new eval questions requiring both HF and YouTube sources written and verified
      · outcome: T-014 done, Phase 1's eval-questions checkbox ticked
-   - 1.2 grill-me found six issues, triaged: fix two now (T-020), defer four
+   - 1.2 adversarial review found six issues, triaged: fix two now (T-020), defer four
      · outcome: T-020 opened for the frozen-dataset proof + yt-dlp timeout; rest deferred to
        `docs/PLAN.md`'s risk register
 

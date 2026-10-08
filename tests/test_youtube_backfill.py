@@ -1,6 +1,6 @@
 """Unit tests for vg09.youtube_backfill (T-036).
 
-Closes the Phase 1 grill-me review's deferred finding (docs/PLAN.md's risk
+Closes the Phase 1 adversarial review review's deferred finding (docs/PLAN.md's risk
 register): "the riskiest orchestration code in the ingest pipeline, verified
 only by real production runs" (T-019's own self-flagged note). No network
 calls of any kind - vg09.youtube_backfill._list_channel and .normalize

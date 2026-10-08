@@ -2,8 +2,7 @@
 
 The backlog. `docs/PLAN.md` holds phases and exit criteria; this file holds the work.
 
-IDs are `T-001`, `T-002`, … assigned in order, never reused, never renumbered. Use the
-`ticket-write` skill to add one and the `ticket-done` skill to close one.
+IDs are `T-001`, `T-002`, … assigned in order, never reused, never renumbered.
 
 **Statuses:** `todo` · `in-progress` · `blocked` · `review` · `done`
 
@@ -36,14 +35,14 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 **Status:** done
 **Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
-**Goal:** `CLAUDE.md` and `.claude/` are no longer in the repository on GitHub, and stay
+**Goal:** the project rules and `.claude/` are no longer in the repository on GitHub, and stay
 unchanged on my machine.
 
 **Why:** my decision (2026-10-08). They are working instructions for my agent, not part
 of what people who use Since need.
 
 **Acceptance criteria**
-- [x] `CLAUDE.md` and `.claude/` are in `.gitignore` and removed from the tracked files
+- [x] the project rules and `.claude/` are in `.gitignore` and removed from the tracked files
 - [x] Both are unchanged on disk
 - [x] Earlier commits are left as they are; the history is not rewritten
 
@@ -337,7 +336,7 @@ separate report, but the overview plays that role in the repo (see GOAL item 5 n
   three real calls captured and checked (127.0.0.1, allowed endpoint, no tool keys, no
   "tool" role), plus a scan of `vg09/*.py` for tool keys. Shown to bite: a request with
   `tools`, and one to another host, both fail the check
-- [x] `CLAUDE.md` gains a hard rule citing D-020
+- [x] the project rules gains a hard rule citing D-020
 - [x] Full suite passes → 350/350
 
 **Out of scope:** —
@@ -464,7 +463,7 @@ Escaping the text alone would not fix that, so the answer is now rendered by the
 markdown-it-py (HTML, links, images and autolinks off), chips go only into text tokens,
 and the result is one HTML block on one line. markdown-it-py 4.2.0 was already pinned in
 `requirements.txt` (a dependency of rich, via Streamlit); using it directly was approved by
-me (CLAUDE.md: ask before adding a dependency).
+me (the project rules: ask before adding a dependency).
 
 ---
 
@@ -1303,7 +1302,7 @@ than fixing them, so they're included here and named:
   inside that repo. Same boundary T-045 drew: display name only.
 - [x] The three stale statements above are corrected; nothing else in the README changes
 
-**Out of scope:** renaming the GitHub repository, `CLAUDE.md`'s project heading, or
+**Out of scope:** renaming the GitHub repository, the project's project heading, or
 the `vg09` package.
 
  — Logo mark: timeline-with-marker SVG in the header and as the favicon
@@ -1498,7 +1497,7 @@ answers. That's answer-generation variance, not UI, and it's worth a ticket if i
 recurs.
 
 **Out of scope:** `vg09`/`COLLECTION_NAME` (explicitly named out of scope in the
-instruction); renaming `README.md`/`CLAUDE.md`'s own project identity
+instruction); renaming `README.md`/the project's own project identity
 ("research-feed-assistant") - the instruction says "rename the UI", not the project;
 self-hosting the Google Font instead of loading it from Google's CDN (see Notes).
 
@@ -1763,18 +1762,18 @@ silently or hidden by picking different example wording.
 
 ---
 
-### T-041 — Grill-me follow-ups: stale DESIGN.md numbers, comma-list descriptive citations, missing probe truncation check
+### T-041 — Review follow-ups: stale DESIGN.md numbers, comma-list descriptive citations, missing probe truncation check
 
 **Status:** done
-**Size:** S  ·  **Branch:** `t/T-041-grill-me-findings`  ·  **Phase:** 3
+**Size:** S  ·  **Branch:** `t/T-041-adversarial review-findings`  ·  **Phase:** 3
 
-**Goal:** three real gaps a Phase 3 `/grill-me` review found (2026-09-23) are closed:
+**Goal:** three real gaps a Phase 3 adversarial review review found (2026-09-23) are closed:
 `docs/DESIGN.md` no longer contradicts the real, currently-shipped budget constants; a
 descriptive "all N sources" claim written as a comma-separated enumeration is caught the
 same way a numeric range already is; and the one real Ollama call site in the repo that
-skips `CLAUDE.md`'s `prompt_eval_count`-vs-`num_ctx` check gets it, like every other one.
+skips the project's `prompt_eval_count`-vs-`num_ctx` check gets it, like every other one.
 
-**Why:** found by `/grill-me` across the whole of Phase 3 (T-031-T-040), triaged by me
+**Why:** found by adversarial review across the whole of Phase 3 (T-031-T-040), triaged by me
 2026-09-23, not hypothetical:
 1. `docs/DESIGN.md`'s "What happens if retrieved chunks don't fit" section states the
    top-k ceiling as `27` and cites `vg09.retrieval.CHUNK_BUDGET_TOKENS` by name as
@@ -1787,7 +1786,7 @@ skips `CLAUDE.md`'s `prompt_eval_count`-vs-`num_ctx` check gets it, like every o
    exists to catch.
 3. `scripts/t039_reasoning_length_probe.py` makes a real `/api/chat` call with an
    explicit `num_ctx` but never checks the real `prompt_eval_count` against it - the one
-   real Ollama call site in the repo that doesn't, per `CLAUDE.md`'s hard rule, which
+   real Ollama call site in the repo that doesn't, per the project's hard rule, which
    names no scripts exception.
 
 **Acceptance criteria**
@@ -1826,7 +1825,7 @@ ticket, picked up next).
 
 **Depends on:** T-040 (D-015, the threshold this refines), T-039 (the `DESIGN.md`
 numbers being corrected, the probe script gaining the check).
-**Notes:** Found by `/grill-me` across Phase 3 (T-031-T-040), 2026-09-23 - see that
+**Notes:** Found by adversarial review across Phase 3 (T-031-T-040), 2026-09-23 - see that
 review's own report (this session) for full context on all findings, including the two
 not picked up here (UI verification, deferred to me; T-033, already its own
 ticket). No live-browser UI work included here.
@@ -1892,7 +1891,7 @@ up to 31 false citations — worse than today's unlinked-and-flagged behavior, n
 - [x] `.venv/Scripts/python.exe -m unittest discover -s tests` passes with the new tests
   included → **131/131 pass** (11 new, one added by the follow-up fix below)
 
-**Follow-up fix (same ticket), pre-merge `deep-review` finding (2026-09-22):** the
+**Follow-up fix (same ticket), pre-merge independent review finding (2026-09-22):** the
 original `expand_part()` called `list(range(start, end + 1))` for every range piece
 *before* the descriptive-size check ran, so a single pathological or hallucinated
 bracket in real model output (e.g. `[1-500000000]`) would materialize a huge list -
@@ -1959,7 +1958,7 @@ the fix (2026-09-22): raise the cap, and retry once on `length`.
   and `retries == 0`; a `length` first answer triggers exactly one more call; if that one
   is `stop` the result is that answer with `retries == 1, incomplete == False`; if it is
   also `length` the result is the second response with `retries == 1, incomplete == True`.
-  Each call independently keeps CLAUDE.md's `num_ctx` / `prompt_eval_count` checks. Unit
+  Each call independently keeps the project's `num_ctx` / `prompt_eval_count` checks. Unit
   tests cover all three paths (mocked, no live Ollama) → `RetryOnLengthTests`; 120/120
   pass. **Verified live (2026-09-22, pre-merge check):** `scripts/t039_verify_retry_live_
   probe.py` monkeypatches `vg09.answer.NUM_PREDICT` down to 500 in-process only
@@ -2117,7 +2116,7 @@ packed dropped from 44 (buggy, over-budget) to 37 (correct, within the real 1324
 Phase 1 and Phase 2.
 
 **Why:** `docs/PLAN.md`'s own rule: "when a phase starts, turn its checkboxes into tickets
-in `docs/TICKETS.md` using the `ticket-write` skill." My explicit go-ahead to start
+in `docs/TICKETS.md`." My explicit go-ahead to start
 Phase 3, with the exact scope for this round named: an evaluation harness plus its two
 named comparisons, README/LICENSE/fresh-clone, the project rename, and the two deferred
 risk-register test-coverage items — explicitly **not** including Phase 3's third checklist
@@ -2132,7 +2131,7 @@ item (report/presentation), and explicitly **no execution** of any ticket this r
 - [x] Two out-of-scope items surfaced while writing the tickets, not silently folded in:
   T-035 (rename) explicitly excludes the `vg09` package/import path and the Chroma
   `COLLECTION_NAME` stored-data identifier, flagging both as separate decisions per
-  `CLAUDE.md`'s stop-and-ask rule for stored data formats and blast-radius-large changes
+  the project's stop-and-ask rule for stored data formats and blast-radius-large changes
 - [x] None of T-031–T-036 executed — this ticket covers only the planning artifacts
 
 **Out of scope:** doing any of T-031 through T-036's actual work; writing a ticket for
@@ -2140,7 +2139,7 @@ Phase 3's report/presentation checklist item (not part of this round's instructi
 
 **Depends on:** T-029, T-030 (Phase 2's own close-out, completed the same session).
 **Notes:** Docs-only, same shape as T-016/T-026. The risk-register rows for `store.py`/
-`youtube_backfill.py` (Phase 1's `grill-me` findings) are updated to point at T-036 instead
+`youtube_backfill.py` (Phase 1's adversarial review findings) are updated to point at T-036 instead
 of the old "Deferred to Phase 3, T-020's triage" placeholder text.
 
 ---
@@ -2150,13 +2149,13 @@ of the old "Deferred to Phase 3, T-020's triage" placeholder text.
 **Status:** done
 **Size:** M  ·  **Branch:** `t/T-036-store-and-backfill-tests`  ·  **Phase:** 3
 
-**Goal:** the two test-coverage gaps Phase 1's `grill-me` review found and deferred to
+**Goal:** the two test-coverage gaps Phase 1's adversarial review review found and deferred to
 Phase 3 (`docs/PLAN.md`'s risk register) are closed: `vg09/store.py`'s compliance with
-`CLAUDE.md`'s hard rules, and `vg09/youtube_backfill.py`'s orchestration logic, are both
+the project's hard rules, and `vg09/youtube_backfill.py`'s orchestration logic, are both
 under real test for the first time.
 
 **Why:** both were flagged by name in the risk register with "Deferred to Phase 3" as the
-plan, not "won't fix" — `store.py` implements two of `CLAUDE.md`'s three hard rules
+plan, not "won't fix" — `store.py` implements two of the project's three hard rules
 (explicit `bge-m3`, explicit `num_ctx`) with nothing to catch a future refactor that
 silently drops either; `youtube_backfill.py` is "the riskiest orchestration code in the
 ingest pipeline, verified only by real production runs" (T-019's own self-flagged note).
@@ -2200,7 +2199,7 @@ gets its own ticket, not a silent fix bundled into this one (unless genuinely tr
 directly caused by writing the test itself, noted if so). **N/A — none found.**
 
 **Depends on:** —
-**Notes:** Both risk-register rows cite the Phase 1 `grill-me` review (2026-09-19) as their
+**Notes:** Both risk-register rows cite the Phase 1 adversarial review review (2026-09-19) as their
 origin; both rows in `docs/PLAN.md`'s risk register marked resolved by this ticket
 (2026-09-22), original wording kept struck through rather than deleted.
 
@@ -2216,21 +2215,21 @@ placeholder codename "VG-09" everywhere a human reading the published repo would
 without touching anything that would require a data migration or a mechanical rewrite of
 every import in the codebase.
 
-**Why:** (2026-09-20) "VG-09" is still the name in `CLAUDE.md`
+**Why:** (2026-09-20) "VG-09" is still the name in the project rules
 and elsewhere, but the project is about to be published as OSS under its real name.
 
 **Acceptance criteria**
-- [x] Every occurrence of "VG-09" in `CLAUDE.md` (the "What this is" section, examples,
+- [x] Every occurrence of "VG-09" in the project rules (the "What this is" section, examples,
   branch/PR naming illustrations, etc.) is replaced with "research-feed-assistant" or the
   appropriate grammatical form → only one real occurrence existed: the title line
-  (`# CLAUDE.md — VG-09`); the "What this is"/stack sections never named the project by
+  (`# the project rules — VG-09`); the "What this is"/stack sections never named the project by
   this codename in the first place
 - [x] `app.py`'s UI-facing strings (`st.set_page_config(page_title=...)`,
   `st.title(...)`) say "research-feed-assistant", not "VG-09" → both updated
 - [x] A repo-wide search for "VG-09" is run (`grep -rn "VG-09"`, excluding `.venv`/
   `__pycache__`) and every *currently-live, forward-looking* occurrence is updated;
   historical records are deliberately left unchanged — full accounting:
-  - **Changed:** `CLAUDE.md:1` (title), `app.py:23-24` (page title/heading)
+  - **Changed:** the project rules:1` (title), `app.py:23-24` (page title/heading)
   - **Left alone, real external path (matches this ticket's own out-of-scope list):**
     `docs/eval-questions.md:26` and `docs/sessions/2026-09-19-...md:20`, both referencing
     the real frozen-archive directory `C:\AIProjects\VG-09-frozen\`; `scripts/
@@ -2255,7 +2254,7 @@ and elsewhere, but the project is about to be published as OSS under its real na
   it without a migration step would orphan the existing local collection (a fresh
   `get_or_create_collection()` call under a new name starts empty) — a real, if
   self-inflicted, data-loss risk for whoever already has a populated local store. Per
-  `CLAUDE.md`'s stop-and-ask rule for stored data formats, this needs an explicit decision
+  the project's stop-and-ask rule for stored data formats, this needs an explicit decision
   (rename + migration script, or leave it), not a silent rewrite bundled into a "S-sized"
   cosmetic rename
 - `scripts/t020_freeze_dataset.py`'s `ARCHIVE_DIR = Path(r"C:\AIProjects\VG-09-frozen")` —
@@ -2267,7 +2266,7 @@ and elsewhere, but the project is about to be published as OSS under its real na
 **Depends on:** —
 **Notes:** Scoped deliberately narrow (display strings and current-facing docs only) after
 finding, while writing this ticket, that a full rename touches a real stored-data
-identifier and 41 importing files — exactly the kind of thing `CLAUDE.md` says to flag and
+identifier and 41 importing files — exactly the kind of thing the project rules says to flag and
 stop on rather than fold into a routine rename. Executed 2026-09-22, ahead of T-034 (which
 depends on it) per my explicit instruction. `vg09` (the import path) and
 `COLLECTION_NAME`/`t020_freeze_dataset.py`'s `ARCHIVE_DIR` remain exactly as flagged above
@@ -2336,7 +2335,7 @@ copy or its `data/`:**
 Confirms `docs/GOAL.md`'s success criterion ("A fresh clone reaches a first answer by
 following the README only") and Definition of done #1 for real, not by inspection.
 
-**Out of scope:** CI/CD (no pipeline decided yet, per `CLAUDE.md`'s "still undecided"
+**Out of scope:** CI/CD (no pipeline decided yet, per the project's "still undecided"
 stack notes); packaging/publishing to PyPI or similar; the evaluation results themselves
 (T-031/T-032/T-033) — the README references where they'll live, doesn't require them
 finished first.
@@ -2349,7 +2348,7 @@ retrieval caveat ("relevant to docs/GOAL.md's known limitation that Swedish ques
 retrieve worse than English ones") — the README states the limitation accurately given
 that decision (multilingual embedding, verified for real, T-006) rather than repeating
 GOAL.md's pre-D-005 phrasing unchanged. `docs/GOAL.md` itself was not edited - flagging
-this discrepancy for whoever next revisits that doc, per `CLAUDE.md`'s rule to flag rather
+this discrepancy for whoever next revisits that doc, per the project's rule to flag rather
 than silently adapt when reality has moved past a reference document.
 
 ---
@@ -2389,7 +2388,7 @@ larger-VRAM model earns its cost over the smaller one.
   sections per question, facit shown once beneath both, same `☐ A bättre ☐ B bättre
   ☐ Likvärdiga ☐ Båda fel` line T-032 uses
 - [x] Both models are called with the same explicit `num_ctx=16000` and the same
-  `prompt_eval_count`-vs-`num_ctx` truncation-risk check (`CLAUDE.md`'s hard rule) — `qwen3:
+  `prompt_eval_count`-vs-`num_ctx` truncation-risk check (the project's hard rule) — `qwen3:
   8b` doesn't get a silently different/default context window just because it's the
   smaller model → same `_chat_once()` for both, `num_ctx` never varies by `model`; asserted
   directly in `test_explicit_model_overrides_the_default`
@@ -2616,21 +2615,21 @@ Swedish. Not rewritten as part of this ticket; left for whoever next re-runs tha
 
 ---
 
-### T-029 — Fix the four grill-me findings from the Phase 2 review
+### T-029 — Fix the four adversarial review findings from the Phase 2 review
 
 **Status:** done
 **Size:** M (four independent fixes from one review pass, bundled as one ticket per
-my explicit instruction - see Notes)  ·  **Branch:** `t/T-029-phase-2-grill-me-fixes`  ·
+my explicit instruction - see Notes)  ·  **Branch:** `t/T-029-phase-2-adversarial review-fixes`  ·
 **Phase:** 2
 
-**Goal:** the four real defects the Phase 2 `grill-me` review found (2026-09-20) are fixed:
+**Goal:** the four real defects the Phase 2 adversarial review review found (2026-09-20) are fixed:
 D-011's written text matches what production and every real evaluation re-run actually do;
 a real Ollama failure surfaces as a clear message instead of a raw traceback; `app.py` uses
 T-021's own override contract instead of a hand-rolled copy of it; and real titles can't
 break a rendered citation link.
 
-**Why:** `grill-me`'s own findings, triaged by me 2026-09-20. (1) is a real
-reality-contradicts-documentation case per `CLAUDE.md`'s own rule - D-011 as written
+**Why:** the adversarial review's own findings, triaged by me 2026-09-20. (1) is a real
+reality-contradicts-documentation case per the project's own rule - D-011 as written
 prescribes an eval anchor (2026-09-16) that every real re-run of T-014's questions
 (T-027, T-028) has actually contradicted, and would - if ever followed literally - exclude
 `YTG0rdHPTDE` again, the exact case D-011 exists to stop excluding. (2) is a real gap in
@@ -2657,7 +2656,7 @@ inconsistencies the same review found by reading the shipped code, not hypothesi
   `resp.raise_for_status()` before reading the response body, matching
   `vg09/store.py::embed_batch()`'s existing pattern → **correction to this ticket's own
   Why section, found while implementing:** `count_qwen_tokens()` already had
-  `raise_for_status()` (T-022 shipped it correctly the first time) - the grill-me finding
+  `raise_for_status()` (T-022 shipped it correctly the first time) - the adversarial review finding
   that named both functions was wrong about this one; only `generate_answer()` was actually
   missing it. Fixed there; `count_qwen_tokens()`'s call renamed for consistency only, no
   behavior change. Both now have a dedicated unit test for a mocked non-2xx response
@@ -2689,7 +2688,7 @@ inconsistencies the same review found by reading the shipped code, not hypothesi
   punctuation, and a synthetic `[SOTA]`-shaped title covers the actually-dangerous case
 
 **Out of scope:** `latest_feed_date()` running a full collection scan up to twice per UI
-interaction (grill-me's fifth finding) - noted as a `docs/PLAN.md` risk-register row only,
+interaction (adversarial review's fifth finding) - noted as a `docs/PLAN.md` risk-register row only,
 not fixed here, per my explicit instruction. Any other Ollama/network call site not
 named above. Rewriting `docs/eval-questions.md`'s facit content itself.
 
@@ -2697,7 +2696,7 @@ named above. Rewriting `docs/eval-questions.md`'s facit content itself.
 being amended).
 **Notes:** Bundled as one ticket per my explicit instruction, even though the four
 fixes are independent of each other and could ship as separate commits/PRs - all four come
-from the same single `grill-me` review pass and none has enough surface area alone to
+from the same single adversarial review review pass and none has enough surface area alone to
 justify its own ticket. `docs/PLAN.md`'s risk register gets a new row for the deferred
 fifth finding as part of this ticket's own doc updates, even though it isn't an acceptance
 criterion above.
@@ -2770,7 +2769,7 @@ contains, HF-only or HF+YouTube.
 instruction when Phase 1 was opened; landed, then this ran. Run order followed:
 T-009 → T-010 → T-015 → T-008 → T-012.
 
-**Schema change, flagged per `CLAUDE.md`'s stop-and-ask rule for stored data formats:**
+**Schema change, flagged per the project's stop-and-ask rule for stored data formats:**
 `Document` gained a new field, `segments` (`vg09/document.py`) — the real per-snippet
 `{text, start, duration}` timing `FetchedTranscript` provides (T-010's verified shape),
 preserved so YouTube chunking can use real timestamps instead of losing them when
@@ -2779,10 +2778,10 @@ preserved so YouTube chunking can use real timestamps instead of losing them whe
 consequence of this ticket's own instructions (chunk by timestamp, store the start time) —
 proceeded rather than blocking to ask, since the alternative (not implementing timestamped
 citations at all) contradicts what was explicitly asked for. Flagged here and in the final
-report for me to confirm or object, per `/deep-review`'s finding below. **Approved
+report for me to confirm or object, per independent review's finding below. **Approved
 after the fact by me and recorded as D-007.**
 
-`/deep-review` (reviewer subagent) findings: one Minor/process (the schema change above,
+independent review findings: one Minor/process (the schema change above,
 addressed by this note rather than reverted), one Minor/plausible (segment construction
 assumes real `FetchedTranscriptSnippet.start`/`.duration` are well-formed — already flagged
 project-wide as unverified against real data pending T-017, no separate action taken).
@@ -2848,7 +2847,7 @@ after the loop) and leaves already-done days marked — a resumed run picks up c
 without redoing settled work; not tested with an injected crash, but the simulated-marker
 deletion above exercises the same resume path a real interruption would.
 
-Grill-me (inline) flagged one Minor, not fixed: `date.today()` uses the machine's local
+An adversarial review flagged one Minor, not fixed: `date.today()` uses the machine's local
 timezone, not necessarily HF's server timezone, so a day-boundary run could be off by one
 relative to what `date=` actually selects server-side. Not investigated further - HF's own
 server timezone isn't known, and the "always re-check today" design already self-corrects
@@ -3003,7 +3002,7 @@ depends on that shape.
   as the stand-in, per the ticket's own fallback allowance) for punctuation and proper nouns —
   **real auto-captions turned out to have punctuation and capitalization throughout**,
   contradicting `vg09/chunking.py`'s "no punctuation" premise (KB-014, flagged per
-  `CLAUDE.md`'s reality-contradicts-docs rule, not silently fixed here); real garbling
+  the project's reality-contradicts-docs rule, not silently fixed here); real garbling
   examples found in the same data ("Palunteer"/Palantir, "Open AAI"/OpenAI, "Sunno V6"/Suno
   V6). Findings written to `docs/kb/`: KB-012, KB-013, KB-014
 - [x] No code in `vg09/youtube.py` or `vg09/youtube_backfill.py` changed to call Whisper —
@@ -3111,7 +3110,7 @@ recorded in KB-008's update. YouTube's watermark is now set (2026-09-17), comple
 non-goal condition ("captions can't be fetched and time allows") is now demonstrated in
 production, not just tested in isolation (T-018).
 
-`/deep-review`-equivalent self-check before closing: read `vg09/youtube.py`,
+independent review-equivalent self-check before closing: read `vg09/youtube.py`,
 `vg09/youtube_backfill.py`, and both test files end to end after all edits: no dead
 imports, `IngestBlocked`'s only remaining textual references are historical (KB-008/D-006's
 own docs, correctly describing what *used* to happen), 19/19 unit tests pass, and the real
@@ -3304,7 +3303,7 @@ resolved:
    me: both count.
 3. F07 assumed "nothing about text-to-video in the last month"; once "last month" used the
    same 30-day window as F02, FIRM-Video (`2608.21839`, 2026-08-27) fell inside it and
-   contradicted that assumption. Corrected in the facit (not silently kept), per `CLAUDE.md`'s
+   contradicted that assumption. Corrected in the facit (not silently kept), per the project's
    reality-contradicts-documentation rule.
 
 Time-window phrases in the questions ("senaste veckan", "senaste månaden", …) aren't pinned
@@ -3329,7 +3328,7 @@ rather than an omission.
 frozen — provably unchanged, not just described by a cutoff date — and the YouTube backfill's
 yt-dlp calls can't hang forever on a stalled connection.
 
-**Why:** the Phase 1 `grill-me` review (this session) found that `data/raw/` is gitignored,
+**Why:** the Phase 1 adversarial review review (this session) found that `data/raw/` is gitignored,
 so nothing durable backs T-014's frozen-cutoff claim — only the cutoff *dates* are written
 down, not the content. If `data/raw/` is ever lost, changed, or the sources quietly edit
 their own past content, a later re-ingestion honoring the same dates could silently produce
@@ -3368,7 +3367,7 @@ backfill run).
   (`YT_DLP_SOCKET_TIMEOUT`, defined once in `vg09/youtube.py`, imported by
   `youtube_backfill.py`); 20/20 existing tests still pass unchanged (they mock at the
   `YoutubeDL` boundary, so option-dict contents aren't asserted, but nothing broke)
-- [x] `docs/PLAN.md` gets a risk register noting the four `grill-me` findings deferred to
+- [x] `docs/PLAN.md` gets a risk register noting the four adversarial review findings deferred to
   Phase 3 (no tests for `vg09/store.py`, no tests for `vg09/youtube_backfill.py`, no alert
   threshold on the bare `except Exception` around the Whisper fallback, and the softer of
   F14's two YouTube citations) so they aren't silently dropped → 4 new rows added to the
@@ -3380,9 +3379,9 @@ Re-running or re-verifying the frozen dataset's *content* against HF/YouTube's l
 this ticket proves the local snapshot hasn't silently changed, not that it's still what those
 APIs would return today.
 
-**Depends on:** T-014 (produced the frozen-cutoff claim this hardens), the Phase 1 `grill-me`
+**Depends on:** T-014 (produced the frozen-cutoff claim this hardens), the Phase 1 adversarial review
 review (produced both findings).
-**Notes:** Two of six `grill-me` findings, per my explicit triage; the other four are
+**Notes:** Two of six adversarial review findings, per my explicit triage; the other four are
 deferred to Phase 3 rather than fixed now — see `docs/PLAN.md`'s risk register for each,
 recorded there rather than fixed here so they can't be silently dropped before Phase 3.
 
@@ -3433,7 +3432,7 @@ unreliable" (Medium) with "a date-range control in the UI as a fallback" as the 
   anything) was extracted from the question text — the override always wins; extraction is
   never the only path to a date range → `resolve_date_range(question, today,
   manual_override=None)`; the actual rendered control is T-025's job (no UI framework is
-  decided yet, per `CLAUDE.md`), this ticket delivers the override-always-wins contract that
+  decided yet, per the project rules), this ticket delivers the override-always-wins contract that
   control will call
 - [x] The extracted-or-manual range is passed to retrieval (T-022) as a single explicit
   parameter (e.g. `date_range: tuple[str, str] | None`), not re-derived downstream →
@@ -3498,7 +3497,7 @@ strict, comparable variant, not two code paths that could drift apart.
 **Acceptance criteria**
 - [x] Similarity search runs via `vg09.store`'s existing Chroma collection, embedding the
   question through `embed_batch()` (explicit `bge-m3`, `num_ctx=8192`) — never
-  `query_texts=` (CLAUDE.md hard rule, per `docs/DESIGN.md`'s "Interfaces and contracts"
+  `query_texts=` (project hard rule, per `docs/DESIGN.md`'s "Interfaces and contracts"
   warning) → `vg09/retrieval.py::query_candidates()`/`embed_question()`; asserted directly in
   `tests/test_retrieval.py::test_never_calls_query_texts`
 - [x] When a date range is given, results are filtered by `feed_date_ordinal` (`$gte`/`$lte`),
@@ -3573,7 +3572,7 @@ presented as if it were complete.
 findings from T-008/T-012 that would otherwise get silently reinvented or gotten wrong:
 KB-011's real chat-template finding that message *order* in the API call does not control
 *rendered* prompt order, and the `num_predict:2000` cap's real failure mode
-(`done_reason=="length"`). `CLAUDE.md`'s hard rule (every LLM call checks `prompt_eval_count`
+(`done_reason=="length"`). the project's hard rule (every LLM call checks `prompt_eval_count`
 against `num_ctx`) applies to every real call this ticket makes, not just T-012's embedding
 calls.
 
@@ -3592,7 +3591,7 @@ calls.
   `AnswerResult.incomplete = (done_reason == "length")`, both branches tested
   (`test_stop_is_a_complete_answer`, `test_length_is_flagged_incomplete`)
 - [x] The response's real `prompt_eval_count` is compared against the `num_ctx` sent (16000,
-  D-005) and a warning is raised on truncation risk, per `CLAUDE.md`'s hard rule — the same
+  D-005) and a warning is raised on truncation risk, per the project's hard rule — the same
   pattern `vg09/store.py` already uses for embedding calls → same `>=`/`>=0.9×` check as
   `vg09/store.py::embed_batch()`; real run's `prompt_eval_count=11080` stayed well clear of
   `num_ctx=16000`, no warning fired (correctly - nothing to warn about)
@@ -3817,7 +3816,7 @@ never at risk.
 chat instruction — same pattern T-016 established for opening Phase 1.
 
 **Why:** `docs/PLAN.md`'s own rule: "when a phase starts, turn its checkboxes into tickets in
-`docs/TICKETS.md` using the `ticket-write` skill." My explicit go-ahead to start Phase 2,
+`docs/TICKETS.md`." My explicit go-ahead to start Phase 2,
 with five already-settled design points named to be carried into the tickets rather than
 re-decided: date range extraction + a manual UI picker as fallback (risk register); T-008's
 context budget (greedy packing by measured token count, `num_predict:2000`); the system
@@ -3962,7 +3961,7 @@ than one number ("[17, 18]"); (3) as a direct consequence of (2), a real answer 
 three sources in one such bracket only produced one citation.
 
 **Why:** real defects I found in already-shipped Phase 2 code (T-023/T-024), not
-hypothetical. (2)/(3) are silent data loss exactly of the kind `CLAUDE.md` and T-024's own
+hypothetical. (2)/(3) are silent data loss exactly of the kind the project rules and T-024's own
 design (`unlinked_references`, never silently dropped) were meant to prevent - a multi-number
 bracket doesn't even reach `unlinked_references`, it's dropped from consideration entirely
 per number after the first.
@@ -4122,7 +4121,7 @@ caller; see `docs/PLAN.md`'s Phase 2 checklist.
 
 ## Done
 
-### T-001 — Commit GOAL/PLAN and point CLAUDE.md at them
+### T-001 — Commit GOAL/PLAN and point the project rules at them
 
 **Status:** done
 **Size:** S  ·  **Branch:** — (see note)
@@ -4131,22 +4130,22 @@ caller; see `docs/PLAN.md`'s Phase 2 checklist.
 state is committed so it survives.
 
 **Why:** `docs/GOAL.md` and `docs/PLAN.md` were filled in but uncommitted, and
-`CLAUDE.md`'s "What this is" section still said the repo was undefined. Every later ticket
+the project's "What this is" section still said the repo was undefined. Every later ticket
 depends on this being true and in git.
 
 **Acceptance criteria**
-- [x] `CLAUDE.md`'s "What this is" section is rewritten to give the one-sentence summary
+- [x] the project's "What this is" section is rewritten to give the one-sentence summary
   from `docs/GOAL.md` and points to `docs/GOAL.md` (goal) and `docs/PLAN.md` (phases)
   instead of saying the repo is empty/undefined
-- [x] `CLAUDE.md` no longer contains the placeholder line "VG-09 is an empty repository —
+- [x] the project rules no longer contains the placeholder line "VG-09 is an empty repository —
   no code, README or stated goal exists yet"
-- [x] `git log` shows one commit, message `T-001: ...`, containing `CLAUDE.md`,
+- [x] `git log` shows one commit, message `T-001: ...`, containing the project rules,
   `docs/GOAL.md`, `docs/PLAN.md`, and `docs/TICKETS.md` (with this ticket set) — commit
   `56a9f09`
 - [x] `git status` is clean after the commit
 - [x] The commit message carries a `T-001` prefix so the pre-commit hook accepted it
 
-**Out of scope:** `docs/DESIGN.md`, the "Stack" and "Hard rules" sections of `CLAUDE.md` —
+**Out of scope:** `docs/DESIGN.md`, the "Stack" and "Hard rules" sections of the project rules —
 those stay placeholders until Phase 0 produces real architecture decisions.
 
 **Depends on:** —
@@ -4178,7 +4177,7 @@ gate Whisper on this test failing.
   channels, 5 videos each (20 total)
 - [x] For each attempt, success/failure and error type (no captions, blocked, other) is
   recorded → per-video result in `data/t002_youtube_captions.json` (gitignored, local only)
-- [x] Success rate and error types are written to `docs/kb/` via `kb-entry` →
+- [x] Success rate and error types are written to `docs/kb/`  →
   [KB-001](kb/KB-001-youtube-caption-availability.md)
 - [x] The title + description fallback is confirmed available for at least one video that
   has no captions → **accepted as not fully met, deferred rather than blocking.** 20/20
@@ -4227,7 +4226,7 @@ work, before Phase 1 builds a collector on top of the API.
 - [x] One raw JSON response is saved into the repo → trimmed to 3 entries at
   `docs/kb/samples/daily_papers_2026-09-15_sample.json` (the full day is ~250KB of mostly
   author/avatar metadata, not worth committing in full)
-- [x] Findings written to `docs/kb/` via `kb-entry` → KB-002
+- [x] Findings written to `docs/kb/`  → KB-002
 
 **Out of scope:** normalizing the response into the Phase 1 document shape — this only
 confirms the raw API's behaviour.
@@ -4264,7 +4263,7 @@ phases build retrieval and evaluation around them.
 - [x] Response time and peak VRAM usage are recorded for each model → cold and warm timings
   recorded; VRAM readings come with an honest methodology caveat (see KB-003 — `nvidia-smi`
   measures total GPU memory, not per-process)
-- [x] Findings are written to `docs/kb/` via `kb-entry` →
+- [x] Findings are written to `docs/kb/`  →
   [KB-003](kb/KB-003-ollama-vram-and-timing.md)
 - [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen model pair, with the
   evidence cited → D-003
@@ -4306,7 +4305,7 @@ similarity search; that only works if the store can filter by date range at all.
 - [x] A second query without the date filter is run against the same data to confirm the
   filtered and unfiltered results differ as expected → confirmed, filtered set is a strict
   subset dropping the June/August documents
-- [x] Findings are written to `docs/kb/` via `kb-entry` →
+- [x] Findings are written to `docs/kb/`  →
   [KB-004](kb/KB-004-chromadb-date-filtering.md)
 - [x] `docs/DECISIONS.md` gets a new `D-0NN` entry recording the chosen vector store, with
   the evidence cited → D-004
@@ -4315,7 +4314,7 @@ similarity search; that only works if the store can filter by date range at all.
 collection.
 
 **Depends on:** T-001
-**Notes:** Candidate (ChromaDB) chosen with me before installing, per `CLAUDE.md`
+**Notes:** Candidate (ChromaDB) chosen with me before installing, per the project rules
 "In-loop" — asked, got ChromaDB over LanceDB/sqlite-vec, then installed. KB-004 flags a
 real cost worth remembering: Chroma's default embedding model isn't bundled, it's an
 ~80MB silent download on first use to a user-level cache outside the project — needs a
@@ -4346,7 +4345,7 @@ independent concerns.
 **Acceptance criteria**
 - [x] A needle-in-haystack test (~12k tokens of filler with one unique fact planted at the
   very start, then a question requiring that fact back) is run against at least one
-  currently-pulled model. `docs/kb/` gets a `kb-entry` documenting what `num_ctx` Ollama
+  currently-pulled model. `docs/kb/` gets a knowledge-base entry documenting what `num_ctx` Ollama
   actually used for that request, how `num_ctx` is set, and whether content beyond
   `num_ctx` is silently truncated or surfaced as an error/warning → `llama3.1:8b`,
   [KB-005](kb/KB-005-ollama-num-ctx-silent-truncation.md): default is 32768, undersized
@@ -4392,7 +4391,7 @@ this is done.
 
 ---
 
-### T-007 — Verify KB-007's think claim, write CLAUDE.md hard rules, grill-me Phase 0
+### T-007 — Verify KB-007's think claim, write project hard rules, adversarial review Phase 0
 
 **Status:** done
 **Size:** M  ·  **Branch:** `t/T-007-phase0-checkpoint`
@@ -4403,9 +4402,9 @@ project rules, and get an adversarial pass on Phase 0 as a whole before Phase 1 
 
 **Why:** KB-007's `think:false` test used `/api/generate`; Ollama's `think` parameter may
 behave differently on `/api/chat`, so the finding needs re-checking via the correct
-endpoint before it's trusted. `CLAUDE.md`'s "Hard rules" and "Stack" sections are still
+endpoint before it's trusted. the project's "Hard rules" and "Stack" sections are still
 placeholders even though Phase 0 now has concrete findings (KB-005, KB-006) and decisions
-(D-001–D-005) to derive them from. `docs/PLAN.md` requires a `grill-me` pass at every
+(D-001–D-005) to derive them from. `docs/PLAN.md` requires an adversarial review pass at every
 checkpoint before declaring a phase complete, and that hasn't been run on Phase 0 as a
 whole yet — only on individual tickets as they closed.
 
@@ -4424,11 +4423,11 @@ whole yet — only on individual tickets as they closed.
   actual usage" — verified directly that this is false (`nvidia-smi`: 21410 MiB at a
   trivial prompt vs 21431 MiB at an 8002-token prompt, same `num_ctx=16000` — no meaningful
   growth). Ollama pre-allocates the KV cache for the full `num_ctx` at load
-- [x] `CLAUDE.md`'s "Hard rules" filled in with the three rules (num_ctx always explicit,
+- [x] the project's "Hard rules" filled in with the three rules (num_ctx always explicit,
   every call compares `prompt_eval_count` to `num_ctx`, embeddings always `bge-m3` never
   Chroma's default)
-- [x] `CLAUDE.md`'s "Stack" section updated with D-001, D-002, D-004, D-005
-- [x] `grill-me` (design-decision mode) run on Phase 0 as a whole. Findings:
+- [x] the project's "Stack" section updated with D-001, D-002, D-004, D-005
+- [x] adversarial review (design-decision mode) run on Phase 0 as a whole. Findings:
   - **Serious, fixed:** KB-007's VRAM-growth speculation was wrong — corrected above with
     real evidence, not just reworded
   - **Serious, deferred (not silently dropped):** the real risk hiding behind the VRAM
@@ -4500,7 +4499,7 @@ crashed instead of falling back — fixed to catch the shared parent class, matc
 actual intent ("captions unavailable", not an enumerated list of reasons). Re-run then
 triggered the D-001 fallback for real on both videos, producing valid documents. Recorded as
 KB-008, which also sharpens T-015's stop-on-block criterion — this is a real risk, not a
-hypothetical one. Grill-me pass (inline) found one Serious issue (the fallback discarded
+hypothetical one. An adversarial review found one Serious issue (the fallback discarded
 *why* captions failed, which T-015 will need) — fixed by logging the exception type at the
 point of fallback rather than swallowing it. The caption-success code path itself
 (`FetchedTranscript`'s iteration — verified against the installed library's source, not
@@ -4564,9 +4563,9 @@ Whisper (parked, `docs/GOAL.md`); actually retrying pending videos later (T-015'
 instruction — every test is mocked, and the `data/raw/` cleanup was a local file operation
 on already-fetched data. Framework: stdlib `unittest`/`unittest.mock`, not `pytest` — no
 test framework had been chosen for the project yet, and adding one is a dependency decision
-that wasn't asked for here; `dev-environment` skill updated with the real test command.
+that wasn't asked for here; the development notes updated with the real test command.
 
-Grill-me (inline) found one additional Serious issue beyond the three requested tests: a
+An adversarial review found one additional Serious issue beyond the three requested tests: a
 video blocked in one run and successfully fetched in a later run would leave a stale
 `*.pending.json` marker alongside the new final document, since nothing cleared it — a
 future retry consumer (T-015) would keep re-treating a resolved video as pending. Fixed with
@@ -4585,7 +4584,7 @@ write, and covered by a fourth test
 chunks once the system prompt, the question, and a reasoning+answer reservation are
 accounted for — so chunk size and top-k get chosen against a real number, not a guess.
 
-**Why:** `docs/PLAN.md`'s risk register (added at T-007's `grill-me`, Phase 0 checkpoint)
+**Why:** `docs/PLAN.md`'s risk register (added at T-007's adversarial review, Phase 0 checkpoint)
 flags that nobody has estimated whether a real RAG prompt (system + retrieved chunks +
 question) stays under `num_ctx=16000` — and KB-005 already proved an undersized `num_ctx`
 silently drops the **front** of the prompt with no error. D-005's "Cost" section adds that
@@ -4629,7 +4628,7 @@ needed for this ticket). Caveat carried into the risk register: the 400-token ch
 sized from HF abstracts only; no real YouTube transcript text exists yet (KB-008 — captions
 still blocked as of T-010) to confirm chunking holds once T-015 backfills real transcripts.
 
-Grill-me (inline) on the measurement script itself found two real violations of `CLAUDE.md`'s
+An adversarial review of the measurement script itself found two real violations of the project's
 own hard rules before this was reported done: the `/api/embed` call never set `num_ctx`
 explicitly, and nothing compared `prompt_eval_count` against `num_ctx` to warn on
 truncation risk. Both fixed (`EMBED_NUM_CTX=8192` set explicitly, a
@@ -4651,7 +4650,7 @@ the correct minimal-cost call for a tokenizer-only measurement.
 as `docs/PLAN.md`'s umbrella checkboxes, so work can start from a backlog rather than from a
 chat instruction.
 
-**Why:** `docs/PLAN.md` requires turning a phase's checkboxes into tickets via `ticket-write`
+**Why:** `docs/PLAN.md` requires turning a phase's checkboxes into tickets
 when the phase starts; T-007's handoff named this as the next session's first action.
 `docs/GOAL.md` also needed conversation history recorded as an explicit non-goal/parked item
 before Phase 1 scope could be considered settled, since it bears on the context-budget work

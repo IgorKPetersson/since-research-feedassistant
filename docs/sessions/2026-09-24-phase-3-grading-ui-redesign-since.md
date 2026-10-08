@@ -18,7 +18,7 @@ why the logo mark is nudged -0.5px.
 ## 2. Pre-merge verification of T-039/T-040  [T-039, T-040]
    - 2.1 Live retry probe: `NUM_PREDICT` patched to 500 in-process only, 3 real questions
      · outcome: all four retry checks passed live. This closed T-039's "only mocked" gap (`ca55d61`)
-   - 2.2 deep-review: `expand_part()` materialised `range()` before the threshold check
+   - 2.2 independent review: `expand_part()` materialised `range()` before the threshold check
      (7.4s for `[1-500000000]`)
      · outcome: fixed as `part_bounds()`, which checks the size first (`a03650b`), then merged and pushed
 
@@ -34,7 +34,7 @@ why the logo mark is nudged -0.5px.
 ## 4. T-036 tests for the two risk-register modules  [T-036]
    - 4.1 · outcome: 13 tests, no production defects found; merged
 
-## 5. Phase 3 grill-me, then T-041  [T-041]
+## 5. Phase 3 adversarial review, then T-041  [T-041]
    - 5.1 Findings: stale DESIGN.md numbers (27/13245 → 24/11787); comma-list bypass of
      D-015; missing `prompt_eval_count` check in a probe script
      · outcome: all three fixed in T-041. D-015's threshold now uses the summed span across

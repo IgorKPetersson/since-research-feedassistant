@@ -80,7 +80,7 @@ markers carry no number, and why the deck lives on its own branch.
      · outcome: done; Streamlit usage statistics were on by default, now off
    - 10.2 Google Fonts loaded by the browser
      · outcome: explained, kept (unresolved: could be self-hosted)
-   - 10.3 No-tools test and CLAUDE.md hard rule
+   - 10.3 No-tools test and project hard rule
      · outcome: done, shown to catch a planted `tools` field
 
 ## 12. Continued 2026-10-06: Enter hint, overview, deck slides  [T-080, T-076, T-077]

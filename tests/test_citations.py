@@ -263,7 +263,7 @@ class RangeCitationTests(unittest.TestCase):
         self.assertEqual(result.descriptive_ranges, ["[1, 2-10]"])
 
     def test_pathological_huge_range_is_descriptive_immediately_not_materialized(self):
-        """deep-review finding (2026-09-22): a hallucinated or malformed huge range in
+        """independent review finding (2026-09-22): a hallucinated or malformed huge range in
         real model output must be classified as descriptive from its bounds alone -
         never by actually building a list of its numbers first. Asserts both the
         classification and that it happens with no measurable delay (previously ~7s

@@ -31,7 +31,7 @@ way it is.
      - 2.2.1 Original code only caught 3 of `CouldNotRetrieveTranscript`'s subclasses, not
        the shared parent — crashed instead of falling back
        · outcome: fixed to catch the parent class; KB-008 written
-   - 2.3 grill-me: the fallback discarded *why* captions failed, which the next ticket
+   - 2.3 adversarial review: the fallback discarded *why* captions failed, which the next ticket
      would need
      · outcome: fixed — log the exception type at the point of fallback
 
@@ -44,7 +44,7 @@ way it is.
    - 3.2 3 mocked unit tests written (missing, blocked, caption-success against the real
      `FetchedTranscript` shape — never actually run before this)
      · outcome: all pass, no live YouTube calls
-   - 3.3 grill-me: a video blocked once then resolved later would leave a stale
+   - 3.3 adversarial review: a video blocked once then resolved later would leave a stale
      `*.pending.json` marker next to its new final document
      · outcome: fixed — `clear_pending()`, 4th test added
    - 3.4 D-001 superseded by **D-006** (missing/blocked split, documented)
@@ -60,9 +60,9 @@ way it is.
    - 4.3 Tried `num_predict:0` to cheaply count tokens — it does NOT mean "generate
      nothing" (485 tokens on a 9-word prompt)
      · outcome: **KB-009**; switched to `num_predict:1`
-   - 4.4 grill-me on the measurement script itself: `/api/embed` call never set `num_ctx`
+   - 4.4 adversarial review on the measurement script itself: `/api/embed` call never set `num_ctx`
      explicitly; nothing compared `prompt_eval_count` against `num_ctx`
-     · outcome: both fixed (CLAUDE.md hard rules), full measurement re-run, numbers held
+     · outcome: both fixed (project hard rules), full measurement re-run, numbers held
 
 ## 5. "No YouTube calls" and the T-015/T-017 split  [T-015, T-017]
    - 5.1 One manual transcript request (`nZYJdwM-_nI`) — still `IpBlocked`;
@@ -104,7 +104,7 @@ way it is.
    - 6.5 Real run: 1184 documents → 1184 chunks → `collection.count()=1184`, stable across
      two runs; date-range filter verified against the real production store
      · outcome: done
-   - 6.6 `/deep-review`: schema change flagged as the one process issue (CLAUDE.md's
+   - 6.6 independent review: schema change flagged as the one process issue (the project's
      stop-and-ask list names stored-data-format changes explicitly)
      · outcome: reported prominently rather than reverted — **approved after the fact,
        recorded as D-007** (start of next session's continuation, § 7)
@@ -135,5 +135,5 @@ way it is.
        more to confirm stability
 
 ## 8. Session close
-   - 8.1 Session-tree, kb-entry pass, session-handoff, commit + push
+   - 8.1 Session summary, knowledge-base entries, handoff, commit + push
      · outcome: this file + docs/HANDOFF.md + push to origin/main

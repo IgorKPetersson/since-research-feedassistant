@@ -4,7 +4,7 @@ What this project knows about **the world**: verified behaviour, measurements, d
 workarounds and constraints. Decisions live in `docs/DECISIONS.md`; design intent lives in
 `docs/DESIGN.md`; session narrative lives in `docs/HANDOFF.md` and `docs/sessions/`.
 
-Written and read via the `kb-entry` skill. **Read the relevant area before starting work in
+**Read the relevant area before starting work in
 it.** An entry not listed here does not exist, because nobody browses directories.
 
 Entries are `docs/kb/KB-0NN-slug.md`. IDs sequential, never reused. A wrong entry is never

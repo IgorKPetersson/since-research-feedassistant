@@ -2,8 +2,8 @@
 
 T-027 added LatestFeedDateTests/IsEmptyTests for the function it introduced, per
 "test what changed", not a backfill of the rest of the module. T-036 closes the
-remaining gap the Phase 1 grill-me review found and docs/PLAN.md's risk register
-deferred to Phase 3: embed_batch()'s compliance with CLAUDE.md's hard rules
+remaining gap the Phase 1 adversarial review review found and docs/PLAN.md's risk register
+deferred to Phase 3: embed_batch()'s compliance with the project's hard rules
 (explicit bge-m3, explicit num_ctx) was previously asserted only by code review,
 never by an automated test that would catch a future refactor silently dropping
 either.
@@ -124,7 +124,7 @@ class EmbedBatchTests(unittest.TestCase):
             embed_batch(["hello world"])
 
         body = mock_post.call_args.kwargs["json"]
-        self.assertIn("num_ctx", body["options"])  # CLAUDE.md's hard rule: never left implicit
+        self.assertIn("num_ctx", body["options"])  # the project's hard rule: never left implicit
         self.assertEqual(body["options"]["num_ctx"], EMBED_NUM_CTX)
         self.assertEqual(body["options"]["num_ctx"], 8192)  # bge-m3's own context window (KB-007)
 

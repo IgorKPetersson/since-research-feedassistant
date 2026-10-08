@@ -36,7 +36,7 @@ one day.
      · outcome: 39.7s for a 30.8-min video, ~1.1GB VRAM - KB-013
    - 5.4 Dead end / unexpected finding: real auto-captions DO have punctuation
      · outcome: contradicts `vg09/chunking.py`'s docstring (misattributed to KB-001) -
-       KB-014, flagged per CLAUDE.md's reality-contradicts-docs rule, not silently fixed
+       KB-014, flagged per the project's reality-contradicts-docs rule, not silently fixed
        here (that came later, § 6.1)
 
 ## 6. T-019: wire Whisper into the collector  [T-019]

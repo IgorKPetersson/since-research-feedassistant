@@ -1,30 +1,10 @@
 # HANDOFF
 
-Newest note at the top. The agent reads the top note at the start of every session and
-prepends a new one at the end via the `session-handoff` skill.
+The project log, newest entry at the top. Each entry records what was done, what is
+half-finished, what was learned and what comes next.
 
-## Why this exists
-
-Each session starts with no memory of the last one. Without this file, every session
-re-derives context from the code, guesses at half-finished intentions, and sometimes undoes
-deliberate choices. This note is the memory.
-
-A good note answers: what did I do, what is half-done, what did I learn that isn't in the
-code, and what should the next session do first.
-
-## Order at the end of a session
-
-1. `session-tree` → `docs/sessions/YYYY-MM-DD-slug.md`
-2. `kb-entry` → anything learned about real behaviour, into `docs/kb/`
-3. `session-handoff` → this file, referencing both
-
-## Rules
-
-- Write the note **before** the context window is exhausted, not after.
-- "Learned" is the highest-value section. Anything discovered about how a dependency really
-  behaves goes to `docs/kb/` as well as here.
-- Decisions go in `DECISIONS.md`; this note only cites the ID.
-- Never delete old notes. They are the project diary.
+Decisions are recorded in `DECISIONS.md`, and what was learned about the tools in
+`docs/kb/`. Each entry here cites them by ID.
 
 ---
 
@@ -110,7 +90,7 @@ code, and what should the next session do first.
     in every item and a sentence per source. Injections steered 2/30 → 0/30.
   - T-074: ids and feed dates validated before they become paths; Streamlit usage
     statistics off.
-  - T-075: a test that no Ollama request carries tools; CLAUDE.md hard rule.
+  - T-075: a test that no Ollama request carries tools; project hard rule.
 - T-078: "research" no longer narrows to papers. T-079: "over the 5 days" etc. understood.
 - 350 unit tests pass. Everything except the deck is merged to `main` and pushed.
 
@@ -149,7 +129,7 @@ code, and what should the next session do first.
 
 **Doc updates made:** D-019, D-020 · KB-032–037 (032/033 on the deck branch) · DESIGN §
 Security baseline and the budget (11560) · TICKETS T-048, T-070–T-079 · PLAN Phase 3 ·
-CLAUDE.md hard rule · GOAL item 5 · README (localhost only)
+project hard rule · GOAL item 5 · README (localhost only)
 
 ---
 
@@ -317,7 +297,7 @@ T-046, T-047  ·  **Tree:** docs/sessions/2026-09-24-phase-3-grading-ui-redesign
 **Done this session (2026-09-22 → 24):**
 - **Evaluation:** T-032 and T-033 both graded and committed. T-039 (retry on
   truncation) verified live; T-040 range citations, with the ≤5-number threshold as
-  D-015. T-041 fixed the Phase 3 grill-me findings. T-036 added the last
+  D-015. T-041 fixed the Phase 3 adversarial review findings. T-036 added the last
   risk-register tests.
 - **Publish:** T-035 rename, then T-034 README + Apache-2.0 LICENSE, then a real
   fresh-clone test that passed with no fixes needed.
@@ -451,7 +431,7 @@ not started) · `docs/eval-results/` (new, tracked — two real result files)
 
 ---
 
-## 2026-09-20 — T-028 closed, Phase 2 `grill-me` (T-029), English-answer decision (T-030), Phase 2 declared complete
+## 2026-09-20 — T-028 closed, Phase 2 adversarial review (T-029), English-answer decision (T-030), Phase 2 declared complete
 
 **Tickets:** T-028, T-029, T-030  ·  **Tree:**
 docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md
@@ -462,7 +442,7 @@ docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md
   at `today=2026-09-17` (T-027's own anchor). Packed chunk count dropped 1-2 on 5/15
   broad/unfiltered questions; **top-5 unchanged on all 15 of 15**, confirmed directly.
   T-027's F15/F06 checkpoints reproduced exactly — the 11/14 headline holds
-- `grill-me` run against the whole of Phase 2 (T-011, T-021–T-028, D-011) —
+- adversarial review run against the whole of Phase 2 (T-011, T-021–T-028, D-011) —
   found D-011's written evaluation-anchor rule was never actually followed by any real
   measurement taken under it (top finding), a missing `raise_for_status()` in the
   single most-exercised code path, and two smaller code-quality gaps
@@ -473,7 +453,7 @@ docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md
     facit window exactly (one day off, harmless for this frozen dataset specifically —
     confirmed HIT/MISS unaffected)
   - `vg09/answer.py::generate_answer()` now calls `raise_for_status()` (self-correction
-    mid-ticket: the grill-me finding was wrong that `count_qwen_tokens()` also lacked it —
+    mid-ticket: the adversarial review finding was wrong that `count_qwen_tokens()` also lacked it —
     it already had it since T-022); `app.py` catches the resulting exception and shows a
     clear Swedish message instead of a traceback
   - `app.py` now calls `resolve_date_range(..., manual_override=manual_range)` directly
@@ -488,7 +468,7 @@ docs/sessions/2026-09-20-phase-2-grillme-and-closeout.md
   was 157) propagated through `CHUNK_BUDGET_TOKENS` (13245, down from 13261) and
   `docs/DESIGN.md`. Verified end to end: two real Swedish questions against the real
   store/Ollama both produced English answers (`scripts/t030_verify_english_answer.py`)
-- **Phase 2 declared complete** in `docs/PLAN.md` — all tickets done, `grill-me` run and
+- **Phase 2 declared complete** in `docs/PLAN.md` — all tickets done, adversarial review run and
   every finding triaged. Phase 3 **not** started
 
 **In progress / half-finished:** nothing — T-028/T-029/T-030 all reached `done`, Phase 2 is
@@ -503,10 +483,10 @@ closed.
 - A decision log entry can drift out of sync with the practice it documents, silently,
   across multiple tickets, if nothing ever cross-checks the written rule against what a
   real re-run actually does. D-011 said "pin eval to 2026-09-16"; T-027's and T-028's real
-  runs both used 2026-09-17, and nobody noticed until a `grill-me` pass read the decision
+  runs both used 2026-09-17, and nobody noticed until an adversarial review pass read the decision
   log and the scripts side by side. Worth remembering as a reason to occasionally re-read a
   decision against the code that's supposed to implement it, not just trust it was followed
-- A `grill-me` finding can itself be wrong in a narrow, checkable way (`count_qwen_tokens()`
+- An adversarial review finding can itself be wrong in a narrow, checkable way (`count_qwen_tokens()`
   already had `raise_for_status()` before T-029) — worth verifying findings against the
   actual code before fixing, not just implementing the review verbatim
 
@@ -515,7 +495,7 @@ report) waits for a go-ahead per `docs/PLAN.md`'s own gating rule — not starte
 session.
 
 **Next session should start with:** Phase 3, once it gets the go-ahead —
-turn `docs/PLAN.md`'s Phase 3 checkboxes into tickets with `ticket-write` first. One loose
+turn `docs/PLAN.md`'s Phase 3 checkboxes into tickets first. One loose
 end worth remembering before Phase 3's evaluation script is built: D-013 means a strict
 re-grading of `docs/eval-questions.md`'s facit (written and graded in Swedish) now needs to
 expect an English answer even though the facit's own descriptive text stays Swedish —
@@ -536,7 +516,7 @@ double scan) · `docs/TICKETS.md` (T-028, T-029, T-030 all closed/done)
 
 **Done this session:**
 - T-014 closed (F14/F15 cross-source questions), Phase 1 fully closed
-- `grill-me` review of all Phase 1 → 6 findings, triaged: 2 now / 4 deferred → **T-020**
+- adversarial review review of all Phase 1 → 6 findings, triaged: 2 now / 4 deferred → **T-020**
   (frozen-dataset SHA-256 manifest + yt-dlp timeout)
 - Phase 2 opened (**T-026**) and every ticket in it shipped, real end to end:
   - **T-021** date-range extraction (`vg09/date_range.py`) - tested against all 15 real
@@ -595,7 +575,7 @@ double scan) · `docs/TICKETS.md` (T-028, T-029, T-030 all closed/done)
 (pattern is in T-028's ticket Notes in `docs/TICKETS.md` — real per-question `pack_to_budget()`
 comparison at `today=2026-09-17`, old budget 13803 vs. new 13261, plus a re-confirmed
 top-5-vs-facit headline at that same anchor) and report the result. After that,
-T-028 can close and Phase 2's checkpoint (all tickets done, `grill-me` not yet run — see
+T-028 can close and Phase 2's checkpoint (all tickets done, adversarial review not yet run — see
 `docs/PLAN.md`'s "Current phase" line) is the next real decision point, not something to walk
 past on autopilot.
 
@@ -783,7 +763,7 @@ Fallback documents and pending markers, § Answer generation, § Interfaces and 
 docs/sessions/2026-09-15-phase-0.md
 
 **Done this session:**
-- T-001: committed GOAL.md/PLAN.md, rewrote CLAUDE.md's "What this is"
+- T-001: committed GOAL.md/PLAN.md, rewrote the project's "What this is"
 - T-002: YouTube captions feasibility — 20/20 succeeded across 4 channels (KB-001, D-001)
 - T-003: HF Daily Papers feasibility — 14-day fetch, field shapes confirmed (KB-002)
 - T-004: first local-model pair test, llama3.1:8b + qwen2.5:32b (KB-003)
@@ -793,7 +773,7 @@ docs/sessions/2026-09-15-phase-0.md
   (KB-007, D-005, supersedes D-003)
 - T-007: re-verified KB-007 via `/api/chat`, corrected a real error in KB-007 (VRAM does
   not grow with conversation length — it's pre-allocated at `num_ctx` load), filled in
-  CLAUDE.md's "Hard rules" and "Stack" sections, ran `grill-me` on Phase 0 as a whole
+  the project's "Hard rules" and "Stack" sections, ran adversarial review on Phase 0 as a whole
 - `docs/PLAN.md`'s Phase 0 checklist fully ticked; Phase 0 approved as complete
 
 **In progress / half-finished:** nothing — Phase 0 is closed, Phase 1 has not started.
@@ -818,7 +798,7 @@ docs/sessions/2026-09-15-phase-0.md
   wrong frame for this pair (D-005).
 - Dead end worth remembering: a bare `except Exception: pass` around `delete_collection`
   and around a VRAM-polling thread both looked harmless but would have silently hidden a
-  real error as something else entirely — caught in `grill-me` passes, not by inspection.
+  real error as something else entirely — caught in adversarial review passes, not by inspection.
 
 **Blocked / needs me:** nothing currently blocked. One item flagged for Phase 1 design,
 not a blocker: `docs/PLAN.md`'s risk register now has an unaddressed item — nobody has
@@ -826,12 +806,12 @@ estimated whether a real RAG prompt (system + retrieved chunks + history + quest
 under `num_ctx=16000` before chunk size / retrieval top-k get finalized.
 
 **Next session should start with:** Phase 1 planning — turn `docs/PLAN.md`'s Phase 1
-checkboxes into tickets with `ticket-write`, and resolve the risk-register item above
+checkboxes into tickets, and resolve the risk-register item above
 (token-budget estimate) as part of the chunking design, before writing the collector code.
 
 **Doc updates made:** D-001, D-002, D-003 (superseded), D-004, D-005 · KB-001 through
 KB-007 · `docs/PLAN.md` Phase 0 fully ticked, Phase 1 risk register updated ·
-`docs/GOAL.md` rewritten for "feed date" · `CLAUDE.md` Stack and Hard rules filled in ·
+`docs/GOAL.md` rewritten for "feed date" · the project rules Stack and Hard rules filled in ·
 `docs/TICKETS.md` T-001–T-007 all closed
 
 ## <YYYY-MM-DD> — Project initialised
@@ -839,7 +819,7 @@ KB-007 · `docs/PLAN.md` Phase 0 fully ticked, Phase 1 risk register updated ·
 **Tickets:** — · **Tree:** —
 
 **Done this session:**
-- Harness installed: CLAUDE.md, docs, skills
+- Project rules and docs set up
 
 **In progress:** nothing yet
 

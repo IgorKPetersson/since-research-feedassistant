@@ -247,7 +247,7 @@ keeping it. Storing segments in a separate file/table alongside the `Document` J
 rejected as unnecessary indirection for a field that's optional and only relevant to one
 source type.
 
-**Cost:** This is a change to an already-shipped, already-stored data format (`CLAUDE.md`'s
+**Cost:** This is a change to an already-shipped, already-stored data format (the project's
 "stop and ask" list names schema changes explicitly), made under T-012 without pausing to
 ask first — flagged clearly in T-012's ticket notes and in the report to me instead,
 and approved after the fact here. The change is additive and backward-compatible: existing
@@ -315,7 +315,7 @@ videos), then hit `IpBlocked` again on the first video attempted from a third ch
 `@NateBJones` — see T-017's ticket notes and KB-008's 2026-09-17 update for the full
 evidence. Per this clause, un-parking option (b) for the two channels not yet reached
 (`@NateBJones`, `@ColeMedin`) is now a live choice, not implemented yet — deliberately left
-for me per `CLAUDE.md`'s stop-and-ask rule on adding a new dependency, rather than
+for me per the project's stop-and-ask rule on adding a new dependency, rather than
 decided here.
 
 ---
@@ -398,7 +398,7 @@ the block is hitting, for no remaining benefit.
 *also* fails (e.g. `yt-dlp` audio is blocked too) - rejected per explicit instruction:
 title+description is the named third resort for that case, not a run-wide stop. Silently
 leaving `IngestBlocked`/the abort branch in place as unreachable dead code "just in case" -
-rejected per `CLAUDE.md`'s conventions; removed instead (`vg09/youtube_backfill.py`'s
+rejected per the project's conventions; removed instead (`vg09/youtube_backfill.py`'s
 `_process_video()` no longer has a branch for it).
 
 **Cost:** The signal D-006 protected - "captions stopped working for this run, don't trust
@@ -495,7 +495,7 @@ docs/eval-questions.md's facit was already written and reviewed against." That s
 never actually followed: T-027's own real re-run of T-014's 15 questions (the run that
 produced the 11/14 headline D-011 itself cites) used `today=2026-09-17`, not 2026-09-16;
 T-028's later re-confirmation of that same headline did too, by explicit instruction in its
-own ticket notes. Found by Phase 2's `grill-me` review (2026-09-20, T-029): D-011's written
+own ticket notes. Found by Phase 2's adversarial review review (2026-09-20, T-029): D-011's written
 rule and the practice it was supposedly describing had already diverged, undetected, across
 two tickets.
 
@@ -658,7 +658,7 @@ smaller piece.
 *own* span against the threshold, not the bracket's total - a range ("[1-31]", one piece,
 span 31) was caught, but the identical claim spelled out as 31 individual comma-separated
 bare numbers ("[1,2,3,...,31]") was not, since a bare number's own span is always 1. Found
-by a Phase 3 `/grill-me` review, not hypothetical, though not yet observed in real model
+by a Phase 3 adversarial review review, not hypothetical, though not yet observed in real model
 output either. Fixed by summing every piece's span across the whole bracket before
 comparing to the threshold - the decision itself (the number 5, the reasoning below) is
 unchanged; only the counting method now matches what "at most 5 numbers named in one

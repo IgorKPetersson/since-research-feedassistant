@@ -39,7 +39,7 @@ predict, now with concrete examples: **"Palunteer"** for what is almost certainl
 odd mid-word break, **"open- source"**.
 
 ## Consequences
-Flagged per `CLAUDE.md`'s rule that reality contradicting reference documentation gets fixed
+Flagged per the project's rule that reality contradicting reference documentation gets fixed
 and flagged, not silently adapted around: `vg09/chunking.py`'s design rationale for
 timestamp-based (not sentence-based) YouTube chunking rests partly on a premise that turns
 out to be false for this project's real data. This does **not** mean the timestamp-based

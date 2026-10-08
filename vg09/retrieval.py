@@ -29,7 +29,7 @@ from vg09.store import embed_batch, get_collection
 
 OLLAMA = "http://127.0.0.1:11434"  # not "localhost" - see vg09/store.py (KB-024)
 CHAT_MODEL = "qwen3:30b-a3b"  # D-005
-NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (CLAUDE.md)
+NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (the project rules)
 
 # docs/DESIGN.md § "Remaining budget for retrieved chunks":
 # 16000 (num_ctx) - 173 (system prompt, T-030 - the English-answer instruction added
@@ -154,7 +154,7 @@ PACKING_PLACEHOLDER_SOURCE_NUMBER = 99
 
 def embed_question(question: str) -> list[float]:
     """The question, embedded via the same explicit bge-m3/num_ctx=8192 call every
-    other embedding in this project uses - never `query_texts=` (CLAUDE.md hard rule,
+    other embedding in this project uses - never `query_texts=` (project hard rule,
     docs/DESIGN.md's "Interfaces and contracts" warning: that path silently invokes
     Chroma's default embedder)."""
     return embed_batch([question])[0]

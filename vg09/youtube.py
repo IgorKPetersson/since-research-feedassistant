@@ -74,7 +74,7 @@ def _get_whisper_model():
 
 YT_DLP_SOCKET_TIMEOUT = 30  # seconds - matches the requests.get/post timeout pattern
 # used elsewhere in the codebase (hf_papers.py, store.py); yt-dlp has no default, so a
-# stalled connection would otherwise hang indefinitely (found in Phase 1's grill-me
+# stalled connection would otherwise hang indefinitely (found in Phase 1's adversarial review
 # review, T-020).
 
 

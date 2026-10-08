@@ -76,9 +76,9 @@ def main(out: Path, cap_to_compare: int) -> None:
                         ans += 1
                     if d.get("done"):
                         last = d
-            # T-041: CLAUDE.md's hard rule - every real Ollama call checks its real
+            # T-041: the project's hard rule - every real Ollama call checks its real
             # prompt_eval_count against num_ctx and warns on truncation risk. This was
-            # the one real call site in the repo that skipped it, found by /grill-me.
+            # the one real call site in the repo that skipped it, found by adversarial review.
             pec = last.get("prompt_eval_count")
             if pec is not None:
                 if pec >= NUM_CTX:

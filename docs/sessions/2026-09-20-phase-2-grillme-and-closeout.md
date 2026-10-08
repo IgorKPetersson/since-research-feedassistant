@@ -1,8 +1,8 @@
-# Session tree · 2026-09-20 · T-028 close-out, Phase 2 grill-me, T-029/T-030, Phase 2 closed, Phase 3 opened and T-031/T-038/T-032 run
+# Session tree · 2026-09-20 · T-028 close-out, Phase 2 adversarial review, T-029/T-030, Phase 2 closed, Phase 3 opened and T-031/T-038/T-032 run
 
 **Tickets:** T-028, T-029, T-030, T-031, T-037, T-038, T-032 · **Handoff:** docs/HANDOFF.md
 § 2026-09-20
-**Read this if you want to know:** why D-011 was replaced by D-012, what grill-me actually
+**Read this if you want to know:** why D-011 was replaced by D-012, what adversarial review actually
 found in Phase 2's code, why the system prompt now pins the answer's language, why the
 packing budget silently undercounted every real prompt since T-008, or where the real
 evaluation results live.
@@ -21,14 +21,14 @@ evaluation results live.
        time on both processes — not by polling the (buffered, empty until exit) log file
    - 1.4 T-028 closed: ticket updated, `docs/PLAN.md` updated, committed (`4edf310`)
 
-## 2. Phase 2 `grill-me`  [none — a review, not a ticket]
+## 2. Phase 2 adversarial review  [none — a review, not a ticket]
    - 2.1 Read `vg09/llm.py`, `answer.py`, `citations.py`, `app.py`, `store.py`,
      `date_range.py`, `retrieval.py` and their tests in full, against Mode 1's checklist
    - 2.2 Found: D-011's text ("pin eval to 2026-09-16") was never actually followed by
      T-027's or T-028's real re-runs (both used 2026-09-17) — and would, if followed
      literally, re-exclude `YTG0rdHPTDE`, the exact case D-011 exists to prevent
      · outcome: reported as the top finding — reality (the practice) was right, the
-       decision log was wrong, per `CLAUDE.md`'s own flag-don't-silently-adapt rule
+       decision log was wrong, per the project's own flag-don't-silently-adapt rule
    - 2.3 Found: `generate_answer()` had no `raise_for_status()`, unlike `embed_batch()`
      · outcome: reported as Serious — real Ollama failures would surface as an opaque
        `KeyError`, not a diagnosable error, in the single most-exercised code path
@@ -37,7 +37,7 @@ evaluation results live.
      links; `latest_feed_date()` scanned up to twice per interaction
      · outcome: all reported, none fixed yet (review only)
 
-## 3. T-029 — fixing what grill-me found  [T-029]
+## 3. T-029 — fixing what adversarial review found  [T-029]
    - 3.1 Ticket written bundling all four fixes as one
      (fifth finding scoped out to the risk register only)
    - 3.2 D-011 marked `superseded by D-012`, original text kept intact (not deleted)
@@ -50,7 +50,7 @@ evaluation results live.
    - 3.4 `docs/eval-questions.md`'s anchor callout rewritten to match; facit content
      (F01-F15) verified untouched via `git diff`
    - 3.5 `raise_for_status()` added to `generate_answer()`
-     · outcome: **self-correction** — the grill-me finding was wrong about
+     · outcome: **self-correction** — the adversarial review finding was wrong about
        `count_qwen_tokens()`, which already had it since T-022; only `generate_answer()`
        was actually missing it. Corrected in the ticket's own Notes rather than left
        standing
@@ -83,7 +83,7 @@ evaluation results live.
      · outcome: done, 111/111 tests pass, committed (`0d7a3c0`)
 
 ## 5. Phase 2 declared complete  [none — a plan-level decision]
-   - 5.1 `docs/PLAN.md`'s "Current phase" block rewritten: all tickets done, `grill-me` run
+   - 5.1 `docs/PLAN.md`'s "Current phase" block rewritten: all tickets done, adversarial review run
      and every finding triaged/fixed (T-029) or deferred to the risk register, T-030 landed
      · outcome: declared complete. Phase 3 **not** started yet
 
