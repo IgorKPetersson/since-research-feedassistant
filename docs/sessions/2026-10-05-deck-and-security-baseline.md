@@ -29,6 +29,7 @@ markers carry no number, and why the deck lives on its own branch.
      no source-as-data framing; Ollama already 127.0.0.1
      · outcome: spec in DESIGN § Security baseline, D-020, seven tickets
    - 3.2 Docker and authentication
+     · outcome: rejected (GOAL non-goals; pointless for a local app)
    - 3.3 Re-running the graded evaluation after the prompt change
      · outcome: not done; to be stated openly
 

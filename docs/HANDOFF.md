@@ -75,6 +75,7 @@ code, and what should the next session do first.
 
 **In progress / half-finished:**
 - **The deck branch is not merged.** T-048's last criterion is my look at the
+  design.
 
 **Learned (not obvious from the code):**
 - The deck said ~100 papers a weekday; the data says 22–60 (2026-09-21 to 2026-10-05).
@@ -141,6 +142,7 @@ code, and what should the next session do first.
   results, limitations.
 - The graded evaluation predates T-073 and T-078 (questions 7 and 11); not re-run. Say so in OVERVIEW and the deck.
 - Google Fonts is loaded by the browser from Google; self-hosting the font would remove it.
+- The reading of "24/7" in GOAL is not confirmed.
 
 **Next session should start with:**
 - Write T-076, `docs/OVERVIEW.md`, from the tickets, D-020, the T-069 and T-073 results.
@@ -271,6 +273,7 @@ TICKETS T-059–T-069 · presentation.md results section
 - The presentation's content is not yet decided. `docs/presentation.md` is a draft;
   expect to rework it rather than polish it. The presentation is the only
   Definition of done item left.
+- The reading of "24/7" in `docs/GOAL.md` is not confirmed.
 
 **Next session should start with:** check how old the data is and run catch-up
 if needed. Then review `docs/presentation.md`.

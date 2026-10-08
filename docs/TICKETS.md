@@ -14,6 +14,23 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-087 — Tighten wording in the process documents
+
+**Status:** done
+**Size:** M  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** the process documents describe the work itself, ready for a public repository.
+
+**Why:** (2026-10-08) review before publishing.
+
+**Acceptance criteria**
+- [x] HANDOFF, TICKETS, PLAN, DECISIONS, the session files and the knowledge base reviewed
+  and tightened
+- [x] Every line of TICKETS read
+- [x] The rest of the repository checked
+
+---
+
 ### T-086 — Local tool configuration stays on my machine, not in the repository
 
 **Status:** done
@@ -278,6 +295,7 @@ tests (2026-10-05).
 **Status:** done
 **Size:** M  ·  **Branch:** `t/T-076-overview`  ·  **Phase:** 3
 
+**Goal:** anyone who opens the repo understands, from one document, why Since exists,
 how it works, how it is protected, how it was tested and what the results were.
 
 **Why:** a code repo alone does not explain purpose and results; one document should be
@@ -469,11 +487,11 @@ including the Sources page that starts fetches and writes files.
   `Since.bat` runs, reading the same config: `127.0.0.1:8501 LISTENING` only; Streamlit
   prints one URL, `http://127.0.0.1:8501`; `http://<LAN IPv4>:8501` refused; in a real
   browser "Has Anthropic been mentioned in the last week?" answered with 7 citation chips.
+  `Since.bat` itself: started 2026-10-05, opens as expected
 - [x] Before the change, the same `netstat` check is recorded → `0.0.0.0:8501` and
   `[::]:8501 LISTENING`; Streamlit printed a Network URL (<LAN IPv4>) and an External
   URL (<public IPv4>, the router's public IPv4, not on this machine). The machine has
   global IPv6 addresses, which `[::]` covered. What stopped outside
-  connections was the firewall alone
 - [x] README says the app is reachable only from the machine it runs on
 
 **Out of scope:** Ollama (already `127.0.0.1`, checked 2026-10-05).
@@ -4014,6 +4032,7 @@ Reasoning alone ranged 61.5-92.1% of the entire 2000-token cap across three real
 *same* question and the *same* retrieved context - only sampling varied. Run 2 reproduces my
 real finding directly: reasoning left only 158 tokens of headroom before the answer
 even started, and the answer was cut off mid-word. This is a real, repeatable risk, not a one-off
+- confirms the diagnosis: the reasoning uses up the 2000-token cap.
 
 **Candidate fixes, neither built:**
 1. **Raise `NUM_PREDICT`.** Costs directly against `docs/DESIGN.md`'s chunk budget
