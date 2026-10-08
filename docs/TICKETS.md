@@ -492,6 +492,7 @@ including the Sources page that starts fetches and writes files.
   `[::]:8501 LISTENING`; Streamlit printed a Network URL (<LAN IPv4>) and an External
   URL (<public IPv4>, the router's public IPv4, not on this machine). The machine has
   global IPv6 addresses, which `[::]` covered. What stopped outside
+  connections was the firewall alone
 - [x] README says the app is reachable only from the machine it runs on
 
 **Out of scope:** Ollama (already `127.0.0.1`, checked 2026-10-05).
