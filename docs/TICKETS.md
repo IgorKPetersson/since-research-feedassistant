@@ -14,6 +14,44 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-085 — One bullet per source, with a bold heading, when the answer lists findings
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-085-one-bullet-per-source`  ·  **Phase:** 3
+
+**Goal:** an answer that reports what several sources say shows each source as its own
+bullet, starting with a short bold heading, instead of one dense paragraph.
+
+**Why:** found 2026-10-08. "What's new in AI agent research this week?" gave 9 papers
+merged into 3 paragraphs. "Has Anthropic been mentioned in the last two weeks?" gave 11
+sources in one paragraph of "19 says…, 21 mentions…", which is hard to read. The system
+prompt ends "Be concise. Synthesize an answer from the sources", so the model does what
+it was told. Answers are rendered with markdown-it-py (commonmark), so lists and bold
+already display; this is a prompt change only.
+
+**Acceptance criteria**
+- [ ] For "what's new" and "did X come up" questions, the system prompt asks for one
+  bullet per source: a short bold heading, the citation, then one sentence on what that
+  source says
+- [ ] "Has Q progressed" questions may still connect sources in running text, but each
+  paragraph or bullet keeps its citation (the existing rule)
+- [ ] The system prompt's real token count is re-measured, and `docs/DESIGN.md`'s budget
+  and `CHUNK_BUDGET_TOKENS` are updated if it changed
+- [ ] In the running app, both questions above show one bullet per source with a bold
+  heading; screenshots or pasted answers in the PR
+- [ ] The 15-question evaluation is re-run on the frozen data and the result committed
+  to `docs/eval-results/`; no question that was right before is wrong after
+- [ ] All tests pass
+
+**Out of scope:** changing how answers are rendered; changing retrieval or how many
+sources are packed.
+
+**Depends on:** —
+**Notes:** System prompt in `vg09/answer.py` (`SYSTEM_PROMPT`). Budget: `docs/DESIGN.md`,
+"Context budget". Rendering: `vg09/ui_helpers.py`, D-020/T-072.
+
+---
+
 ### T-084 — Understand "since 3 days" and "since 3 days ago"
 
 **Status:** done
