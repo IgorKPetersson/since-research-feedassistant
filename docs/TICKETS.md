@@ -14,6 +14,24 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-086 — Local tool configuration stays on my machine, not in the repository
+
+**Status:** done
+**Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
+
+**Goal:** `CLAUDE.md` and `.claude/` are no longer in the repository on GitHub, and stay
+unchanged on my machine.
+
+**Why:** my decision (2026-10-08). They are working instructions for my agent, not part
+of what people who use Since need.
+
+**Acceptance criteria**
+- [x] `CLAUDE.md` and `.claude/` are in `.gitignore` and removed from the tracked files
+- [x] Both are unchanged on disk
+- [x] Earlier commits are left as they are; the history is not rewritten
+
+---
+
 ### T-085 — One bullet per source, with a bold heading, when the answer lists findings
 
 **Status:** todo

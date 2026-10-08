@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .playwright-mcp/
 presentation/
+
+# T-086: my agent instructions stay local
+CLAUDE.md
+.claude/
