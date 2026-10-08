@@ -112,7 +112,7 @@ baseline](DESIGN.md), [D-020](DECISIONS.md).)
 
 | Risk | Measure | Checked by |
 |---|---|---|
-| The model acts on the machine | The model never gets tools: no function calling, files, shell or network. An injection can change words, not actions | `tests/test_no_tools.py`, a hard rule in `CLAUDE.md` (T-075) |
+| The model acts on the machine | The model never gets tools: no function calling, files, shell or network. An injection can change words, not actions | `tests/test_no_tools.py`, decision D-020 (T-075) |
 | Others reach the app | Streamlit and Ollama listen on `127.0.0.1` only. Before T-071 the app listened on every interface | `netstat` before and after; a LAN address refused (T-071) |
 | Injected text becomes live HTML | The app renders the answer itself with HTML, links and images off; only its own citation links are HTML, and only to `https` on Hugging Face, arXiv or YouTube | 6 unit tests; an injected `<img onerror>` shown as text in a real browser (T-072) |
 | Injected text steers the answer | Sources sit between `<<<BEGIN>>>`/`<<<END>>>` and are declared untrusted data, never instructions | Six planted attacks × 5 runs: steered 2/30 before, **0/30** after ([results](eval-results/2026-10-05-t073-prompt-injection.md)) |
