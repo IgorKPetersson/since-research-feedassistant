@@ -16,7 +16,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-084 — Understand "since 3 days" and "since 3 days ago"
 
-**Status:** review
+**Status:** done
 **Size:** S  ·  **Branch:** — (committed on `main`)  ·  **Phase:** 3
 
 **Goal:** a question like "What is new in AI since 3 days?" gets a real date range instead
@@ -39,13 +39,13 @@ Oct 5–8. "last N days" is unchanged (today plus the N-1 days before it).
   back); covered by tests
 - [x] Swedish "sedan 3 dagar" resolves the same way; covered by a test
 - [x] Every existing test in `tests/test_date_range.py` still passes
-- [ ] In the running app, "What is new in AI since 3 days?" shows a date range, not None
+- [x] In the running app, "What is new in AI since 3 days?" shows a date range, not None
 
 **Out of scope:** "since the last 3 days" (already works through "last 3 days"); any
 change to how "last N days" counts.
 
 **Depends on:** —
-**Verified:** 354 tests pass (`.venv`). The running-app check is left for me to do.
+**Verified:** 354 tests pass (`.venv`). In the app on 2026-10-08, "What is new in AI since 3 days ago?" showed Date range Oct 5–8.
 **Notes:** T-066 added the "since ..." patterns; T-079 is the most recent change to this
 file.
 
