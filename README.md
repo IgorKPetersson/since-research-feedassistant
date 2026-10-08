@@ -49,8 +49,8 @@ claim tied back to a real, clickable source.
 ## Install
 
 ```
-git clone https://github.com/IgorKPetersson/since-research-feed-assistant.git
-cd research-feed-assistant
+git clone https://github.com/IgorKPetersson/since-research-feedassistant.git
+cd since-research-feedassistant
 python -m venv .venv
 .venv\Scripts\activate        # Windows;  on macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
