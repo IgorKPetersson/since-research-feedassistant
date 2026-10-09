@@ -619,6 +619,48 @@ by the Whisper fallback, but slow — the progress line must show it); the job p
 dying without updating its status file (the status carries the process id and a
 heartbeat time, and a stale one is reported as interrupted, not as running).
 
+## Reference date and date filters (T-093, D-022)
+
+**Reference date.** Relative phrases are measured from the user's calendar date in the
+configured time zone (`data/sources.json` `timezone`, default `Europe/Stockholm`,
+`vg09/reference_date.py`). `app.py` resolves it once per question and passes it to
+`resolve_date_range()`, to the retrieval filter (through the resolved range) and to
+`generate_answer(today=...)`, which states it in the prompt. Nothing below the app reads
+the clock for a question. The header's freshness note, the date picker's defaults and the
+update job (`ingest_job`, `sync_hf`, the YouTube run) use the same calendar date. Phrase
+support itself is unchanged here; T-094 owns it.
+
+**Three dates, kept apart** (`ui_helpers.dates_note()`, shown under the answer's mode line):
+1. *Requested period* — the resolved range, or none.
+2. *Newest source* — the largest feed date in the index (`store.latest_feed_date()`). A
+   period ending after it gets a warning (`past_newest_note()`); the period is never moved.
+3. *Checked* — papers through the day of the last completed Hugging Face sync (watermark
+   + `REOPEN_DAYS`), videos through the earliest `checked_through` of the configured
+   channels, or "not complete" if any channel lacks one (`vg09/coverage.py`). Checked is
+   not stored (T-092).
+
+**Which date each filter uses:**
+
+| Mechanism | Field | Source of the date |
+|---|---|---|
+| Date filter, interpreted or manual | `feed_date_ordinal` | paper: Daily Papers day (`submittedOnDailyAt`, D-002); video: yt-dlp `upload_date`, a UTC date (KB-040) |
+| Recency ranking ("the latest") | `feed_date_ordinal` | same |
+| Newest source, freshness note | largest `feed_date` in the index | same |
+| arXiv publication date | `arxiv_published_at` | shown in citations only, never filtered on (D-002) |
+
+Feed dates are calendar dates in their source's own terms and are not converted to local
+time: no timestamps are stored. A video uploaded at 00:30 in Stockholm in summer
+(22:30 UTC) carries the previous day's date. Daylight-saving changes move the local
+midnight in UTC; the reference date follows them (tested), feed dates don't change.
+
+**Manual range.** Start after end, or a missing end, is refused in the sidebar and the
+question is not searched. A future end is allowed (the warning above applies). Precedence:
+the manual range always wins over a period named in the question; the mode line names the
+question's own period as "not used".
+
+**Evaluation.** The evaluation scripts pass a fixed reference date, the frozen dataset's
+newest date (D-012), to both parsing and generation, so reruns stay comparable.
+
 ## Security baseline (T-071–T-075, D-020)
 
 **Problem:** I require that nothing outside the machine can reach the app, and

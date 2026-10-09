@@ -168,8 +168,19 @@ A few things worth knowing before you use it:
   languages. **Answers are always generated in English**, regardless of what language the
   question was asked in — a deliberate, explicit decision (see `docs/DECISIONS.md`, D-013),
   not something left to the model's default behavior.
+- **"Today" is your own date.** Phrases like "yesterday" or "the last 7 days" count from
+  today's date in your time zone, not from the newest item Since has fetched. The time
+  zone is `Europe/Stockholm` unless you change it: add `"timezone": "America/New_York"`
+  (any IANA time zone name) to `data/sources.json`. Under every answer, one line shows
+  today's date, the newest source in the index, and how far papers and videos have been
+  checked. If the period you asked about runs past the newest source, a warning says so.
+  Nothing newer can be found until the next update.
 - A sidebar lets you override the automatically-interpreted date window (e.g. "last week")
-  with an explicit start/end date — the manual override always wins when set.
+  with an explicit start/end date — the manual override always wins when set, and the
+  answer says which period from the question it did not use. A start date after the end
+  date is refused.
+- Dates are compared as calendar dates: a paper's date is its Daily Papers day, a video's
+  is its upload date in UTC. Close to midnight a video can count for the neighbouring day.
 - Every answer lists its real sources underneath: title, feed date, and a clickable link
   (a YouTube source links to the exact timestamp it was drawn from). If the model's answer
   contains a citation-shaped bracket that couldn't be resolved to a real source, that's

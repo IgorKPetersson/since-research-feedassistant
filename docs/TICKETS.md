@@ -380,7 +380,7 @@ right filter was applied.
 
 ### T-093 — One reference date and timezone for parsing, filtering and answers
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-093-reference-date`  ·  **Phase:** v2-1 (P1-05)
 
 **Goal:** "today" means the same date in date parsing, retrieval and the answer prompt.
@@ -389,20 +389,46 @@ right filter was applied.
 `date.today()`; with stale data the two disagree.
 
 **Acceptance criteria**
-- [ ] The mismatch is confirmed or ruled out in the current code before any change
-- [ ] One reference date, from a configured timezone (Europe/Stockholm by default), is
+- [x] The mismatch is confirmed or ruled out in the current code before any change →
+  confirmed: on the pre-T-093 code a stale index (newest 2026-09-18) made "the last 7
+  days" search 2026-09-12 to 2026-09-18 while the prompt got no date and used the
+  computer's (2026-10-09)
+- [x] One reference date, from a configured timezone (Europe/Stockholm by default), is
   resolved once per question and passed to parsing, retrieval and generation; the clock is
-  injectable in tests
-- [ ] Fixed-clock tests cover a stale store, weekends, midnight and daylight-saving changes
-- [ ] A reversed manual range is rejected; a manual range plus a date phrase follows a
-  documented precedence
-- [ ] A requested period newer than the data says so, instead of moving the period back
+  injectable in tests → `vg09/reference_date.py` (`now=`), `data/sources.json` `timezone`;
+  `tests/test_app_question_dates.py` drives the real `app.py` and checks the same date
+  reaches search and the answer
+- [x] Fixed-clock tests cover a stale store, weekends, midnight and daylight-saving changes
+  → `tests/test_reference_date.py`: local midnight, both 2026 summer-time changes, another
+  time zone, a Monday's "yesterday", a stale and an empty index
+- [x] A reversed manual range is rejected; a manual range plus a date phrase follows a
+  documented precedence → refused in the sidebar and in `resolve_date_range()`; manual
+  wins and the question's own period is named as not used
+- [x] A requested period newer than the data says so, instead of moving the period back →
+  `past_newest_note()`; app test on a stale index
 
 **Out of scope:** new date phrases (T-094).
 
 **Depends on:** T-091; runs after T-092
 **Notes:** the feed date (D-002) stays the filter field; coverage is shown separately from
 the reference date.
+
+Design: D-022 (supersedes D-012 for the app; evaluation keeps its fixed date), DESIGN §
+Reference date and date filters, which also lists the date field each filter uses. Full
+suite 426 tests OK. Real app on 2026-10-09: "the last 7 days" searched 2026-10-03 to
+2026-10-09, the dates line read "Today: Fri 2026-10-09 (Europe/Stockholm) · Newest
+source: 2026-10-09 · Checked: papers through 2026-10-09, videos through 2026-10-09", and
+the answer had 9 citations.
+
+Also changed for consistency: the update job, the Hugging Face sync, the YouTube run,
+the freshness notes and the date picker use the same reference date. Stored format:
+`data/sources.json` gains `timezone`; files without it read as the default.
+
+Not covered: feed dates are not converted to local time (no timestamps are stored), so
+near midnight a video can count for the neighbouring day. Timestamps written by the job
+use the computer's clock. There is no time-zone setting in the app; it is edited in the
+file. The newer-than-data warning was checked by tests, not in the live app, whose data
+was current.
 
 ---
 

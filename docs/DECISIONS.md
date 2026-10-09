@@ -478,7 +478,8 @@ retrieval session - not a concern at this project's real daily/weekly ingest cad
 ---
 
 ## D-012 — Relative retrieval windows anchor to the dataset's real latest content — one anchor, production and evaluation alike
-**Status:** accepted
+**Status:** superseded by D-022 for the app (2026-10-09); still how the evaluation scripts
+choose their fixed reference date
 
 **Decision:** `vg09.store.latest_feed_date()` (the maximum `feed_date` actually present
 across the whole Chroma store, both sources combined) is the `today` every caller of
@@ -878,6 +879,43 @@ every run (T-104). Coverage before a channel's `unverified_before` date is never
 
 **Would change our mind:** YouTube offering a listing by date range, or a need to check
 history older than the newest 50 videos, which would need a different listing approach.
+
+---
+
+## D-022 — "Today" is the user's calendar date in a configured time zone, resolved once per question
+**Status:** accepted (2026-10-09, T-093, by my instruction for P1-05)
+
+**Decision:** relative dates in a question ("yesterday", "the last 7 days") are measured
+from the user's own calendar date in the time zone set in `data/sources.json`
+(`timezone`, an IANA name, default `Europe/Stockholm`; `vg09/reference_date.py`). The app
+resolves that date once per question and passes the same value to the date parser, the
+retrieval filter and the answer prompt. The update job, the freshness note and the date
+picker use the same calendar. The newest date in the index is shown next to it, together
+with how far papers and videos were checked, and a period that runs past the newest
+source is said so instead of being moved back. A manual date range must have its start
+on or before its end; it always wins over a period named in the question, and the app
+names the period it did not use. The evaluation scripts keep a fixed reference date, the
+frozen dataset's newest date (D-012), so their results stay comparable.
+
+**Why:** D-012 anchored "today" to the newest date in the index. The answer prompt used
+the computer's date instead (T-061), so with stale data the two disagreed: a question
+about "the last 7 days" on 9 October searched 12–18 September while the prompt said it was
+9 October (reproduced in T-093). A stale index also made "yesterday" mean a day weeks ago
+without saying so.
+
+**Rejected:** keeping the newest-content anchor and only fixing the prompt to match it,
+which keeps "yesterday" wrong whenever the data is old; the computer's own time zone, which
+Windows doesn't report as an IANA name and which can't be fixed in a test; converting feed
+dates to local time, which would need timestamps the store doesn't keep.
+
+**Cost:** feed dates stay calendar dates in their source's own terms: a paper's Daily
+Papers day, a video's UTC upload date (KB-040). Near midnight a video can count for the
+neighbouring local day. Timestamps the app writes (job status, channel checks) use the
+computer's clock, so a time zone set far from the computer's would show times and dates
+from two clocks. Other users must set `timezone` by hand; there is no setting in the app.
+
+**Would change our mind:** the app being used across time zones by one person, or sources
+whose dates need hour precision.
 
 ---
 
