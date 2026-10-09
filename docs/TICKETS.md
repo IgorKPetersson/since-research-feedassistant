@@ -13,6 +13,474 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### v2 improvement backlog (T-088–T-102)
+
+Added 2026-10-09 from my ordered improvement list. All v2 work happens on `v2-development`,
+which starts at tag `v1-pre-improvement` (`8ed936f51eb006e8b110812315413f43e3c412c4`).
+`main` and the tag stay unchanged. Ticket branches start from `v2-development` and merge
+back into it.
+
+One ticket at a time, in the order below. Each ticket stops for my approval before the
+next starts; the last ticket of each phase is that phase's checkpoint. File paths and line
+numbers in these tickets come from earlier reviews and are starting points to verify, not
+verified facts.
+
+| Plan ID | Ticket | Title |
+|---|---|---|
+| P0-01 | T-088 | Preserve the pre-improvement baseline |
+| P1-01 | T-089 | Escape HTML in bracketed answer text |
+| P1-02 | T-090 | Recheck recent YouTube dates so later same-day uploads are found |
+| P1-03 | T-091 | Track YouTube completion per channel so a failed channel recovers its gap |
+| P1-04 | T-092 | Correct required and optional model instructions in the README |
+| P1-05 | T-093 | One reference date and timezone for parsing, filtering and answers |
+| P1-06 | T-094 | Audit and fix natural-language date interpretation |
+| P1-07 | T-095 | Mixed-source retrieval and scoped negative answers |
+| P2-01 | T-096 | Configurable local chat model and context budget |
+| P2-02 | T-097 | Benchmark a newer local Qwen model on the RTX 4090 |
+| P2-03 | T-098 | Selectable Ollama, OpenAI and Anthropic answer backends |
+| P3-01 | T-099 | Answer structure and citation inspection |
+| P3-02 | T-100 | Progress, timing labels and responsive layout |
+| P4-01 | T-101 | First-run Windows setup |
+| P4-02 | T-102 | Verify a release candidate and prepare a teacher pilot |
+
+---
+
+### T-102 — Verify a release candidate and prepare a teacher pilot
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-102-release-candidate`  ·  **Phase:** v2-4 (P4-02)
+
+**Goal:** a release candidate whose tests, evaluations and clean install have recorded real
+results, with pilot instructions ready for my review.
+
+**Why:** release gate for the v2 backlog. Another person should be able to install Since,
+ask a question, see the date range and coverage searched, and inspect the evidence alone.
+
+**Acceptance criteria**
+- [ ] Full unit suite and the frozen retrieval and answer evaluations rerun with their
+  documented protocol; results and regressions recorded against the baseline
+- [ ] Security rendering, late upload, failed-channel recovery, date, exact-name,
+  mixed-source, citation and backend-routing checks each have a recorded result
+- [ ] Clean Windows install checked against the release candidate commit
+- [ ] Representative questions asked in the app, including an empty or stale store and
+  incomplete channel coverage; a sample of citations checked by hand against the sources
+- [ ] No open critical security or ingestion data-loss issue; other limits documented
+- [ ] Release-candidate commit, tested configuration, restore steps, pilot instructions
+  and a feedback checklist written for my review
+
+**Out of scope:** merging to `main`, publishing a release, or contacting anyone.
+
+**Depends on:** T-088–T-101
+**Notes:** the original tag and `main` stay unchanged.
+
+---
+
+### T-101 — First-run Windows setup
+
+**Status:** todo
+**Size:** L  ·  **Branch:** `t/T-101-first-run-setup`  ·  **Phase:** v2-4 (P4-01)
+
+**Goal:** a new user on Windows reaches a first answer with sources by following the
+documented steps.
+
+**Why:** setting up Python, Ollama, models, sources and the first ingest is the main barrier
+to anyone else using Since.
+
+**Acceptance criteria**
+- [ ] A clean Windows setup from a fresh clone reaches a first answer with sources using
+  only the README; the run is recorded
+- [ ] Preflight checks name a missing Python dependency, unreachable Ollama, missing model,
+  unwritable data folder or incomplete backend configuration before a crash
+- [ ] `Since.bat` still starts the app
+- [ ] README model instructions match the final configuration from T-092 and T-096–T-098
+- [ ] Hardware notes state what was measured and mark the rest unverified; local and cloud
+  network behaviour and the YouTube and Hugging Face downloads are documented separately
+- [ ] Local use works without any cloud account; the app still listens on `127.0.0.1` only
+
+**Out of scope:** an installer framework, unless a simple launcher has been tried and fails.
+
+**Depends on:** Phase v2-3 approved
+**Notes:** L because it spans setup, docs and the app's startup; it is one clean-install
+test and can't be split without testing twice.
+
+---
+
+### T-100 — Progress, timing labels and responsive layout
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-100-progress-timing-layout`  ·  **Phase:** v2-3 (P3-02)
+
+**Goal:** the answer is the focus of the page, and every timing label says what it measured.
+
+**Why:** the Time metric is reported to cover generation only, and diagnostics compete with
+the answer.
+
+**Acceptance criteria**
+- [ ] Retrieval, generation and total time measured with a monotonic clock; total includes
+  both; labels state what each covers; unit test on the timing boundaries
+- [ ] Technical statistics sit in an expandable section below the answer
+- [ ] Progress shows the actual stages, and a failed stage gives a readable message without
+  secrets
+- [ ] Answer and source inspection checked at a recorded narrow and wide viewport
+
+**Out of scope:** first-token timing unless it is measured.
+
+**Depends on:** T-099
+**Notes:** last ticket of v2 Phase 3, so its report is the phase checkpoint.
+
+---
+
+### T-099 — Answer structure and citation inspection
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-099-answer-structure`  ·  **Phase:** v2-3 (P3-01)
+
+**Goal:** broad summaries are scannable, and each source can be inspected without leaving
+the answer.
+
+**Why:** broad answers become dense paragraphs, and citation chips give little context.
+
+**Acceptance criteria**
+- [ ] Broad summaries open with a short takeaway and group developments by theme; short
+  factual answers stay short; checked on recorded example answers
+- [ ] A bracket mixing valid and invalid numbers, such as `[1, 99]`, keeps the invalid
+  number visible and marked; regression test
+- [ ] Source title, date, type and excerpt can be opened by click, tap or keyboard
+- [ ] A "How this answer was researched" section shows the real date filter, sources,
+  evidence selection and limits; any raw model reasoning is labelled and rendered as text
+- [ ] The T-089 HTML-safety tests and existing citation tests pass
+
+**Out of scope:** confidence scores or verification claims the data can't support.
+
+**Depends on:** Phase v2-2 approved
+**Notes:** reproduce the `[1, 99]` behaviour before changing it.
+
+---
+
+### T-098 — Selectable Ollama, OpenAI and Anthropic answer backends
+
+**Status:** todo
+**Size:** L  ·  **Branch:** `t/T-098-answer-backends`  ·  **Phase:** v2-2 (P2-03)
+
+**Goal:** answers can optionally come from OpenAI or Anthropic, while ingest, embeddings,
+the store and retrieval stay local.
+
+**Why:** not everyone has a 24 GB GPU for the chat model.
+
+**Acceptance criteria**
+- [ ] A design for the provider interface, dependencies, credentials, token budgets and
+  errors is approved by me before any dependency is added or any cloud call written
+- [ ] Ollama is the default; a mocked test shows no cloud request in local mode
+- [ ] The app explains that the question and excerpts leave the machine, and requires an
+  explicit choice, before the first cloud request; there is no fallback to cloud
+- [ ] API keys come from environment variables or a secure local store, and never appear
+  in git, ordinary settings, prompts or logs; test covers logs
+- [ ] OpenAI and Anthropic each pass a small live smoke test with my credentials; mocked
+  tests are reported separately
+- [ ] Date filtering, retrieval and citations behave the same on every backend; local
+  regression tests pass
+
+**Out of scope:** changing embeddings or transcription; a proxy server.
+
+**Depends on:** T-096, T-097 reviewed
+**Notes:** L with a built-in review point: the design approval in the first criterion.
+Changes GOAL's "running entirely on their own machine" for users who opt in, so it needs a
+DECISIONS entry. D-020's no-tools rule applies to every backend.
+
+---
+
+### T-097 — Benchmark a newer local Qwen model on the RTX 4090
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-097-model-benchmark`  ·  **Phase:** v2-2 (P2-02)
+
+**Goal:** a measured answer to whether a newer local model is better than `qwen3:30b-a3b`
+on this machine.
+
+**Why:** a newer model name does not guarantee better answers here.
+
+**Acceptance criteria**
+- [ ] Candidates checked in official Qwen and Ollama documentation when the ticket runs;
+  exact tag, quantization, Ollama version and context recorded
+- [ ] Baseline and candidate answer the same frozen questions from the same retrieved
+  evidence with the same instructions
+- [ ] Results include a written rubric, raw outputs, correctness, citation support, date
+  adherence, latency, peak VRAM and GPU/CPU split
+- [ ] Whether `bge-m3` fits alongside the candidate at the tested context is measured
+- [ ] Any default change is backed by the results and approved by me
+
+**Out of scope:** changing the default without my approval.
+
+**Depends on:** T-096
+**Notes:** needs the RTX 4090; without it, a runnable benchmark is prepared and the
+hardware results stay pending.
+
+---
+
+### T-096 — Configurable local chat model and context budget
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-096-model-config`  ·  **Phase:** v2-2 (P2-01)
+
+**Goal:** a supported local model can be chosen in one place, and packing follows that
+model's budget.
+
+**Why:** the model name, `NUM_CTX`, `NUM_PREDICT` and token counting are set in several
+modules today.
+
+**Acceptance criteria**
+- [ ] Model name, context size, output limit, sampling settings and thinking behaviour come
+  from one configuration interface; tests cover the selection
+- [ ] Packing reserves room for the system prompt, question and output from the selected
+  model's budget; test with oversized evidence
+- [ ] The token-count method per model is documented; a model without its own tokenizer
+  uses a documented estimate with headroom
+- [ ] A missing model or bad setting gives a clear error before generation, without
+  switching models
+- [ ] With the default configuration, answers and existing tests match the baseline
+
+**Out of scope:** changing the default model.
+
+**Depends on:** Phase v2-1 approved
+**Notes:** keep the `num_ctx` and `prompt_eval_count` hard rules (KB-005).
+
+---
+
+### T-095 — Mixed-source retrieval and scoped negative answers
+
+**Status:** todo
+**Size:** L  ·  **Branch:** `t/T-095-mixed-source-retrieval`  ·  **Phase:** v2-1 (P1-07)
+
+**Goal:** questions spanning papers and videos retrieve both, and "not found" answers say
+what was searched.
+
+**Why:** F14 shows videos crowding out papers, and a name like "Mistral" missing from top-k
+is not proof it was never mentioned.
+
+**Acceptance criteria**
+- [ ] F14 and the full frozen evaluation have a recorded baseline before any retrieval
+  change and a rerun after; regressions listed
+- [ ] Tests show a mixed-source question gets relevant papers and videos
+- [ ] Exact-name lookup has separate positive, negative and date-filter tests
+- [ ] A negative answer names its source and date scope, and any channel gaps or
+  title-only videos that limit it
+- [ ] Explicit source filters (T-068) and the shared context budget still hold
+
+**Out of scope:** tuning for F14 alone; replacing ChromaDB or `bge-m3`.
+
+**Depends on:** T-091, T-093, T-094
+**Notes:** the frozen data and original results stay unchanged. L because it evaluates
+before building; the baseline in the first criterion is the review point. Last ticket of
+v2 Phase 1, so its report is the phase checkpoint.
+
+---
+
+### T-094 — Audit and fix natural-language date interpretation
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-094-date-phrases-audit`  ·  **Phase:** v2-1 (P1-06)
+
+**Goal:** every supported date phrase has a defined, tested meaning, and the interval
+actually searched is shown.
+
+**Why:** some date phrases work and others fail, and a plausible answer doesn't prove the
+right filter was applied.
+
+**Acceptance criteria**
+- [ ] At least 30 English and Swedish phrases tested at a fixed reference date, covering
+  single days, rolling periods, "since" periods, calendar weeks and months, explicit dates,
+  ranges, and month, year and leap-year boundaries
+- [ ] Boundary rules are written down: inclusive ends, Monday-based weeks, month
+  arithmetic, omitted years, "since Monday" on a Monday
+- [ ] A question with time intent that can't be resolved asks for a date or offers the
+  manual range; it never searches all dates silently
+- [ ] An integration test shows the resolved interval reaches the retrieval filter
+- [ ] The UI shows the interval actually searched
+
+**Out of scope:** an LLM-based date parser.
+
+**Depends on:** T-093
+**Notes:** any change to a phrase that already works is listed for my review.
+
+---
+
+### T-093 — One reference date and timezone for parsing, filtering and answers
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-093-reference-date`  ·  **Phase:** v2-1 (P1-05)
+
+**Goal:** "today" means the same date in date parsing, retrieval and the answer prompt.
+
+**Why:** `app.py` anchors parsing to `latest_feed_date()`, while the answer prompt may use
+`date.today()`; with stale data the two disagree.
+
+**Acceptance criteria**
+- [ ] The mismatch is confirmed or ruled out in the current code before any change
+- [ ] One reference date, from a configured timezone (Europe/Stockholm by default), is
+  resolved once per question and passed to parsing, retrieval and generation; the clock is
+  injectable in tests
+- [ ] Fixed-clock tests cover a stale store, weekends, midnight and daylight-saving changes
+- [ ] A reversed manual range is rejected; a manual range plus a date phrase follows a
+  documented precedence
+- [ ] A requested period newer than the data says so, instead of moving the period back
+
+**Out of scope:** new date phrases (T-094).
+
+**Depends on:** T-091; runs after T-092
+**Notes:** the feed date (D-002) stays the filter field; coverage is shown separately from
+the reference date.
+
+---
+
+### T-092 — Correct required and optional model instructions in the README
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-092-readme-models`  ·  **Phase:** v2-1 (P1-04)
+
+**Goal:** the README lists exactly the models Since needs to run, with optional ones
+labelled.
+
+**Why:** the README says three models are required but gives two pull commands.
+
+**Acceptance criteria**
+- [ ] The models used at runtime and in evaluation scripts are checked against the code
+- [ ] The README's model count, commands and required/optional labels match the code
+- [ ] `qwen3:8b` is shown as optional for evaluation only, if the code confirms it
+- [ ] No code or model change
+
+**Out of scope:** changing the default model.
+
+**Depends on:** T-091
+**Notes:** revisit after v2 Phase 2.
+
+---
+
+### T-091 — Track YouTube completion per channel so a failed channel recovers its gap
+
+**Status:** todo
+**Size:** L  ·  **Branch:** `t/T-091-per-channel-watermarks`  ·  **Phase:** v2-1 (P1-03)
+
+**Goal:** a channel whose listing fails keeps its missing interval and fetches it on a later
+run, while other channels keep their progress.
+
+**Why:** the shared YouTube watermark advances even when a channel's listing fails, so that
+channel's missed videos are forgotten while the update reports success.
+
+**Acceptance criteria**
+- [ ] A test with one failing and one working channel reproduces the loss; the test that
+  asserts the old behaviour is replaced
+- [ ] Each channel records last attempted check, last successful check and newest content;
+  a failed or incomplete listing never advances its completed interval
+- [ ] A failed channel recovers its interval on a later run, also beyond the T-090 overlap
+- [ ] Migration from the shared watermark is backed up first, idempotent, survives
+  interruption, and does not mark old gaps as verified coverage; tests cover all three
+- [ ] Sources and the update status show channel failures and partial success
+
+**Out of scope:** per-video retry redesign, beyond investigating it.
+
+**Depends on:** T-090
+**Notes:** changes stored state (`data/watermark_youtube.json`), which needs my approval
+of the design before coding. L because the format change and the migration must ship
+together.
+
+---
+
+### T-090 — Recheck recent YouTube dates so later same-day uploads are found
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-090-youtube-recheck`  ·  **Phase:** v2-1 (P1-02)
+
+**Goal:** a video uploaded after the day's update is fetched by the next update.
+
+**Why:** the YouTube watermark is set to today, and the next run starts the day after, so a
+video uploaded later on the same day is skipped. Hugging Face already re-checks its last two
+days (T-015).
+
+**Acceptance criteria**
+- [ ] A test reproduces a same-day upload after an earlier update being skipped
+- [ ] A documented overlap window rechecks recent dates; a test shows the late upload is
+  found on the next run
+- [ ] Repeated and overlapping runs create no duplicate documents or chunks
+- [ ] Tests cover consecutive days, two runs in one day, midnight, and several days off
+- [ ] Captions, then Whisper, then title and description still apply in that order;
+  existing ingest tests pass
+
+**Out of scope:** per-channel tracking (T-091).
+
+**Depends on:** T-089
+**Notes:** document whether the late video arrives on the next day's automatic update or
+needs Update now.
+
+---
+
+### T-089 — Escape HTML in bracketed answer text
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-089-escape-bracket-html`  ·  **Phase:** v2-1 (P1-01)
+
+**Goal:** nothing in the model's answer can become active HTML, including text in square
+brackets.
+
+**Why:** a bracket that isn't a citation number skips escaping in `render_citation_chips()`
+and is rendered with HTML enabled. On 2026-10-09 a direct call turned a bracketed image tag
+into a live tag with an outside URL. That breaks D-020.
+
+**Acceptance criteria**
+- [ ] A regression test reproduces the bypass with an inert local fixture and passes after
+  the fix
+- [ ] Tests cover bracketed HTML, image tags, event-handler attributes, malformed and
+  unlinked citations, descriptive ranges, and text outside brackets
+- [ ] Unlinked brackets and bracketed prose stay visible as escaped text; valid citation
+  chips still link
+- [ ] Every other path that renders answer or source text with HTML is checked
+- [ ] D-020, `docs/OVERVIEW.md` and the T-073 results describe the verified behaviour,
+  without claiming prompt injection is solved
+
+**Out of scope:** other prompt-injection defences.
+
+**Depends on:** T-088
+
+---
+
+### T-088 — Preserve the pre-improvement baseline
+
+**Status:** done
+**Size:** M  ·  **Branch:** — (tag `v1-pre-improvement` and branch `v2-development`)  ·
+**Phase:** v2-0 (P0-01)
+
+**Goal:** the version before v2 work, and the local data it runs on, can be restored at any
+time.
+
+**Why:** v2 changes code, stored state and setup; the working version must stay recoverable.
+
+**Acceptance criteria**
+- [x] Baseline commit fixed: `8ed936f51eb006e8b110812315413f43e3c412c4`, the verified
+  `main` on 2026-10-09, clean working tree, identical to `origin/main`
+- [x] A backup outside the repository holds every git ref, the working copy with all
+  ignored local data, and the frozen evaluation dataset; 4186 files compared by SHA-256,
+  no differences
+- [x] Store backup checked: no writer running during the copy, SQLite `integrity_check` ok,
+  live store unchanged afterwards
+- [x] Restore tested in a temporary directory: bundle clone passes `git fsck --full`, 354
+  unit tests pass, and a real demo question is answered from the restored store with 12
+  citations
+- [x] Annotated tag `v1-pre-improvement` and branch `v2-development` point at `8ed936f`,
+  locally and on GitHub; `main` unchanged
+- [x] Restore steps documented next to the backup
+
+**Out of scope:** any application change.
+
+**Depends on:** —
+**Notes:** the commit the teacher approved could not be identified from the repository, its
+notes or the presentation-day ticket (T-070 is still open). So the tag is named
+`v1-pre-improvement`, not `v1-school-approved`: it marks the last `main` before v2, not a
+confirmed approved version. If the approved commit is identified later, it can get its own
+tag. The backup's location and contents are recorded in its private restore file, not
+here. Model weights and `.venv` are not backed up; exact versions are recorded with the
+backup.
+
+---
+
 ### T-087 — Tighten wording in the process documents
 
 **Status:** done
