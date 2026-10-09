@@ -172,13 +172,15 @@ class EnglishRelativeDaysAndMonthsTests(unittest.TestCase):
             (date(2026, 9, 12), date(2026, 9, 16)),
         )
 
-    def test_last_month_is_one_calendar_month_not_30_days(self):
+    def test_past_month_is_one_calendar_month_not_30_days(self):
         """Same convention as Swedish "senaste manaden": 2026-08-16, a calendar
-        month back, not today-30 (2026-08-17)."""
+        month back, not today-30 (2026-08-17). T-106: "in the last month" is asked
+        about instead (calendar or rolling?); "the past month" is the rolling form."""
         self.assertEqual(
-            extract_date_range("in the last month", date(2026, 9, 16)),
+            extract_date_range("over the past month", date(2026, 9, 16)),
             (date(2026, 8, 16), date(2026, 9, 16)),
         )
+        self.assertIsNone(extract_date_range("in the last month", date(2026, 9, 16)))
 
     def test_this_past_month_is_the_same_calendar_month_window(self):
         self.assertEqual(

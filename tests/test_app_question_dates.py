@@ -158,7 +158,7 @@ class AppDateFilterTests(_AppTestCase):
             ("Vad hände denna vecka?", TODAY, TODAY),
             ("Vad hände förra månaden?", date(2026, 9, 1), date(2026, 9, 30)),
             ("What happened this month?", date(2026, 10, 1), TODAY),
-            ("What happened in the last month?", date(2026, 9, 12), TODAY),
+            ("What happened over the past month?", date(2026, 9, 12), TODAY),
         ):
             with self.subTest(question=question):
                 at = self.ask(question)

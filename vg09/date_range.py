@@ -370,14 +370,13 @@ def _t094_phrases(q: str, today: date) -> DateRange | tuple[()] | None:
     if re.search(r"\b(?:den\s+h[aä]r\s+m[aå]naden|denna\s+m[aå]nad(?:en)?)\b", q):
         return today.replace(day=1), today
 
-    # T-105: "the last week" / "the last month" (with "the": "in the last week") are
-    # rolling, ending today. Without "the", "last week" and "last month" are the previous
-    # calendar week (Monday to Sunday) and calendar month; "this week" runs from this
-    # Monday through today. Checked before the older rolling patterns below.
-    if re.search(r"\bthe\s+last\s+week\b", q):
-        return _last_n_days(today, 7)
-    if re.search(r"\bthe\s+last\s+month\b", q):
-        return _subtract_months(today, 1), today
+    # T-105/T-106: "last week" and "last month" are the previous calendar week (Monday to
+    # Sunday) and calendar month; "this week" runs from this Monday through today. "The
+    # last week" / "in the last month" can be read either way, and "the" alone is no
+    # reliable sign, so they are asked about (`unresolved_time_phrase()`). Rolling periods
+    # are asked for with "past", a number or "senaste": "the past week", "the last 7 days".
+    if re.search(r"\bthe\s+last\s+(?:week|month)\b", q):
+        return ()
     monday = today - timedelta(days=today.weekday())
     if re.search(r"\b(?:last|previous)\s+week\b|\bf[oö]rra\s+veckan\b", q):
         return monday - timedelta(days=7), monday - timedelta(days=1)
@@ -558,7 +557,7 @@ _VAGUE_TIME_RE = re.compile(
     r"|(?:de\s+)?senaste\s+(?:veckorna|dagarna|m[aå]naderna|[aå]ren)"
     r"|recent\s+(?:weeks|days|months)|earlier\s+this\s+(?:week|month|year)"
     r"|tidigare\s+(?:i\s+veckan|i\s+m[aå]naden|i\s+[aå]r)"
-    r"|last\s+year|f[oö]rra\s+[aå]ret|i\s+fjol"
+    r"|last\s+year|f[oö]rra\s+[aå]ret|i\s+fjol|the\s+last\s+(?:week|month)"
     r"|(?:this|last|the)\s+weekend|i\s+helgen|f[oö]rra\s+helgen"
     r"|q[1-4]|quarter|kvartal(?:et)?|i\s+(?:h[oö]stas|v[aå]ras|somras|vintras)"
     r"|(?:week|weeks|day|days|month|months)\s+(?:after|before(?!\s+yesterday)|following|prior\s+to|leading\s+up\s+to)"
