@@ -13,6 +13,32 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-104 — Stop looking up members-only and private videos on every update
+
+**Status:** todo
+**Size:** S  ·  **Branch:** `t/T-104-unreadable-videos`  ·  **Phase:** v2-1 follow-up
+
+**Goal:** a listed video YouTube refuses to show costs one request, not one per update.
+
+**Why:** found in T-090 and kept by T-091: one real channel lists 6 members-only videos,
+and each update asks YouTube for each of them again and gets the same refusal. T-091
+records them per channel (`unreadable`) but still looks them up every run.
+
+**Acceptance criteria**
+- [ ] A video recorded as members-only or private is not looked up again for a set
+  period, documented with its reason; a test counts the lookups over several runs
+- [ ] It is looked up again after that period, so a video that becomes public is found;
+  test covers it
+- [ ] Sources still shows how many listed videos can't be read
+- [ ] A transient error is never recorded as unreadable
+
+**Out of scope:** fetching members-only content.
+
+**Depends on:** T-091
+**Notes:** the refusal texts matched today are in `youtube_backfill._UNREADABLE`.
+
+---
+
 ### T-103 — Fetch videos discovered after their recheck window has passed
 
 **Status:** todo
