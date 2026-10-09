@@ -356,7 +356,8 @@ class RetrieveIntegrationTests(unittest.TestCase):
             patch("vg09.retrieval.embed_batch", return_value=[[0.1, 0.2]]),
         ):
             retrieve("What's new this week?", date_range=None, ranking=False)
-        self.assertGreater(collection.query.call_args.kwargs["n_results"], 71)
+        # T-095: the first query is the main pool; per-source queries follow it.
+        self.assertGreater(collection.query.call_args_list[0].kwargs["n_results"], 71)
 
 
 if __name__ == "__main__":

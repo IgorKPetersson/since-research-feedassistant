@@ -33,6 +33,17 @@ _VIDEO_WORDS = (
 )
 
 
+def asks_for_both_sources(question: str) -> bool:
+    """T-095: the question names both papers and videos ("i både videor och artiklar",
+    "in both papers and videos"). Then each source must be in the answer's context
+    (`vg09.retrieval.MIN_CHUNKS_PER_SOURCE`). Not for other questions: on the frozen set
+    a quota for every question added off-topic papers to F14's context and pushed out
+    an expected video."""
+    q = question.lower()
+    return (re.search(r"\b(?:" + _PAPER_WORDS + r")\b", q) is not None
+            and re.search(r"\b(?:" + _VIDEO_WORDS + r")\b", q) is not None)
+
+
 def detect_source(question: str) -> str | None:
     """"hf" when the question names papers, "youtube" when it names videos, None when
     it names both or neither - None searches everything, as before."""

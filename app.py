@@ -42,6 +42,7 @@ from vg09.date_range import (
 from vg09.quote_links import misattributed_quotes, quote_times
 from vg09.source_filter import detect_source
 from vg09.retrieval import NUM_CTX, retrieve
+from vg09.scope import scope_lines, scope_prompt, search_scope
 from vg09.store import corpus_stats, is_empty, latest_feed_date
 from vg09.ui_helpers import (
     APP_NAME,
@@ -55,6 +56,7 @@ from vg09.ui_helpers import (
     dates_note,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    escape_markdown_text,
     format_corpus_summary,
     format_date_range_short,
     logo_mark_html,
@@ -273,7 +275,10 @@ def ask_page() -> None:
         packed_slot.metric("Packed", len(retrieval.chunks))
 
         start_t = time.monotonic()
-        result = generate_answer(question, retrieval.chunks, date_range=date_range, today=today)
+        # T-095: what was searched, for the model's prompt and for the user below.
+        searched = search_scope(date_range, source, retrieval.name_doc_counts, config.channels)
+        result = generate_answer(question, retrieval.chunks, date_range=date_range, today=today,
+                                 scope_note=scope_prompt(searched))
         elapsed = time.monotonic() - start_t
         time_slot.metric("Time", f"{elapsed:.1f}s")
 
@@ -308,6 +313,11 @@ def ask_page() -> None:
         quote_seconds=quote_times(result.answer, result.source_map),  # T-063
     )
     st.markdown(chip_answer, unsafe_allow_html=True)
+    # T-095: the scope a "not found" answer refers to, computed by the app. The lines carry
+    # names from the question and channel handles, so they are escaped (T-089).
+    with st.container(key="search_scope"):
+        for line in scope_lines(searched):
+            st.caption(escape_markdown_text(line))
 
     # T-064: a quote credited to a source that doesn't contain it is the answer's own
     # error, so it is said right under the answer, not tucked away with the sources.

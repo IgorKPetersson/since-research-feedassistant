@@ -285,10 +285,11 @@ class RetryOnLengthTests(unittest.TestCase):
 class ReservationArithmeticTests(unittest.TestCase):
     def test_chunk_budget_is_what_num_ctx_leaves_after_the_other_reservations(self):
         """docs/DESIGN.md § Remaining budget for retrieved chunks. 330 = the system
-        prompt, 40 = the reserved question size, 70 = T-061's date line (all measured, see
-        DESIGN.md); a change to NUM_PREDICT that forgets CHUNK_BUDGET_TOKENS (or vice
-        versa) fails here instead of silently overrunning num_ctx - the T-038 class of bug."""
-        self.assertEqual(CHUNK_BUDGET_TOKENS + 330 + 40 + 70 + NUM_PREDICT, NUM_CTX)  # T-073: 173 -> 330
+        prompt, 40 = the reserved question size, 70 = T-061's date line, 160 = T-095's
+        search-scope line (all measured, see DESIGN.md); a change to NUM_PREDICT that
+        forgets CHUNK_BUDGET_TOKENS (or vice versa) fails here instead of silently
+        overrunning num_ctx - the T-038 class of bug."""
+        self.assertEqual(CHUNK_BUDGET_TOKENS + 330 + 40 + 70 + 160 + NUM_PREDICT, NUM_CTX)
 
 
 if __name__ == "__main__":

@@ -127,7 +127,8 @@ _WEEKDAY_NAMES = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 
 def build_user_message(question: str, source_map: dict[int, Candidate],
                        today: date | None = None,
-                       date_range: tuple[date, date] | None = None) -> str:
+                       date_range: tuple[date, date] | None = None,
+                       scope_note: str | None = None) -> str:
     """Empty `source_map` produces an honest "no sources" note rather than a
     special-cased response - the system prompt's own instruction ("say so plainly")
     handles a query with nothing relevant retrieved. Formats each source via
@@ -144,6 +145,8 @@ def build_user_message(question: str, source_map: dict[int, Candidate],
 
         today = reference_date.today()
     dates = date_context(today, date_range)
+    if scope_note:  # T-095: what was searched, from vg09.scope.scope_prompt()
+        dates += " " + scope_note
     return f"Sources:\n\n{sources_block}\n\n{dates}\n\nQuestion: {question}"
 
 
@@ -185,7 +188,8 @@ def _chat_once(messages: list[dict], model: str) -> tuple[str, str, str, int]:
 
 def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MODEL,
                     date_range: tuple[date, date] | None = None,
-                    today: date | None = None) -> AnswerResult:
+                    today: date | None = None,
+                    scope_note: str | None = None) -> AnswerResult:
     """The real answer-generation call. A `done_reason == "length"` first attempt is
     repeated up to `MAX_RETRIES` times (T-039/D-014); if the last attempt is still cut
     off it is returned flagged as incomplete, not silently presented as finished, and
@@ -204,7 +208,8 @@ def generate_answer(question: str, chunks: list[Candidate], model: str = CHAT_MO
         # `today` is the real date unless a caller fixes it: T-069's frozen evaluation
         # tells the model the dataset's anchor, 2026-09-17, not the wall-clock date.
         {"role": "user", "content": build_user_message(question, source_map, today=today,
-                                                       date_range=date_range)},
+                                                       date_range=date_range,
+                                                       scope_note=scope_note)},
     ]
 
     retries = 0

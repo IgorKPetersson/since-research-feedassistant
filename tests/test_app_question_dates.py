@@ -18,6 +18,7 @@ from streamlit.testing.v1 import AppTest
 from vg09.answer import AnswerResult
 from vg09.retrieval import RetrievalResult
 from vg09.retrieval import retrieve as _REAL_RETRIEVE
+from vg09.scope import SearchScope
 from vg09.sources import Sources
 from vg09.ui_helpers import format_interval
 
@@ -61,6 +62,9 @@ class _AppTestCase(unittest.TestCase):
             ("vg09.coverage.papers_checked_through", {"return_value": date(2026, 9, 18)}),
             ("vg09.coverage.videos_checked_through", {"return_value": None}),
             ("vg09.sources.load", {"return_value": Sources(channels={"c": "u"}, saved=True)}),
+            # T-095: the scope reads the index; never the real one in a test.
+            ("vg09.scope.search_scope", {"side_effect": lambda dr, src, names, channels=None:
+                                         SearchScope(dr, src, papers=3, videos=2, name_counts=names)}),
         ):
             stack.enter_context(patch(target, **kwargs))
 
@@ -137,7 +141,15 @@ class AppDateFilterTests(_AppTestCase):
         stack.enter_context(patch("vg09.retrieval.embed_question", return_value=[0.0] * 4))
 
     def where(self) -> dict | None:
-        return self.collection.query.call_args.kwargs["where"]
+        """The main semantic query's filter. Since T-095 retrieval also makes per-source
+        and exact-name queries; the main one asks for the full candidate pool."""
+        from vg09.retrieval import CANDIDATE_POOL_SIZE
+
+        main = [c for c in self.collection.query.call_args_list
+                if c.kwargs.get("n_results") == CANDIDATE_POOL_SIZE
+                and "where_document" not in c.kwargs]
+        self.assertEqual(len(main), 1)
+        return main[0].kwargs["where"]
 
     def shown_interval(self, at) -> str:
         return next(c for c in self.texts(at.caption) if c.startswith(("Date filter", "No date")))
@@ -161,6 +173,7 @@ class AppDateFilterTests(_AppTestCase):
             ("What happened over the past month?", date(2026, 9, 12), TODAY),
         ):
             with self.subTest(question=question):
+                self.collection.query.reset_mock()
                 at = self.ask(question)
                 self.assert_filter(at, start, end)
                 self.assertIn("upload day in UTC", " ".join(self.texts(at.caption)))

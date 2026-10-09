@@ -38,8 +38,10 @@ NUM_CTX = 16000  # D-005 - the real, explicit num_ctx every call must set (the p
 # truncated 4 of 30 calls) = 11787, - 70 (T-061's date line before the question, 63
 # measured with a date range, the longer form) = 11717, - 157 (T-073: the system prompt
 # grew by 148 measured tokens, 179 -> 327 counted by Ollama, for the untrusted-data and
-# citation rules; reserved 330 instead of 173) = 11560
-CHUNK_BUDGET_TOKENS = 11560
+# citation rules; reserved 330 instead of 173) = 11560, - 160 (T-095: the search-scope
+# line after the date line, 120 measured on the live store, 150 for a constructed worst
+# case with four names and coverage gaps) = 11400
+CHUNK_BUDGET_TOKENS = 11400
 MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # transcript) can otherwise fill most/all of the top of the ranking by volume alone,
 # crowding out other, equally- or more-relevant documents represented by only one
@@ -66,6 +68,14 @@ MAX_CHUNKS_PER_DOC = 2  # T-027: a document with many chunks (a long YouTube
 # every question fills 96-99% of the budget (that one 97%, with 18 papers); 11 of 18
 # packed sets change, the 7 that were already full do not. Cost: +0.2 s median retrieval.
 CANDIDATE_POOL_SIZE = 200
+# T-095: a question that asks for both papers and videos gets at least this many chunks
+# of each source in the packed context when that source has any match, so one source can't
+# crowd the other out (F14 on the frozen set: 18 videos, no paper). Every question with no
+# source filter also gets this many extra candidates per source in its pool.
+MIN_CHUNKS_PER_SOURCE = 4
+PER_SOURCE_POOL_SIZE = 20
+NAME_CANDIDATES_PER_NAME = 10
+SOURCES = ("hf", "youtube")
 
 
 @dataclass
@@ -86,6 +96,8 @@ class RetrievalResult:
     candidates_after_dedup: int = 0  # T-042: surfaces dedup_by_doc()'s own already-
     # computed output count, for the UI's pipeline strip - not a new pipeline stage,
     # just exposing one that already ran
+    # T-095: documents in the searched scope that contain each exact name in the question
+    name_doc_counts: dict[str, int] = field(default_factory=dict)
 
 
 def count_qwen_tokens(text: str) -> int:
@@ -160,20 +172,9 @@ def embed_question(question: str) -> list[float]:
     return embed_batch([question])[0]
 
 
-def query_candidates(
-    question: str,
-    date_range: tuple[date, date] | None,
-    n_results: int = CANDIDATE_POOL_SIZE,
-    source: str | None = None,
-) -> list[Candidate]:
-    """Real Chroma similarity search, in Chroma's own relevance order. `date_range`,
-    when given, filters by `feed_date_ordinal` ($gte/$lte, KB-004) - never by the
-    `feed_date` string. Passing `date_range=None` runs genuinely unfiltered, which is
-    exactly what Phase 3's "plain retrieval" comparison arm calls with, regardless of
-    what `vg09.date_range` would have extracted from the question."""
-    collection = get_collection()
-    query_embedding = embed_question(question)
-
+def scope_where(date_range: tuple[date, date] | None, source: str | None) -> dict | None:
+    """The Chroma `where` clause for a date range and source filter: `feed_date_ordinal`
+    ($gte/$lte, KB-004), never the `feed_date` string."""
     conditions = []
     if date_range is not None:
         start, end = date_range
@@ -183,14 +184,58 @@ def query_candidates(
         ]
     if source is not None:  # T-068: "hf" or "youtube", from vg09.source_filter
         conditions.append({"source": source})
+    if not conditions:
+        return None
     # Chroma refuses an "$and" of a single condition.
-    where = None if not conditions else conditions[0] if len(conditions) == 1 \
-        else {"$and": conditions}
+    return conditions[0] if len(conditions) == 1 else {"$and": conditions}
+
+
+def name_candidates(question: str, date_range: tuple[date, date] | None, source: str | None,
+                    query_embedding: list[float]) -> tuple[list[Candidate], dict[str, int]]:
+    """T-095: chunks containing an exact name from the question, best match first, and
+    the number of documents in scope containing each name. A name found in more than
+    `DISTINCTIVE_MAX_DOCS` documents is counted but adds no candidates: it doesn't single
+    anything out."""
+    from vg09.exact_names import DISTINCTIVE_MAX_DOCS, exact_names, name_regex
+
+    collection = get_collection()
+    where = scope_where(date_range, source)
+    found: list[Candidate] = []
+    counts: dict[str, int] = {}
+    for name in exact_names(question):
+        pattern = {"$regex": name_regex(name)}
+        matches = collection.get(where=where, where_document=pattern, include=["metadatas"])
+        counts[name] = len({m["doc_id"] for m in matches["metadatas"]})
+        if not 0 < counts[name] <= DISTINCTIVE_MAX_DOCS:
+            continue
+        result = collection.query(query_embeddings=[query_embedding],
+                                  n_results=min(NAME_CANDIDATES_PER_NAME, len(matches["ids"])),
+                                  where=where, where_document=pattern)
+        found += [Candidate(id=i, text=t, metadata=m) for i, t, m in
+                  zip(result["ids"][0], result["documents"][0], result["metadatas"][0])]
+    return found, counts
+
+
+def query_candidates(
+    question: str,
+    date_range: tuple[date, date] | None,
+    n_results: int = CANDIDATE_POOL_SIZE,
+    source: str | None = None,
+    query_embedding: list[float] | None = None,
+) -> list[Candidate]:
+    """Real Chroma similarity search, in Chroma's own relevance order. `date_range`,
+    when given, filters by `feed_date_ordinal` ($gte/$lte, KB-004) - never by the
+    `feed_date` string. Passing `date_range=None` runs genuinely unfiltered, which is
+    exactly what Phase 3's "plain retrieval" comparison arm calls with, regardless of
+    what `vg09.date_range` would have extracted from the question."""
+    collection = get_collection()
+    if query_embedding is None:
+        query_embedding = embed_question(question)
 
     result = collection.query(
         query_embeddings=[query_embedding],
         n_results=n_results,
-        where=where,
+        where=scope_where(date_range, source),
     )
     ids = result["ids"][0]
     documents = result["documents"][0]
@@ -229,6 +274,29 @@ def dedup_by_doc(
         counts[doc_id] = counts.get(doc_id, 0) + 1
         deduped.append(c)
     return deduped
+
+
+def pack_balanced(
+    candidates: list[Candidate], min_each: int, budget_tokens: int = CHUNK_BUDGET_TOKENS
+) -> tuple[list[Candidate], int, list[str]]:
+    """T-095: `pack_to_budget()`, but the first `min_each` candidates of each source are
+    packed before the rest, so a source with any match is in the context. The packed
+    chunks are then put back in their original order, so relevance order (and the prompt's
+    least-relevant-first numbering) is unchanged."""
+    if min_each <= 0:
+        return pack_to_budget(candidates, budget_tokens)
+    # Taking turns, best first: each source's 1st chunk, then each source's 2nd, ..., so a
+    # tight budget still holds both sources.
+    by_source: dict[str, list[Candidate]] = {}
+    for c in candidates:
+        by_source.setdefault(c.metadata.get("source"), []).append(c)
+    quota = [chunks[k] for k in range(min_each) for chunks in by_source.values() if k < len(chunks)]
+    quota_ids = {c.id for c in quota}
+    rest = [c for c in candidates if c.id not in quota_ids]
+    packed, total, dropped = pack_to_budget(quota + rest, budget_tokens)
+    position = {c.id: i for i, c in enumerate(candidates)}
+    packed.sort(key=lambda c: position[c.id])
+    return packed, total, dropped
 
 
 def pack_to_budget(
@@ -278,10 +346,26 @@ def retrieve(
     script) decide those via `vg09.date_range.resolve_date_range()`/
     `detect_recency_ranking()`, or override them directly for a "plain retrieval"
     comparison run."""
-    candidates = query_candidates(question, date_range, n_results, source=source)
+    query_embedding = embed_question(question)
+    # T-095: exact-name matches first, then the semantic pool, then, with no source
+    # filter, each source's own best matches, so neither source is missing from the pool.
+    named, name_counts = name_candidates(question, date_range, source, query_embedding)
+    pools = [named, query_candidates(question, date_range, n_results, source=source,
+                                     query_embedding=query_embedding)]
+    if source is None:
+        pools += [query_candidates(question, date_range, PER_SOURCE_POOL_SIZE, source=s,
+                                   query_embedding=query_embedding) for s in SOURCES]
+    candidates, seen = [], set()
+    for c in (c for pool in pools for c in pool):
+        if c.id not in seen:
+            seen.add(c.id)
+            candidates.append(c)
     ordered = order_candidates(candidates, ranking)
     deduped = dedup_by_doc(ordered)
-    packed, total_tokens, dropped = pack_to_budget(deduped)
+    from vg09.source_filter import asks_for_both_sources
+
+    both = source is None and asks_for_both_sources(question)
+    packed, total_tokens, dropped = pack_balanced(deduped, MIN_CHUNKS_PER_SOURCE if both else 0)
     return RetrievalResult(
         chunks=packed,
         total_tokens=total_tokens,
@@ -290,4 +374,5 @@ def retrieve(
         ranking_used=ranking,
         candidates_considered=len(candidates),
         candidates_after_dedup=len(deduped),
+        name_doc_counts=name_counts,
     )
