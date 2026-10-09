@@ -122,6 +122,9 @@ ask a question, see the date range and coverage searched, and inspect the eviden
 - [ ] Representative questions asked in the app, including an empty or stale store and
   incomplete channel coverage; a sample of citations checked by hand against the sources
 - [ ] No open critical security or ingestion data-loss issue; other limits documented
+- [ ] T-103 (videos noticed after their recheck window are not fetched) is done, or its
+  remaining loss is measured on real data (late discoveries recorded per channel) and
+  reviewed and accepted by me in writing; T-104 is done or explicitly deferred
 - [ ] Release-candidate commit, tested configuration, restore steps, pilot instructions
   and a feedback checklist written for my review
 
