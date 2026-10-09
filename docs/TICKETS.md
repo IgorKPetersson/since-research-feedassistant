@@ -13,6 +13,37 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-103 — Fetch videos discovered after their recheck window has passed
+
+**Status:** todo
+**Size:** M  ·  **Branch:** `t/T-103-delayed-discovery`  ·  **Phase:** v2-1 follow-up
+
+**Goal:** a video that first appears in a channel's listing after its upload date has
+fallen out of the recheck window is still fetched, if it is within the backfill window.
+
+**Why:** a scheduled or premiered video can appear days after the date yt-dlp gives it
+(KB-040). T-090's two-day recheck misses it. T-091 no longer lets it hide other videos
+and records it per channel (`late`), but does not fetch it. Per-channel tracking alone
+does not solve this.
+
+**Acceptance criteria**
+- [ ] A test reproduces a video first listed 5 days after its upload date and shows it
+  fetched by the next update
+- [ ] Videos recorded as late are fetched at most once and keep stable ids; no
+  duplicate documents or chunks
+- [ ] What counts as "newly published" is documented: above the first id from the last
+  complete listing
+- [ ] Answers about the period the video is dated in can cite it once it is stored; the
+  feed-date rule (D-002) is kept or a decision records the change
+- [ ] Whether yt-dlp's `upload_date` for a scheduled video is the upload or the
+  publication date is checked against a real video and written down
+
+**Out of scope:** changing the recheck window itself.
+
+**Depends on:** T-091
+
+---
+
 ### v2 improvement backlog (T-088–T-102)
 
 Added 2026-10-09 from my ordered improvement list. All v2 work happens on `v2-development`,
