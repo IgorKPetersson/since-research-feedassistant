@@ -549,6 +549,17 @@ original Definition of done, added by explicit instruction (2026-10-02).
    The header follows the job every 3 seconds ("Updating… <step>"), reloads its counts
    when the job finishes without rerunning the page, and says in plain words when the
    last update failed ("Ollama isn't running" for a refused connection to port 11434).
+9. **YouTube recheck window (T-090, KB-040):** a catch-up starts at the day before the
+   YouTube watermark, not the day after it (`youtube_backfill.catch_up_start()`,
+   `RECHECK_DAYS = 2`). The watermark is the date of the last full run, and that run saw
+   only videos uploaded before it started; yt-dlp also dates videos in UTC, a day behind
+   local time just after midnight in Sweden. A video uploaded after an update is fetched
+   by the next one: Update now on the same day, or the automatic update on the first
+   opening of the next day (item 8 runs once a day). Rechecking is cheap and idempotent:
+   a video on disk is listed with its stored date and not fetched again, and its chunks
+   keep their ids, so the index stage skips them. Not covered: a video that appears more
+   than a day after its upload date, and in-window videos listed below an out-of-order
+   older entry, where the listing walk stops.
 
 **Not included:** scheduled ingest with the app closed (still a non-goal, D-018); choosing individual papers or
 filtering Hugging Face by topic; sources other than HF Daily Papers and YouTube;

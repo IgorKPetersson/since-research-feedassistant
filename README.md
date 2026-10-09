@@ -169,6 +169,11 @@ comparison (T-033). See
 - **YouTube's channel listing only exposes the latest ~15 videos per channel.** A long gap
   between catch-up runs on a very active channel can miss older videos that scrolled off
   that list before you caught up.
+- **A video uploaded after an update arrives with the next update.** That is either
+  **Update now** on the same day or the automatic update when you first open the app the
+  next day. Each YouTube update looks back over the last two days again, so a late upload
+  is not skipped. A video that only appears more than a day after its upload date can
+  still be missed.
 - **YouTube may block caption requests outright.** The fallback chain is real captions →
   local Whisper transcription → title and description only — the last of these gives
   noticeably weaker answers for the videos it applies to.

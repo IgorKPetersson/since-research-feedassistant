@@ -395,7 +395,7 @@ together.
 
 ### T-090 — Recheck recent YouTube dates so later same-day uploads are found
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-090-youtube-recheck`  ·  **Phase:** v2-1 (P1-02)
 
 **Goal:** a video uploaded after the day's update is fetched by the next update.
@@ -405,19 +405,39 @@ video uploaded later on the same day is skipped. Hugging Face already re-checks 
 days (T-015).
 
 **Acceptance criteria**
-- [ ] A test reproduces a same-day upload after an earlier update being skipped
-- [ ] A documented overlap window rechecks recent dates; a test shows the late upload is
-  found on the next run
-- [ ] Repeated and overlapping runs create no duplicate documents or chunks
-- [ ] Tests cover consecutive days, two runs in one day, midnight, and several days off
-- [ ] Captions, then Whisper, then title and description still apply in that order;
-  existing ingest tests pass
+- [x] A test reproduces a same-day upload after an earlier update being skipped →
+  `LateUploadRecheckTests`: 6 of 7 fail with the fix removed, all pass with it
+- [x] A documented overlap window rechecks recent dates; a test shows the late upload is
+  found on the next run → `catch_up_start()`, `RECHECK_DAYS = 2` (the watermark day and
+  the day before), used by both the ingest job and `vg09.catchup`; DESIGN § Sources page
+  item 9, README known limitations, KB-040
+- [x] Repeated and overlapping runs create no duplicate documents or chunks → test with
+  four updates over two days: each video looked up and fetched once, one file per id;
+  chunk ids are skipped by `build_store(only_new=True)` (existing `test_store` test); a
+  second real run fetched 0 videos and wrote 0 chunks
+- [x] Tests cover consecutive days, two runs in one day, midnight, and several days off →
+  same class, plus a weekend and month and year boundaries for `catch_up_start()`
+- [x] Captions, then Whisper, then title and description still apply in that order;
+  existing ingest tests pass → `_process_video()` and `normalize()` unchanged; the real
+  run fetched all three late videos through the Whisper tier; full suite 377 tests OK
 
 **Out of scope:** per-channel tracking (T-091).
 
 **Depends on:** T-089
-**Notes:** document whether the late video arrives on the next day's automatic update or
-needs Update now.
+**Notes:** a late upload arrives with the next update: Update now on the same day, or the
+automatic update on the first opening of the next day, which runs once a day (D-018).
+
+Real check on 2026-10-09, after that day's 16:01 update: a read-only listing of the five
+configured channels found three videos dated 2026-10-08 and 2026-10-09 that were not on
+disk. The old start, 2026-10-10, excluded all three. A real ingest run with the fix fetched
+all three (Whisper; captions were blocked) and added 59 chunks (3396 to 3455). A second
+run fetched nothing, counted 4 videos as already done, and added no chunks.
+
+Found and not fixed, outside this ticket: `_list_channel()` stops at the first unknown
+video dated before the window and assumes the listing is in date order. A later-listed
+video with an older date hides the in-window videos below it (KB-040, claim 3). Proposed
+for T-091, which already reworks channel completeness. Also seen: members-only videos
+can't be read and are looked up again on every run, which costs a request each.
 
 ---
 
