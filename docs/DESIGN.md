@@ -160,8 +160,9 @@ at their old packed size) are unchanged.
  -  330 (system prompt, T-073's untrusted-data and citation rules; 173 before)
  -   40 (question, reserved)
  -   70 (date line before the question, T-061)
+ -  160 (search-scope line after the date line, T-095: 120 measured, 150 worst case)
  - 4000 (reasoning + answer, T-039's measured reservation)
- = 11560 tokens available for retrieved chunks
+ = 11400 tokens available for retrieved chunks
 ```
 
 **Amended by T-073 (D-020):** the system prompt now names the `<<<SOURCE N BEGIN>>>` /
@@ -619,6 +620,34 @@ taken through Sources in a real browser: change the channel list, update, ask a 
 by the Whisper fallback, but slow — the progress line must show it); the job process
 dying without updating its status file (the status carries the process id and a
 heartbeat time, and a stale one is reported as interrupted, not as running).
+
+## Retrieval: exact names, both sources, and the search scope (T-095, D-023)
+
+Semantic search stays the base. Three additions, each measured on the frozen set with
+identical explicit date filters before and after
+(`scripts/t095_retrieval_eval.py`, `docs/eval-results/2026-10-09-t095-retrieval.md`):
+
+1. **Exact names** (`vg09/exact_names.py`, `retrieval.name_candidates()`). Words shaped
+   like names are matched as text with Chroma's `$regex` (`(?i)`, word boundaries; KB-042)
+   inside the same `where` filter. Each name's document count is kept. A name in at most
+   `DISTINCTIVE_MAX_DOCS` (25) documents adds its 10 best chunks to the front of the pool;
+   a commoner one ("Video", 234 documents) adds nothing.
+2. **Both sources** (`source_filter.asks_for_both_sources()`, `retrieval.pack_balanced()`).
+   A question naming papers and videos packs at least `MIN_CHUNKS_PER_SOURCE` (4) chunks
+   of each source with any match, taken in turns, then restored to relevance order.
+   Every question without a source filter also gets `PER_SOURCE_POOL_SIZE` (20) best
+   candidates per source in its pool, so a source can't be absent from the pool.
+3. **Search scope** (`vg09/scope.py`). After retrieval the app counts the documents in
+   the filter per source, videos by transcript kind, exact-name hits, and the YouTube
+   coverage holes for that range from the channel records: never checked, last check
+   failed or incomplete (with the date from which videos may be missing), unverified
+   gaps, unreadable videos, late discoveries (T-103), and history before the first
+   check. The lines are shown under the answer; a one-line version goes to the model
+   after the date line, with "say it was not found in these sources for this period".
+   The exact-name counts stay out of the model's line: in the first answer run the model
+   repeated "'Copding' in no source" for a typo in F04 and "'Palantir' in no source" over
+   the misspelling it had found itself in F12.
+   The count of documents searched is the filter's, not the packed context's.
 
 ## Reference date and date filters (T-093, D-022)
 

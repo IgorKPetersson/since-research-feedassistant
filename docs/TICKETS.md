@@ -399,7 +399,7 @@ modules today.
 
 ### T-095 — Mixed-source retrieval and scoped negative answers
 
-**Status:** todo
+**Status:** done
 **Size:** L  ·  **Branch:** `t/T-095-mixed-source-retrieval`  ·  **Phase:** v2-1 (P1-07)
 
 **Goal:** questions spanning papers and videos retrieve both, and "not found" answers say
@@ -409,13 +409,23 @@ what was searched.
 is not proof it was never mentioned.
 
 **Acceptance criteria**
-- [ ] F14 and the full frozen evaluation have a recorded baseline before any retrieval
-  change and a rerun after; regressions listed
-- [ ] Tests show a mixed-source question gets relevant papers and videos
-- [ ] Exact-name lookup has separate positive, negative and date-filter tests
-- [ ] A negative answer names its source and date scope, and any channel gaps or
-  title-only videos that limit it
-- [ ] Explicit source filters (T-068) and the shared context budget still hold
+- [x] F14 and the full frozen evaluation have a recorded baseline before any retrieval
+  change and a rerun after; regressions listed → `docs/eval-results/2026-10-09-t095-retrieval.md`,
+  retrieval and answers, identical explicit filters from `docs/eval-expectations.json`
+- [x] Tests show a mixed-source question gets relevant papers and videos → partly:
+  `test_retrieve_applies_the_quota_only_when_both_are_asked_for` and F15 on the frozen
+  set get both, F15's papers on topic; **F14 gets papers, but not relevant ones** (a
+  remaining limit, below)
+- [x] Exact-name lookup has separate positive, negative and date-filter tests →
+  `NameCandidateTests` against a real in-memory Chroma collection
+- [x] A negative answer names its source and date scope, and any channel gaps or
+  title-only videos that limit it → `vg09/scope.py`; lines under the answer, one line in
+  the prompt; F09 answered "not mentioned in the provided sources for the period
+  covered"; channel notes checked in the live app
+- [x] Explicit source filters (T-068) and the shared context budget still hold → source
+  filter tests unchanged and passing; budget 11400 with the scope line reserved
+  (`test_answer.ReservationArithmeticTests`); every answer run stayed under 11,700
+  prompt tokens of 16,000
 
 **Out of scope:** tuning for F14 alone; replacing ChromaDB or `bge-m3`.
 
@@ -423,6 +433,19 @@ is not proof it was never mentioned.
 **Notes:** the frozen data and original results stay unchanged. L because it evaluates
 before building; the baseline in the first criterion is the review point. Last ticket of
 v2 Phase 1, so its report is the phase checkpoint.
+
+Result (D-023): answers pass 13 of 15 against the key, from 11 of 15. F02 gains through
+retrieval (all five key papers in context); F06 and F12 change with the same context, so
+the scope line or sampling. F04 and F14 still fail. A first after-run regressed F04 and
+F12 because exact-name counts were in the prompt; they were moved to the app's lines.
+Rejected after measuring: BM25 fusion, a quota for every question.
+
+Added by my approval of P1-07: versioned expectations (`docs/eval-expectations.json`, v1 =
+the key as written, v2 = corrected F11 with 146 papers counted in the frozen archive); the
+original F11 discrepancy (key window 2026-09-10 – 16, graded filter 2026-09-11 – 17, 32
+papers outside) and a similar one for F15 are recorded there and in the results. KB-042
+(Chroma `$contains` vs `$regex`). Full suite 453 tests OK. The frozen archive's SHA-256
+matches the P0 backup; `docs/eval-questions.md` and the earlier results are unchanged.
 
 ---
 

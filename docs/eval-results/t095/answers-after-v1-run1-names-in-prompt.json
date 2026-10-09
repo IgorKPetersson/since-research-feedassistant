@@ -1,0 +1,2376 @@
+{
+ "code": "after: t/T-095-mixed-source-retrieval",
+ "version": "v1",
+ "results": {
+  "F01": {
+   "question": "I området Recursive self-improvement, vad är de två senaste nyheterna och vad handlar de om?",
+   "answer": "The two most recent papers about Recursive self-improvement (RSI) with feed dates of 2026-09-16 are:\n\n[30] ScienceBuddy: Recursive-in-Recursive Self-Improvement for Interactive Scientific Agents, which introduces a paradigm that couples harness evolution with model reinforcement learning. It creates an \"inner recursion\" that improves the harness while keeping the model fixed, and an \"outer recursion\" that trains the model under the improved harness. This approach transforms researcher requests, feedback, and execution evidence into tasks for continual learning, enabling scientific AI to evolve alongside the research it supports [30].\n\n[31] ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement, which proposes a framework that contrasts successful and failed trajectories for the same task and aggregates evidence across tasks to identify recurring behavioral deficiencies. It decomposes the evolvable harness into five functional modules (Agent Loop, Tool Use, Observation Management, Context Management, and Task Completion Detection) that evolve independently within a restricted modification scope before being integrated into a unified harness [31].",
+   "incomplete": false,
+   "prompt_eval_count": 11265,
+   "sources": {
+    "1": [
+     "2609.04280",
+     "2026-09-09",
+     "EVOHARNESSBENCH: Can Your Agents Keep Pace with an Evolving Harness?"
+    ],
+    "2": [
+     "2609.00787",
+     "2026-09-09",
+     "StudyBench: Can Self-Evolution Squeeze Textbooks for Olympiad Capability?"
+    ],
+    "3": [
+     "2609.08183",
+     "2026-09-09",
+     "NeoHorse-1: Towards Recursive Self-Improvement via Agentic Post-Training with Routing Harness"
+    ],
+    "4": [
+     "2609.09113",
+     "2026-09-10",
+     "SAEScientist-Bench: Can AI Agents Conduct Autonomous SAE Interpretability Research?"
+    ],
+    "5": [
+     "2609.06806",
+     "2026-09-10",
+     "Train Smarter, Not Harder: Switching Signal-Guided Training in Active Learning"
+    ],
+    "6": [
+     "2609.06490",
+     "2026-09-10",
+     "OracleZoom: On-Policy Self-Distillation Inspired Reference-Constrained Recursive Image Super Resolution"
+    ],
+    "7": [
+     "2609.11929",
+     "2026-09-11",
+     "SenseNova-U1.5: Towards Native Unified Visual Intelligence"
+    ],
+    "8": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "9": [
+     "2609.09076",
+     "2026-09-11",
+     "ActReview: Rebuttal-Guided Training Data and Rubric Rewards for Actionable Peer Review Generation"
+    ],
+    "10": [
+     "2608.15380",
+     "2026-09-11",
+     "Adaptive Bridge: A Proxy-Based Decoupling Layer for Mitigating DDS Backpressure in ROS 2"
+    ],
+    "11": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "12": [
+     "2609.08365",
+     "2026-09-14",
+     "ReMoMask-2: Latent Retrieval-Augmented Masked Motion Generation"
+    ],
+    "13": [
+     "2609.08230",
+     "2026-09-14",
+     "ActionSplice: In-Flight Action Editing for Interactive World Models"
+    ],
+    "14": [
+     "2609.07099",
+     "2026-09-14",
+     "Ambient @ EgoProactive 2026 : Proactive Egocentric Assistance with Visually Grounded Supervision"
+    ],
+    "15": [
+     "2609.06107",
+     "2026-09-14",
+     "DataFlex-RL: An Evaluation Platform for RLVR Data Policies"
+    ],
+    "16": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "17": [
+     "2609.08418",
+     "2026-09-14",
+     "Feyospace-v1: How the Cyber Mercury Seven Trained Frontier Cyber Models"
+    ],
+    "18": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "19": [
+     "2609.13463",
+     "2026-09-15",
+     "Root-Cause Attribution Is a Search Problem: Continual Search for Long-Horizon Agent Failures"
+    ],
+    "20": [
+     "2609.14973",
+     "2026-09-15",
+     "PhysBrain 1.5: From Vision-Language Models to Physical Foundation Models"
+    ],
+    "21": [
+     "2609.12419",
+     "2026-09-15",
+     "MInTRL: Off-policy Intervention can boost On-policy RL"
+    ],
+    "22": [
+     "2609.14708",
+     "2026-09-15",
+     "Lightning Weave: Improving the Accuracy-Efficiency Frontier of Reasoning Models through Capability Composition"
+    ],
+    "23": [
+     "2609.15504",
+     "2026-09-15",
+     "How Lossless Is Lossless Speculative Decoding? The Role of Numerical Precision in Orthrus"
+    ],
+    "24": [
+     "2609.15364",
+     "2026-09-15",
+     "RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments"
+    ],
+    "25": [
+     "2609.14858",
+     "2026-09-15",
+     "Dream-RSI: Recursive Self-Improvement through Evolving Worlds"
+    ],
+    "26": [
+     "2609.14803",
+     "2026-09-16",
+     "Another Blueprint In The Wall: How to Ask Frontier AI Like a Kid?"
+    ],
+    "27": [
+     "2609.06986",
+     "2026-09-16",
+     "Continual Learning Mechanisms Compose for Long-Horizon Memorization"
+    ],
+    "28": [
+     "2609.13680",
+     "2026-09-16",
+     "Drift-Constrained Optimization: Only Direction Matters in Fine-Tuning Instruct Models"
+    ],
+    "29": [
+     "2609.15975",
+     "2026-09-16",
+     "Disentangling Representation Evolution in Transformers through Directional Decomposition"
+    ],
+    "30": [
+     "2609.17523",
+     "2026-09-16",
+     "ScienceBuddy: Recursive-in-Recursive Self-Improvement for Interactive Scientific Agents"
+    ],
+    "31": [
+     "2609.14857",
+     "2026-09-16",
+     "ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement"
+    ],
+    "32": [
+     "2609.11873",
+     "2026-09-16",
+     "The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. Exact text: “Recursive” in 29 sources. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F02": {
+   "question": "Vad har hänt med GUI agents den senaste månaden?",
+   "answer": "Based on the provided sources, several significant developments have occurred with GUI agents in the past month:\n\nA new benchmark called GUI-Primitives was introduced to diagnose spatial reasoning failures in vision-language GUI grounding, featuring 994 contrastive instruction pairs over seven spatial relations in graphical user interfaces [26]. This addresses a critical gap in evaluating how well agents understand spatial relationships within UIs.\n\nThe AnTrap benchmark was developed to systematically evaluate GUI agents' robustness against runtime anomalies, revealing that even top models suffer significant performance degradation when encountering dynamic issues like unexpected pop-ups [27].\n\nMobilePA-Bench was presented as a comprehensive benchmark for evaluating mobile planning agents, featuring 13 functional domains and 212 realistic mobile tools, with evaluation across dimensions like sub-agent collaboration and memory usage [25].\n\nUI-Mate was introduced as a foundation GUI agent that integrates an environment-grounded training stack with in-context demonstration learning, setting a new open-weight state of the art on general computer-use benchmarks with 77.0% on OSWorld-Verified [29].\n\nLLaDA-UI was developed as a block-wise diffusion vision-language GUI agent that outperforms existing models like Qwen2.5-VL-7B on multiple GUI benchmarks, demonstrating the effectiveness of diffusion models for latency-sensitive GUI applications [28].\n\nUI-Venus-2 was introduced as a general-purpose foundation GUI agent designed to operate across mobile, web, and desktop environments through a unified closed-loop reasoning-action framework, expanding environment coverage to over 170 multilingual mobile apps and native desktop operating systems [30].\n\nEASEL was proposed as a benchmark evaluating dexterous visual tool use in multimodal agents, which is a critical capability for fine-grained visual action in GUI environments [23].\n\nTRACE was introduced to address the memory and latency challenges GUI agents face when accumulating high-resolution screenshots during trajectories, using trajectory-robust admission with evidence ordering [21].",
+   "incomplete": false,
+   "prompt_eval_count": 11403,
+   "sources": {
+    "1": [
+     "2608.14667",
+     "2026-08-18",
+     "Position: AI Agents in Scientific Teams Should Be Studied as Human-Agent Systems"
+    ],
+    "2": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "3": [
+     "2608.30478",
+     "2026-09-02",
+     "Agents in the Large: Perception-Centered Architecture for Persistent Agents"
+    ],
+    "4": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "5": [
+     "IpEaSa7tgfc",
+     "2026-08-26",
+     "Agents Aren't Taking Your Jobs. They're Creating More Work Instead."
+    ],
+    "6": [
+     "msfMqW92Y8Q",
+     "2026-08-27",
+     "Watch This If Your Coding Agent is Ignoring Your Rules (You Need Hooks)"
+    ],
+    "7": [
+     "2608.19861",
+     "2026-08-21",
+     "PolicyGuide: From Guarding One Action to Guiding the Whole Workflow for Policy-Compliant LLM Agents"
+    ],
+    "8": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "9": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "10": [
+     "CSCwaqVqHGE",
+     "2026-08-28",
+     "How I Fight AI Brain Rot. Friction Maxxing With Codex, Grok And Claude."
+    ],
+    "11": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "12": [
+     "6XgSpFdD3EU",
+     "2026-08-25",
+     "BMAD's Founder on the Future of AI Coding (And the Slop Apocalypse)"
+    ],
+    "13": [
+     "6XgSpFdD3EU",
+     "2026-08-25",
+     "BMAD's Founder on the Future of AI Coding (And the Slop Apocalypse)"
+    ],
+    "14": [
+     "IpEaSa7tgfc",
+     "2026-08-26",
+     "Agents Aren't Taking Your Jobs. They're Creating More Work Instead."
+    ],
+    "15": [
+     "qYe1GsMRElw",
+     "2026-08-30",
+     "Runable Raised $21 Million On Agents That Finish. Nobody Told Yours What Done Means."
+    ],
+    "16": [
+     "qYe1GsMRElw",
+     "2026-08-30",
+     "Runable Raised $21 Million On Agents That Finish. Nobody Told Yours What Done Means."
+    ],
+    "17": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "18": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "19": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "20": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "21": [
+     "2609.10297",
+     "2026-09-14",
+     "TRACE: Trajectory-robust Admission with Evidence Ordering for Efficient GUI Agents"
+    ],
+    "22": [
+     "2608.26200",
+     "2026-08-28",
+     "GameWAM: A World Action Model for Video Games"
+    ],
+    "23": [
+     "2608.25417",
+     "2026-08-31",
+     "Paint What You See: Benchmarking Dexterous Visual Tool Use in Multimodal Agents"
+    ],
+    "24": [
+     "2608.20707",
+     "2026-08-24",
+     "Towards Faithful Simulation of Human Shopping Behavior"
+    ],
+    "25": [
+     "2608.23035",
+     "2026-08-25",
+     "MobilePA-Bench: Benchmarking Mobile Planner Agents on Complex Real-World Tasks"
+    ],
+    "26": [
+     "2608.21832",
+     "2026-08-27",
+     "GUI-Primitives: Diagnosing Spatial Reasoning Failures in Vision-Language GUI Grounding"
+    ],
+    "27": [
+     "2608.24099",
+     "2026-08-27",
+     "Are Android GUI Agents Robust Against Runtime Anomalies? AnTrap: Evaluating Agents in Dynamic Adversarial Environments"
+    ],
+    "28": [
+     "2609.13287",
+     "2026-09-15",
+     "LLaDA-UI: Bringing Block-wise Diffusion to Vision-Language GUI Agents"
+    ],
+    "29": [
+     "2608.15930",
+     "2026-08-18",
+     "UI-Mate: Advancing Open-Weight Foundation GUI Agents with In-Context Demonstrations"
+    ],
+    "30": [
+     "2609.00028",
+     "2026-09-02",
+     "UI-Venus-2 Technical Report"
+    ]
+   },
+   "scope_note": "The search covered 683 papers and 41 videos dated 2026-08-17 to 2026-09-17. 1 of the videos have only a title and description, no transcript. Exact text: “GUI” in 12 sources. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F03": {
+   "question": "Vad är det absolut  senaste inom Video genereation och är det hårdvaru- eller mjukvarurelaterat?",
+   "answer": "The absolute latest in video generation as of the most recent sources is PhysStream [31], which was published on 2026-09-16. PhysStream is a software-based framework for physics-grounded image-to-video synthesis that incorporates structured scene memory (positional maps and object tracking maps derived online) and supports fine-grained motion control through sparse velocity-increment signals. It's designed for interactive, mid-generation control over multi-object tabletop rigid-body scenes, improving physical consistency by reducing motion distribution distance (FVMD) by 33% and trajectory error by 12% over baseline methods.\n\nPhysStream is clearly software-related rather than hardware-related, as it describes a model architecture with specific technical components like bidirectional model finetuning and causal autoregressive training [31]. The framework focuses on improving the quality and controllability of generated videos through algorithmic innovations rather than hardware advancements.\n\nThe next most recent video generation work is LynnReal-Omni [29], which also describes a software framework for native multimodal video generation that achieves faster inference (377 ms for 22-frame 540p video on a single H100 GPU), but PhysStream is the absolute latest with a 2026-09-16 publication date [31].",
+   "incomplete": false,
+   "prompt_eval_count": 11333,
+   "sources": {
+    "1": [
+     "2609.02780",
+     "2026-09-07",
+     "ShallowStream: Index Shallow then Answer Deep for Streaming Video Understanding"
+    ],
+    "2": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "3": [
+     "2609.04190",
+     "2026-09-07",
+     "One Editor, Many Edits: A Unified Training-Free Framework for Diverse Video Editing"
+    ],
+    "4": [
+     "2609.06758",
+     "2026-09-09",
+     "Agentic Visual Generation: From Generative Models to Agentic Control"
+    ],
+    "5": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "6": [
+     "2609.06652",
+     "2026-09-09",
+     "VidaForge: Open Research Infrastructure for Video Pretraining Data Recipes"
+    ],
+    "7": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "8": [
+     "2609.08108",
+     "2026-09-09",
+     "SynthGait-19K: A Physically Grounded Synthetic Video Dataset for Gait Parameter Estimation"
+    ],
+    "9": [
+     "2609.06373",
+     "2026-09-09",
+     "Multi-Grid Post-Training for Long-Form Multi-Shot Video Generation"
+    ],
+    "10": [
+     "2609.05779",
+     "2026-09-10",
+     "Diffs vs. Whole Files: An Empirical Comparison of Iterative Edit-Based and Direct Generation for Flutter/Dart Code Models"
+    ],
+    "11": [
+     "q9tpIc8PVKM",
+     "2026-09-10",
+     "New BEST AI image generator is here"
+    ],
+    "12": [
+     "2609.09187",
+     "2026-09-10",
+     "AgenticGen: Reward-Guided Agentic Video Generation for Advertising"
+    ],
+    "13": [
+     "2609.10540",
+     "2026-09-10",
+     "Programmable World Model"
+    ],
+    "14": [
+     "2609.10355",
+     "2026-09-10",
+     "Why Is Video Still So Expensive? A Survey of Inference-Efficiency Mechanisms in Video and Audiovisual LLMs"
+    ],
+    "15": [
+     "2609.07369",
+     "2026-09-10",
+     "DF26: We Cannot Tell Fake From Real Anymore"
+    ],
+    "16": [
+     "2609.11929",
+     "2026-09-11",
+     "SenseNova-U1.5: Towards Native Unified Visual Intelligence"
+    ],
+    "17": [
+     "2609.01515",
+     "2026-09-11",
+     "TempCloze: Can Video-LLMs Identify the Missing Middle?"
+    ],
+    "18": [
+     "2609.11548",
+     "2026-09-11",
+     "World in World: Explore the World with World Models"
+    ],
+    "19": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "20": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "21": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "22": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "23": [
+     "SWEThyRHMgQ",
+     "2026-09-15",
+     "My NEW FAVORITE Skill - Claude Code Drives My Whole Computer (Better Computer Use)"
+    ],
+    "24": [
+     "9RtywbN--QE",
+     "2026-09-15",
+     "Forget Suno. New BEST local AI music generator is here!"
+    ],
+    "25": [
+     "9RtywbN--QE",
+     "2026-09-15",
+     "Forget Suno. New BEST local AI music generator is here!"
+    ],
+    "26": [
+     "2609.11638",
+     "2026-09-15",
+     "Vidu S2: Real-Time Interactive, Editable, and Spatial Video Generation"
+    ],
+    "27": [
+     "2609.15478",
+     "2026-09-15",
+     "BVB: Benchmarking Agentic Video Understanding via Programmatic Reconstruction in Blender"
+    ],
+    "28": [
+     "2609.14462",
+     "2026-09-15",
+     "AlayaVista: Streaming World Modeling from Panoramic States to Perspective Video"
+    ],
+    "29": [
+     "2609.15863",
+     "2026-09-15",
+     "LynnReal-Omni: Native multi-modal Video Generation for Agentic Visual Workflows"
+    ],
+    "30": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "31": [
+     "2609.17521",
+     "2026-09-16",
+     "PhysStream: Streaming Physics-Grounded Video Generation with Structured Scene Memory and Fine-Grained Motion Control"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. Exact text: “Video” in 234 sources. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F04": {
+   "question": "Den senaste veckan, vad har sagts om Copding Agents. Vänligen sammanfatta.",
+   "answer": "The exact phrase \"Copding Agents\" was not found in any of the provided sources. The instruction explicitly states: \"Exact text: 'Copding' in no source; 'Agents' in 34 sources.\" [31] There is no mention of \"Copding\" or \"Copding Agents\" in any of the 31 sources listed, which cover research papers and YouTube videos dated between 2026-09-11 and 2026-09-17. [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] [25] [26] [27] [28] [29] [30] [31]",
+   "incomplete": false,
+   "prompt_eval_count": 11589,
+   "sources": {
+    "1": [
+     "2609.15982",
+     "2026-09-16",
+     "The Router Within: Eliciting Native Skill Routing from a Frozen LLM"
+    ],
+    "2": [
+     "2609.14708",
+     "2026-09-15",
+     "Lightning Weave: Improving the Accuracy-Efficiency Frontier of Reasoning Models through Capability Composition"
+    ],
+    "3": [
+     "2609.15818",
+     "2026-09-15",
+     "Atria Dawn: The Dawn of Agentic Superintelligence"
+    ],
+    "4": [
+     "2609.13498",
+     "2026-09-15",
+     "Building a Production Greek-English Speech Recognizer"
+    ],
+    "5": [
+     "2609.15364",
+     "2026-09-15",
+     "RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments"
+    ],
+    "6": [
+     "2609.07154",
+     "2026-09-14",
+     "Ambient @ EgoLongQA 2026: Distilling Long-Video perception into a Sub-2B Model"
+    ],
+    "7": [
+     "2609.05903",
+     "2026-09-11",
+     "EvoSafeHarness: Evolving Model- and Domain-Specific Harnesses for Securing Agents"
+    ],
+    "8": [
+     "2609.11682",
+     "2026-09-14",
+     "COBRA-Skills: Contextual Bandit-Guided Evolution for Agent Skill Optimization"
+    ],
+    "9": [
+     "mjQlZrteMIY",
+     "2026-09-17",
+     "You Built Your AI Second Brain. Now What? (Here's How to Evolve It)"
+    ],
+    "10": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "11": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "12": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "13": [
+     "mjQlZrteMIY",
+     "2026-09-17",
+     "You Built Your AI Second Brain. Now What? (Here's How to Evolve It)"
+    ],
+    "14": [
+     "2609.15134",
+     "2026-09-15",
+     "HazardAuditor: From Executable Threats to Safer Computer-Use Agents"
+    ],
+    "15": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "16": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "17": [
+     "2609.12541",
+     "2026-09-15",
+     "Agent as Policy for Robotic Manipulation"
+    ],
+    "18": [
+     "2609.08418",
+     "2026-09-14",
+     "Feyospace-v1: How the Cyber Mercury Seven Trained Frontier Cyber Models"
+    ],
+    "19": [
+     "2609.17320",
+     "2026-09-16",
+     "Emergence World: Adversarial Stress-Testing of Long-Horizon Multi-Agent Systems"
+    ],
+    "20": [
+     "zDPuEPDXCpU",
+     "2026-09-11",
+     "Is Omarchy The Last Desktop You'll Ever Need?"
+    ],
+    "21": [
+     "SWEThyRHMgQ",
+     "2026-09-15",
+     "My NEW FAVORITE Skill - Claude Code Drives My Whole Computer (Better Computer Use)"
+    ],
+    "22": [
+     "zDPuEPDXCpU",
+     "2026-09-11",
+     "Is Omarchy The Last Desktop You'll Ever Need?"
+    ],
+    "23": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "24": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "25": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "26": [
+     "SWEThyRHMgQ",
+     "2026-09-15",
+     "My NEW FAVORITE Skill - Claude Code Drives My Whole Computer (Better Computer Use)"
+    ],
+    "27": [
+     "2609.11977",
+     "2026-09-14",
+     "Occamy-1.0: Open Pareto-frontier 35B Intelligence for Co-work"
+    ],
+    "28": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "29": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "30": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "31": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ]
+   },
+   "scope_note": "The search covered 105 papers and 11 videos dated 2026-09-11 to 2026-09-17. Exact text: “Copding” in no source; “Agents” in 34 sources. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F05": {
+   "question": "Har NeoHorse nämnts de senaste två veckorna?",
+   "answer": "Yes, NeoHorse was mentioned in source [29], which is titled \"NeoHorse-1: Towards Recursive Self-Improvement via Agentic Post-Training with Routing Harness\" and has a feed date of 2026-09-09 [29]. This source describes NeoHorse-1 as \"a family of agent-native models developed to explore this path through agentic post-training\" that focuses on \"recursive self-improvement\" and includes \"a heterogeneous model pool with intelligent routing\" [29]. The paper was published on 2026-09-09, which falls within the last two weeks (from 2026-09-03 to 2026-09-17) as requested [29].",
+   "incomplete": false,
+   "prompt_eval_count": 11260,
+   "sources": {
+    "1": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "2": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "3": [
+     "2609.15504",
+     "2026-09-15",
+     "How Lossless Is Lossless Speculative Decoding? The Role of Numerical Precision in Orthrus"
+    ],
+    "4": [
+     "2609.07099",
+     "2026-09-14",
+     "Ambient @ EgoProactive 2026 : Proactive Egocentric Assistance with Visually Grounded Supervision"
+    ],
+    "5": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "6": [
+     "2609.10712",
+     "2026-09-11",
+     "An Open Recipe for IMO Gold: Training Nemotron for Olympiad Mathematics"
+    ],
+    "7": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "8": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "9": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "10": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "11": [
+     "2609.08418",
+     "2026-09-14",
+     "Feyospace-v1: How the Cyber Mercury Seven Trained Frontier Cyber Models"
+    ],
+    "12": [
+     "2609.05663",
+     "2026-09-09",
+     "What LLM Trading Agents Actually Do in Production: A Six-Month, Population-Scale Record from Two Fleets"
+    ],
+    "13": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "14": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "15": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "16": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "17": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "18": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "19": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "20": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "21": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "22": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "23": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "24": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "25": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "26": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "27": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "28": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "29": [
+     "2609.08183",
+     "2026-09-09",
+     "NeoHorse-1: Towards Recursive Self-Improvement via Agentic Post-Training with Routing Harness"
+    ]
+   },
+   "scope_note": "The search covered 255 papers and 21 videos dated 2026-09-04 to 2026-09-17. 1 of the videos have only a title and description, no transcript. Exact text: “NeoHorse” in 1 source. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F06": {
+   "question": "Vad är det senaste inom benchmarking av coding agents?",
+   "answer": "Based on the provided sources, the most recent and comprehensive information about benchmarking of coding agents comes from [25] Benchmark Radar, which is a \"living database and search engine for retrieval and discovery of AI benchmarks, covering LLM evaluation, agentic and tool-use benchmarks, coding, reasoning, safety, and domain-specific evaluations\" with a feed date of 2026-09-14.\n\nThis source describes Benchmark Radar as containing \"1,283 source records drawn from 4 benchmark catalogs and 12,916 numeric observations on 790 records,\" making it a comprehensive resource for discovering coding benchmarks [25].\n\nAdditionally, [20] mentions that \"Software engineering benchmarks like Swebench or Deep Suite are already getting saturated very quickly\" and introduces a new benchmark called \"Real Suite\" that \"tests whether an AI can handle actual software engineering work,\" noting that \"Fable and GPT6 scored less than 40%\" on this benchmark [20].\n\n[15] SWE-Bench Pro Verified is described as \"a standard benchmark for evaluating software engineering agents on challenging repository-level tasks\" that has been \"verified\" to address issues with reward hacking and task quality [15].\n\nThe YouTube videos [19] and [20] also mention that DeepSeek V4.1 Flash has \"state-of-the-art\" performance on \"CyberJ and Automation Bench\" and \"beats GPT6 Astra Max\" on the Automation Bench [19].\n\nAmong these, Benchmark Radar [25] is the most recent source (2026-09-14) that provides an overview of the current landscape of coding agent benchmarking, while Real Suite [20] represents a newer benchmark that has been introduced to address saturation in existing coding benchmarks.",
+   "incomplete": false,
+   "prompt_eval_count": 11418,
+   "sources": {
+    "1": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "2": [
+     "2609.04611",
+     "2026-09-07",
+     "τ^τ-Bench: An Environment for End-To-End, Realistic Agent Construction"
+    ],
+    "3": [
+     "2609.04280",
+     "2026-09-09",
+     "EVOHARNESSBENCH: Can Your Agents Keep Pace with an Evolving Harness?"
+    ],
+    "4": [
+     "2609.06966",
+     "2026-09-09",
+     "MOLE: Detecting Insider Threats in AI Agents"
+    ],
+    "5": [
+     "2609.07369",
+     "2026-09-10",
+     "DF26: We Cannot Tell Fake From Real Anymore"
+    ],
+    "6": [
+     "SGodxQHnVxc",
+     "2026-09-10",
+     "No One Talks Enough About Security for AI Coding. Here's How I Do It in My Workflows"
+    ],
+    "7": [
+     "2609.10226",
+     "2026-09-10",
+     "Φ-Bench: Can Large Language Models Engineer the Infrastructure That Powers Them?"
+    ],
+    "8": [
+     "2609.08572",
+     "2026-09-10",
+     "AgentGrad: Intervention-guided Prompt Optimization for Multi Agent Systems"
+    ],
+    "9": [
+     "2609.08126",
+     "2026-09-10",
+     "SchemeArena: Factorized Stress Testing of Scheming in LLM Agents"
+    ],
+    "10": [
+     "2609.08965",
+     "2026-09-10",
+     "PlannerForge: LLM Agents for Scenario-Based Testing of Motion Planners in Autonomous Driving"
+    ],
+    "11": [
+     "2609.09113",
+     "2026-09-10",
+     "SAEScientist-Bench: Can AI Agents Conduct Autonomous SAE Interpretability Research?"
+    ],
+    "12": [
+     "2609.11042",
+     "2026-09-10",
+     "T1: Terminal Agent Reinforcement Learning for Long-Horizon Tasks"
+    ],
+    "13": [
+     "2609.09264",
+     "2026-09-10",
+     "StochBench: A Domain-Specific Benchmark for Stochastic Processes in Lean"
+    ],
+    "14": [
+     "SGodxQHnVxc",
+     "2026-09-10",
+     "No One Talks Enough About Security for AI Coding. Here's How I Do It in My Workflows"
+    ],
+    "15": [
+     "2609.08149",
+     "2026-09-10",
+     "SWE-Bench Pro Verified: A Reliable Benchmark for Software Engineering Agents"
+    ],
+    "16": [
+     "2609.05903",
+     "2026-09-11",
+     "EvoSafeHarness: Evolving Model- and Domain-Specific Harnesses for Securing Agents"
+    ],
+    "17": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "18": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "19": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "20": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "21": [
+     "2609.10824",
+     "2026-09-14",
+     "Studying Without a Syllabus: Task-Agnostic Environment Preprocessing"
+    ],
+    "22": [
+     "2609.11977",
+     "2026-09-14",
+     "Occamy-1.0: Open Pareto-frontier 35B Intelligence for Co-work"
+    ],
+    "23": [
+     "2609.11682",
+     "2026-09-14",
+     "COBRA-Skills: Contextual Bandit-Guided Evolution for Agent Skill Optimization"
+    ],
+    "24": [
+     "2609.08418",
+     "2026-09-14",
+     "Feyospace-v1: How the Cyber Mercury Seven Trained Frontier Cyber Models"
+    ],
+    "25": [
+     "2609.11115",
+     "2026-09-14",
+     "Benchmark Radar: A Living Database and Search Engine for AI Benchmarks and Evaluation"
+    ],
+    "26": [
+     "2609.15309",
+     "2026-09-15",
+     "When Agents Slow Down: Understanding LLM Agents' Test-Time Strategies via Elo-per-token Analysis"
+    ],
+    "27": [
+     "2609.15078",
+     "2026-09-15",
+     "Enabling Creative Exploration for Vibe Design Agents"
+    ],
+    "28": [
+     "2609.15364",
+     "2026-09-15",
+     "RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments"
+    ],
+    "29": [
+     "2609.15818",
+     "2026-09-15",
+     "Atria Dawn: The Dawn of Agentic Superintelligence"
+    ],
+    "30": [
+     "2609.15134",
+     "2026-09-15",
+     "HazardAuditor: From Executable Threats to Safer Computer-Use Agents"
+    ],
+    "31": [
+     "2609.15478",
+     "2026-09-15",
+     "BVB: Benchmarking Agentic Video Understanding via Programmatic Reconstruction in Blender"
+    ],
+    "32": [
+     "2609.14857",
+     "2026-09-16",
+     "ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F07": {
+   "question": "Vad säger forskningen om text-to-video den senaste månaden?",
+   "answer": "The research on text-to-video in the last month includes two key studies:\n\n[22] Introduces Temporal Context Routing (TCR), which maps script timing onto the shared temporal axis of video and audio generation, improving alignment between text prompts and video content. TCR reduces Shot Boundary MAE by 96% (from 1.11s to 0.042s) and raises Dialogue Accuracy by 55.8 percentage points (from 28.3% to 84.1%) compared to baseline models [22].\n\n[29] Presents FIRM-Video, a framework for reliable text-to-video reward modeling that uses a \"check-before-score\" principle. It constructs dimension-specific checklists, verifies each criterion against temporal visual evidence, and aggregates only verified decisions to improve evaluation accuracy and reduce unfaithful justification in text-to-video model assessment [29].\n\nAdditionally, there is a news report about MiniMax's new video model that can generate a 15-second video in 13 seconds, demonstrating text-to-video generation speed improvements, though this is a product announcement rather than research [25].",
+   "incomplete": false,
+   "prompt_eval_count": 11245,
+   "sources": {
+    "1": [
+     "2609.04190",
+     "2026-09-07",
+     "One Editor, Many Edits: A Unified Training-Free Framework for Diverse Video Editing"
+    ],
+    "2": [
+     "2608.23383",
+     "2026-08-27",
+     "Long-Horizon Audio-Visual Generation for Persistent Stories and Interactive Worlds"
+    ],
+    "3": [
+     "2608.24845",
+     "2026-08-26",
+     "LAION-BVD: A 10-Million-Hour Open Video Dataset for Multimodal Pre-training"
+    ],
+    "4": [
+     "2609.06652",
+     "2026-09-09",
+     "VidaForge: Open Research Infrastructure for Video Pretraining Data Recipes"
+    ],
+    "5": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "6": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "7": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "8": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "9": [
+     "2608.14718",
+     "2026-08-18",
+     "VideoGAIA: A Benchmark for General AI Assistants on Agentic Video Understanding"
+    ],
+    "10": [
+     "2609.04173",
+     "2026-09-04",
+     "Last Translation Benchmark"
+    ],
+    "11": [
+     "2609.00551",
+     "2026-09-02",
+     "EM^2Mem: Event-Centric Multimodal Memory for Large Language Models"
+    ],
+    "12": [
+     "2608.13210",
+     "2026-08-21",
+     "NARU: A Benchmark for NARrative Evolution and Cultural Nuance Understanding in Japanese Extreme Long Video"
+    ],
+    "13": [
+     "4wjHNgMLeyY",
+     "2026-08-30",
+     "Ox Alpha reveal, realtime Minimax, Qwen Next, Hy4, robot olympics: AI NEWS"
+    ],
+    "14": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "15": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "16": [
+     "2609.07099",
+     "2026-09-14",
+     "Ambient @ EgoProactive 2026 : Proactive Egocentric Assistance with Visually Grounded Supervision"
+    ],
+    "17": [
+     "2609.03586",
+     "2026-09-07",
+     "The Attention Triangle in Audio-Video Models"
+    ],
+    "18": [
+     "2608.15869",
+     "2026-08-18",
+     "Beyond Visual CoT: Internalized Visual Thinking for Proactive Video Reasoning"
+    ],
+    "19": [
+     "2608.29847",
+     "2026-09-01",
+     "ContextBias: Controlled Evaluation of Bias Persistence Under Context Shift in Text-to-Image Models"
+    ],
+    "20": [
+     "2609.09143",
+     "2026-09-11",
+     "Studying Image Tokenizers as Visual Languages in Unified Multimodal Models"
+    ],
+    "21": [
+     "2608.16320",
+     "2026-08-18",
+     "StreamOPD: A Post-Training Recipe with Spatio-Temporal Cue Gating for Streaming Video Understanding"
+    ],
+    "22": [
+     "2609.02367",
+     "2026-09-04",
+     "The Missing Temporal Link: Temporal Context Routing for Script-Driven Audio-Video Generation"
+    ],
+    "23": [
+     "2608.25529",
+     "2026-08-27",
+     "Video-IFBench: Evaluating Instruction Following of Multimodal LLMs in Video Understanding Scenarios"
+    ],
+    "24": [
+     "2609.08365",
+     "2026-09-14",
+     "ReMoMask-2: Latent Retrieval-Augmented Masked Motion Generation"
+    ],
+    "25": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "26": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "27": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "28": [
+     "2609.01515",
+     "2026-09-11",
+     "TempCloze: Can Video-LLMs Identify the Missing Middle?"
+    ],
+    "29": [
+     "2608.21839",
+     "2026-08-27",
+     "FIRM-Video: Check Before You Score for Reliable Text-to-Video Reward Modeling"
+    ],
+    "30": [
+     "2609.10355",
+     "2026-09-10",
+     "Why Is Video Still So Expensive? A Survey of Inference-Efficiency Mechanisms in Video and Audiovisual LLMs"
+    ],
+    "31": [
+     "2609.07369",
+     "2026-09-10",
+     "DF26: We Cannot Tell Fake From Real Anymore"
+    ]
+   },
+   "scope_note": "The search covered 683 papers and 41 videos dated 2026-08-17 to 2026-09-17. 1 of the videos have only a title and description, no transcript. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F08": {
+   "question": "Nämns LEGO i någon artikel och i så fall, sammanfatta vad de handlar om.",
+   "answer": "LEGO is mentioned in source [32], which is titled \"LEGO-RL: Harness-Native Reinforcement Learning for Coding Agents\" with a feed date of 2026-08-19. [32] describes LEGO-RL as a framework that bridges native coding-agent harnesses with scalable policy-gradient optimization without modifying the harness's internal control flow. [32] states that LEGO-RL is built upon three pillars: (1) faithful optimization via in-process LLM proxying, (2) reliable execution through scalable sandbox orchestration, and (3) observable training through an integrated plugin. [32] reports that LEGO-RL improves coding agent performance across multiple benchmarks, including improvements from 64.0% to 70.4% on OpenHands SDK, 62.4% to 68.2% on Claude Code, and 57.2% to 66.6% on OpenCode on SWE-bench Verified.",
+   "incomplete": false,
+   "prompt_eval_count": 11169,
+   "sources": {
+    "1": [
+     "2608.24569",
+     "2026-08-26",
+     "When \"Must\" Becomes \"Maybe\": Constraint Weakening in LLM Agent Workflows"
+    ],
+    "2": [
+     "2608.23181",
+     "2026-08-26",
+     "CyberFactory: Scaling Cyber Security Capabilities with Instances from the Wild"
+    ],
+    "3": [
+     "2607.28624",
+     "2026-07-31",
+     "PhiZero: A World Model Built Around Physical Language"
+    ],
+    "4": [
+     "2608.23172",
+     "2026-08-28",
+     "CaRGo-T: Causal Reasoning Graph-of-Thought improves Multimodal Humor Comprehension"
+    ],
+    "5": [
+     "2608.08466",
+     "2026-08-21",
+     "Hierarchical Self-Improvement: A Framework for Task-Specific Evolvable Agent Harnesses"
+    ],
+    "6": [
+     "2609.00474",
+     "2026-09-03",
+     "Exploring Collaboration between a language and a non-language agent"
+    ],
+    "7": [
+     "2608.09096",
+     "2026-08-11",
+     "Evo-Bench: Can Language Models Improve Agent Harness?"
+    ],
+    "8": [
+     "2608.12875",
+     "2026-08-21",
+     "The Embedder's Dilemma: LLMs Are Better, but at What Cost?"
+    ],
+    "9": [
+     "2608.14138",
+     "2026-08-17",
+     "SPARGen: Unifying Spatial Perception and Reasoning through Native Multimodal Generation"
+    ],
+    "10": [
+     "2609.03254",
+     "2026-09-08",
+     "What Else Needs Fixing? Exploring Cost-Effective Test-Time Compute for Revision Propagation in Artifacts Generated Through Conversation"
+    ],
+    "11": [
+     "2608.15875",
+     "2026-08-26",
+     "GigaBrain-0.7: Scaling Embodied Foundation Models to Emergent Capabilities with a Three-System Architecture"
+    ],
+    "12": [
+     "2608.24877",
+     "2026-08-26",
+     "From Seeing to Acting: Smart Glasses as First-Person Intelligence Platforms"
+    ],
+    "13": [
+     "2607.13429",
+     "2026-07-23",
+     "Generalizable VLA Finetuning via Representation Anchoring and Language-Action Alignment"
+    ],
+    "14": [
+     "2608.16590",
+     "2026-08-20",
+     "Zetta ζ: An Efficient Closed-Loop Embodied Harness for Self-Evolving Physical Intelligence"
+    ],
+    "15": [
+     "2608.01973",
+     "2026-08-04",
+     "Roomer: Reflective Object-Grounded Model Editing and Repair for 3D Indoor Layout Synthesis"
+    ],
+    "16": [
+     "2608.30428",
+     "2026-09-01",
+     "Lies We Can See: Joint Verbal and Non-Verbal Deception by VLM Agents in Embodied Social Interactions"
+    ],
+    "17": [
+     "2609.04010",
+     "2026-09-08",
+     "Unlocking Lossless Speedups in LLMs via Discrete Diffusion"
+    ],
+    "18": [
+     "2608.20965",
+     "2026-08-31",
+     "Training, learning and inference: unified dynamics of neural systems"
+    ],
+    "19": [
+     "2607.25614",
+     "2026-08-04",
+     "MemSFT: Mitigating Alignment Tax with an External Parametric Memory"
+    ],
+    "20": [
+     "2608.23149",
+     "2026-08-31",
+     "Language Chain in Alignment: Cross-lingual Ranking Preference Optimization"
+    ],
+    "21": [
+     "2608.25832",
+     "2026-08-27",
+     "Skill Issue: Are Skills Language-Invariant in LLMs?"
+    ],
+    "22": [
+     "2608.13567",
+     "2026-08-17",
+     "Modular Cognitive Architecture Emerges in Large Language Models"
+    ],
+    "23": [
+     "2609.03199",
+     "2026-09-04",
+     "RoboTok: An Internet-Scale Data Engine for Human Demonstration Retrieval and Dexterous Manipulation Learning"
+    ],
+    "24": [
+     "2609.05463",
+     "2026-09-10",
+     "A Three-Layer Caching Architecture for Low-Latency LLM Web Search on Commodity CPU Hardware"
+    ],
+    "25": [
+     "2609.09158",
+     "2026-09-09",
+     "TANGO: Humanoid Navigation in Cluttered Environments with a Whole-Body Vision-Language-Action Model"
+    ],
+    "26": [
+     "2608.28600",
+     "2026-09-01",
+     "SHAPE of Chain-of-Thought in Math Reasoning"
+    ],
+    "27": [
+     "2606.13610",
+     "2026-08-25",
+     "One Polluted Page Is Enough: Evaluating Web Content Pollution in LLM Recommenders"
+    ],
+    "28": [
+     "2609.16679",
+     "2026-09-16",
+     "AI for Games in the Foundation Model Era"
+    ],
+    "29": [
+     "2608.08160",
+     "2026-08-13",
+     "Can LLM Agents Stick to the Script? A Benchmark for Long-Horizon Consistency in Interactive Narratives"
+    ],
+    "30": [
+     "2609.04753",
+     "2026-09-07",
+     "Beneath the Surface of Chains-of-Thought: A Mechanistic Interpretation of Reasoning Operations in LLMs"
+    ],
+    "31": [
+     "2608.01851",
+     "2026-08-07",
+     "Weights or Skills? A Survey of Robot-Learning Techniques: from Action-Predicting Weights to Robots that Write their Own Skills"
+    ],
+    "32": [
+     "2608.17393",
+     "2026-08-19",
+     "LEGO-RL: Harness-Native Reinforcement Learning for Coding Agents"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 0 videos of all dates. Exact text: “LEGO” in 1 source. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F09": {
+   "question": "Har AutoDev nämnts de senaste veckorna?",
+   "answer": "\"AutoDev\" was not mentioned in any of the provided sources for the period covered. The sources contain mentions of similar terms like \"AutoSaddler\" [9] which describes an automatic harness optimization framework, and \"AutoDesign\" [15] which is a framework for meta-harness optimization for long-horizon agentic design, but neither of these are \"AutoDev\". The exact text \"AutoDev\" does not appear in any of the provided source excerpts.",
+   "incomplete": false,
+   "prompt_eval_count": 11510,
+   "sources": {
+    "1": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "2": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "3": [
+     "2609.01437",
+     "2026-09-03",
+     "HarnessDev: Can LLMs Create and Evolve Their Own Agent Harness?"
+    ],
+    "4": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "5": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "6": [
+     "GGzT7zVrRTU",
+     "2026-09-03",
+     "GPT-6 Astra Is Finally Here (And It’s REALLY Good)"
+    ],
+    "7": [
+     "4wjHNgMLeyY",
+     "2026-08-30",
+     "Ox Alpha reveal, realtime Minimax, Qwen Next, Hy4, robot olympics: AI NEWS"
+    ],
+    "8": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "9": [
+     "2608.23041",
+     "2026-08-26",
+     "AutoSaddler: Automatic Harness Optimization with Durable Updates from Agent Execution Traces"
+    ],
+    "10": [
+     "1lO8aNSLPJc",
+     "2026-08-31",
+     "Apple's New Mac Line is Built Around Local AI. The Bet Is You'd Rather Own Than Rent."
+    ],
+    "11": [
+     "rKo9iLGjUbs",
+     "2026-08-26",
+     "I Built a FREE App That Runs Your Entire Business"
+    ],
+    "12": [
+     "2608.16391",
+     "2026-08-18",
+     "Ventor-QTest: Threat-Model-Driven Verification of Vendor-Hosted LLM APIs"
+    ],
+    "13": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "14": [
+     "6XgSpFdD3EU",
+     "2026-08-25",
+     "BMAD's Founder on the Future of AI Coding (And the Slop Apocalypse)"
+    ],
+    "15": [
+     "2608.13560",
+     "2026-08-14",
+     "AutoDesign: Meta-Harness Optimization for Long-Horizon Agentic Design"
+    ],
+    "16": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "17": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "18": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "19": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "20": [
+     "6XgSpFdD3EU",
+     "2026-08-25",
+     "BMAD's Founder on the Future of AI Coding (And the Slop Apocalypse)"
+    ],
+    "21": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "22": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "23": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "24": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "25": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "26": [
+     "GGzT7zVrRTU",
+     "2026-09-03",
+     "GPT-6 Astra Is Finally Here (And It’s REALLY Good)"
+    ],
+    "27": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "28": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "29": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. Exact text: “AutoDev” in no source. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F10": {
+   "question": "Vad är nytt den 16 september?",
+   "answer": "On September 16, 2026, several new AI research papers and a YouTube video were published. [1] introduced ModAR, a world-action model that autoregressively denoises multiple future modalities before predicting actions, achieving 75% success rate on real-world tasks with 20x fewer training FLOPs than alternatives. [2] presented Decoy Direction Optimization (DDO), a post-hoc defense against LLM ablation attacks that reduces attack success rate to under 10% with 30-450x lower optimization cost. [3] described Gavel, a method for eliciting native skill routing from frozen LLMs that outperforms existing pipelines by up to 21.9 points on written tasks. [4] demonstrated convergent emergence of in-context learning across six modalities, showing common difficulty profiles between different domains. [5] revealed that specialist distillation implicitly selects from latent trajectory space, with specialization-generalization profiles correlating strongly across 27 specialist-student pairings. [6] proposed Mind2Dialogue, a framework for training human-aware language models by simulating user mental states, improving personalization metrics by 26.6-40.9 percentage points. [7] developed a method for composing continual learning mechanisms to improve long-horizon memorization from 1.2% to 34.9% retention. [9] presented StepAudio 3 Realtime, an audio-language foundation model achieving 90.6 on MMSU benchmark and 98.9 on Artificial Analysis Full-Duplex Bench. [10] introduced HarnessVLN, a training-free framework for embodied navigation with success rates of 60.8-76.0% on various benchmarks. [13] proposed ModularRSI, a modular framework for generalizable recursive harness self-improvement that transfers across different foundation models. [15] described Emergence World, a continuously running multi-agent environment for adversarial stress testing of long horizon autonomous systems. [19] and [20] discussed recursive self-improvement concepts, with ScienceBuddy being released as an interactive scientific research workspace. [21] and [22] featured a YouTube video about a free and open-source \"spy tool\" described as giving users \"information and data and can track stuff\" with \"100% free to use,\" though the video content focused on the tool's features rather than AI research.",
+   "incomplete": false,
+   "prompt_eval_count": 7886,
+   "sources": {
+    "1": [
+     "2609.17524",
+     "2026-09-16",
+     "Modality-Autoregressive World-Action Models"
+    ],
+    "2": [
+     "2609.16204",
+     "2026-09-16",
+     "Decoy Direction Optimization: A Post-Hoc Defense Against LLM Abliteration"
+    ],
+    "3": [
+     "2609.15982",
+     "2026-09-16",
+     "The Router Within: Eliciting Native Skill Routing from a Frozen LLM"
+    ],
+    "4": [
+     "2609.14011",
+     "2026-09-16",
+     "Convergent Emergence of In-Context Learning Across Modalities"
+    ],
+    "5": [
+     "2609.13770",
+     "2026-09-16",
+     "Training Specialist Models without Reasoning Trajectories for Domain Expert Distillation"
+    ],
+    "6": [
+     "2609.15972",
+     "2026-09-16",
+     "Mind2Dialogue: Training Human-Aware Language Models by Simulating User Mental States"
+    ],
+    "7": [
+     "2609.06986",
+     "2026-09-16",
+     "Continual Learning Mechanisms Compose for Long-Horizon Memorization"
+    ],
+    "8": [
+     "2609.14803",
+     "2026-09-16",
+     "Another Blueprint In The Wall: How to Ask Frontier AI Like a Kid?"
+    ],
+    "9": [
+     "2609.14005",
+     "2026-09-16",
+     "StepAudio 3 Realtime Technical Report"
+    ],
+    "10": [
+     "2609.15195",
+     "2026-09-16",
+     "HarnessVLN: Unifying Training-Free Embodied Navigation through an Agent Harness"
+    ],
+    "11": [
+     "2609.17521",
+     "2026-09-16",
+     "PhysStream: Streaming Physics-Grounded Video Generation with Structured Scene Memory and Fine-Grained Motion Control"
+    ],
+    "12": [
+     "2609.16816",
+     "2026-09-16",
+     "ImpossibleRubrics: Stress-Testing Generated Rubrics as Reward Signals"
+    ],
+    "13": [
+     "2609.14857",
+     "2026-09-16",
+     "ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement"
+    ],
+    "14": [
+     "2609.16034",
+     "2026-09-16",
+     "StepAudio 3 Music Technical Report"
+    ],
+    "15": [
+     "2609.17320",
+     "2026-09-16",
+     "Emergence World: Adversarial Stress-Testing of Long-Horizon Multi-Agent Systems"
+    ],
+    "16": [
+     "2609.13680",
+     "2026-09-16",
+     "Drift-Constrained Optimization: Only Direction Matters in Fine-Tuning Instruct Models"
+    ],
+    "17": [
+     "2609.15975",
+     "2026-09-16",
+     "Disentangling Representation Evolution in Transformers through Directional Decomposition"
+    ],
+    "18": [
+     "2609.16679",
+     "2026-09-16",
+     "AI for Games in the Foundation Model Era"
+    ],
+    "19": [
+     "2609.11873",
+     "2026-09-16",
+     "The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement"
+    ],
+    "20": [
+     "2609.17523",
+     "2026-09-16",
+     "ScienceBuddy: Recursive-in-Recursive Self-Improvement for Interactive Scientific Agents"
+    ],
+    "21": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "22": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ]
+   },
+   "scope_note": "The search covered 20 papers and 1 videos dated 2026-09-16. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F11": {
+   "question": "Vad hände i forskningen förra veckan?",
+   "answer": "This week's research included several significant developments across AI research. ModularRSI introduced a new framework for generalizable harness evolution in recursive self-improvement, decomposing agent harnesses into five functional modules for improved transferability [1]. MetroLLM-Bench presented a 955-case benchmark for testing language models as transit kiosk runtimes, covering six metro systems and eleven categories including routing and accessibility [4].\n\nResearchers developed ReactHuman, the first physics-grounded benchmark for human-like reactive decision-making in embodied multimodal LLMs, testing models on 1,000+ scenes with exact ground truth from rigid-body simulation [5]. E2A-Bench was introduced to evaluate evidence-to-action reliability in financial chart reasoning, revealing three hidden failures in existing hallucination evaluations [7].\n\nEmergence World created a continuously running multi-agent environment for adversarial stress testing of long-horizon autonomous systems, demonstrating that individually capable agents can form systems with qualitatively different failure modes [8]. Lightning Weave improved the accuracy-efficiency frontier of reasoning models through capability composition, raising HMMT 2025 accuracy from 59.2% to 64.0% with 10.7% fewer response tokens [13].\n\nDrift-Constrained Optimization established a new approach to fine-tuning instruct models by constraining behavioral drift, with results showing substantial improvements in scientific reasoning and multilingual translation [19]. ScienceBuddy was released as an interactive scientific research workspace that brings continually improving scientific agents into researchers' everyday workflows through recursive-in-recursive self-improvement [26].",
+   "incomplete": false,
+   "prompt_eval_count": 11384,
+   "sources": {
+    "1": [
+     "2609.14857",
+     "2026-09-16",
+     "ModularRSI: Modular and Generalizable Recursive Harness Self-Improvement"
+    ],
+    "2": [
+     "2609.06107",
+     "2026-09-14",
+     "DataFlex-RL: An Evaluation Platform for RLVR Data Policies"
+    ],
+    "3": [
+     "2609.16679",
+     "2026-09-16",
+     "AI for Games in the Foundation Model Era"
+    ],
+    "4": [
+     "2609.10016",
+     "2026-09-11",
+     "MetroLLM-Bench: Evaluating Language Models as Transit Kiosk Runtimes"
+    ],
+    "5": [
+     "2609.10895",
+     "2026-09-14",
+     "ReactHuman: A Physics-Grounded Benchmark for Human-Like Reactive Decision-Making in Embodied Multimodal LLMs"
+    ],
+    "6": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "7": [
+     "2609.14302",
+     "2026-09-15",
+     "E2A-Bench: Benchmarking Evidence-to-Action Reliability in Financial Chart Reasoning"
+    ],
+    "8": [
+     "2609.17320",
+     "2026-09-16",
+     "Emergence World: Adversarial Stress-Testing of Long-Horizon Multi-Agent Systems"
+    ],
+    "9": [
+     "2609.10728",
+     "2026-09-14",
+     "Towards a Deterministic Math Solver for Clinical Language Models"
+    ],
+    "10": [
+     "mjQlZrteMIY",
+     "2026-09-17",
+     "You Built Your AI Second Brain. Now What? (Here's How to Evolve It)"
+    ],
+    "11": [
+     "2609.10539",
+     "2026-09-11",
+     "IdeaAMBIG: Benchmarking Implementation-Critical Gaps in Research-Idea Specifications"
+    ],
+    "12": [
+     "2609.11115",
+     "2026-09-14",
+     "Benchmark Radar: A Living Database and Search Engine for AI Benchmarks and Evaluation"
+    ],
+    "13": [
+     "2609.14708",
+     "2026-09-15",
+     "Lightning Weave: Improving the Accuracy-Efficiency Frontier of Reasoning Models through Capability Composition"
+    ],
+    "14": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "15": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "16": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "17": [
+     "2609.14803",
+     "2026-09-16",
+     "Another Blueprint In The Wall: How to Ask Frontier AI Like a Kid?"
+    ],
+    "18": [
+     "2609.14011",
+     "2026-09-16",
+     "Convergent Emergence of In-Context Learning Across Modalities"
+    ],
+    "19": [
+     "2609.13680",
+     "2026-09-16",
+     "Drift-Constrained Optimization: Only Direction Matters in Fine-Tuning Instruct Models"
+    ],
+    "20": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "21": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "22": [
+     "2609.13770",
+     "2026-09-16",
+     "Training Specialist Models without Reasoning Trajectories for Domain Expert Distillation"
+    ],
+    "23": [
+     "2609.15635",
+     "2026-09-15",
+     "ModaLens: Measuring Image Sensitivity in Report-Conditioned Medical VLMs"
+    ],
+    "24": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "25": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "26": [
+     "2609.17523",
+     "2026-09-16",
+     "ScienceBuddy: Recursive-in-Recursive Self-Improvement for Interactive Scientific Agents"
+    ],
+    "27": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "28": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "29": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "30": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ]
+   },
+   "scope_note": "The search covered 105 papers and 11 videos dated 2026-09-11 to 2026-09-17. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F12": {
+   "question": "Har Palantir nämnts i någon video?",
+   "answer": "Palantir was not mentioned in any of the provided sources [1-29]. The sources contain no references to Palantir, as explicitly stated in the user's message which notes \"Exact text: 'Palantir' in no source.\" [29]",
+   "incomplete": false,
+   "prompt_eval_count": 11442,
+   "sources": {
+    "1": [
+     "6XgSpFdD3EU",
+     "2026-08-25",
+     "BMAD's Founder on the Future of AI Coding (And the Slop Apocalypse)"
+    ],
+    "2": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "3": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "4": [
+     "4wjHNgMLeyY",
+     "2026-08-30",
+     "Ox Alpha reveal, realtime Minimax, Qwen Next, Hy4, robot olympics: AI NEWS"
+    ],
+    "5": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "6": [
+     "rKo9iLGjUbs",
+     "2026-08-26",
+     "I Built a FREE App That Runs Your Entire Business"
+    ],
+    "7": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "8": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "9": [
+     "4wjHNgMLeyY",
+     "2026-08-30",
+     "Ox Alpha reveal, realtime Minimax, Qwen Next, Hy4, robot olympics: AI NEWS"
+    ],
+    "10": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "11": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "12": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "13": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "14": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "15": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "16": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "17": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "18": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "19": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "20": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "21": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "22": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "23": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "24": [
+     "GGzT7zVrRTU",
+     "2026-09-03",
+     "GPT-6 Astra Is Finally Here (And It’s REALLY Good)"
+    ],
+    "25": [
+     "GGzT7zVrRTU",
+     "2026-09-03",
+     "GPT-6 Astra Is Finally Here (And It’s REALLY Good)"
+    ],
+    "26": [
+     "rKo9iLGjUbs",
+     "2026-08-26",
+     "I Built a FREE App That Runs Your Entire Business"
+    ],
+    "27": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "28": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "29": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ]
+   },
+   "scope_note": "The search covered 0 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. Exact text: “Palantir” in no source. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F13": {
+   "question": "Vad har sagts om OpenAI de senaste två veckorna?",
+   "answer": "In the sources provided, several statements about OpenAI have been made within the relevant time frame:\n\nOpenAI released GPT-6 Astra, which is described as \"the best model available\" and \"the most capable and powerful model you can use right now\" [2]. The model is being positioned as a significant step in AI capabilities, with claims that it \"just destroys all the other models\" [20].\n\nGPT-6 Astra is described as capable of running autonomous workflows, building software factories, and handling complex tasks without constant human intervention [12]. One user reportedly \"left it alone for five days\" with \"tens of thousands of emails, years of writing, calendar contacts\" and Astra \"built Ethan a personal knowledge system\" [28].\n\nOpenAI's GPT-6 Astra is being marketed as a step toward AGI (Artificial General Intelligence), though there's skepticism about this claim. The sources note that \"AI still really sucks at determining when something is AI\" - a capability that would be expected if AGI had been achieved [25].\n\nOpenAI also released \"ChatGPT images 2.5,\" an improved image generation model that \"is apparently a lot better at working from reference photos to transform familiar subjects, visual styles, and compositions\" [29].\n\nOpenAI is developing a \"work\" system that allows ChatGPT to carry out tasks on supported websites and continue working after the computer is closed [27]. This system supports \"applications inside the conversation\" and \"a cloud browser that can carry out tasks on supported websites and keep on working after you close your computer\" [27].\n\nOpenAI has a product called \"GPT finance,\" which \"combines GPT6 Astra with financial data sets and tools for producing actual banking research\" [15].\n\nSome sources mention OpenAI's claim about the \"AGI era\" and note that \"Jensen Huang, the CEO of NVIDIA, said yesterday he declared that we have AGI because of Astra\" [12], though the sources express skepticism about this claim.",
+   "incomplete": false,
+   "prompt_eval_count": 11319,
+   "sources": {
+    "1": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "2": [
+     "Ji4amrxrzVM",
+     "2026-09-07",
+     "GPT 6 Astra is a freak"
+    ],
+    "3": [
+     "ix8SsXjBc7M",
+     "2026-09-07",
+     "There Are Jobs You Could Never Give AI. I Gave GPT-6 Astra 20 Hours Of Admin."
+    ],
+    "4": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "5": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "6": [
+     "55rDzRkUVdE",
+     "2026-09-04",
+     "Everyone's Testing Claude Fable 5.1 On Code. It Made Me A 37-Second Film."
+    ],
+    "7": [
+     "9RtywbN--QE",
+     "2026-09-15",
+     "Forget Suno. New BEST local AI music generator is here!"
+    ],
+    "8": [
+     "zDPuEPDXCpU",
+     "2026-09-11",
+     "Is Omarchy The Last Desktop You'll Ever Need?"
+    ],
+    "9": [
+     "2609.14803",
+     "2026-09-16",
+     "Another Blueprint In The Wall: How to Ask Frontier AI Like a Kid?"
+    ],
+    "10": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "11": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "12": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "13": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "14": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "15": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "16": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "17": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "18": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "19": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "20": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "21": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "22": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "23": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "24": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "25": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "26": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "27": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "28": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "29": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ]
+   },
+   "scope_note": "The search covered 255 papers and 21 videos dated 2026-09-04 to 2026-09-17. 1 of the videos have only a title and description, no transcript. Exact text: “OpenAI” in 11 sources. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F14": {
+   "question": "Har det sagts något om open source-alternativ till stora AI-verktyg, både i videor och i artiklar?",
+   "answer": "Yes, there are several mentions of open source alternatives to large AI tools in both the papers and videos.\n\nThe FreeToken paper [1] describes an edge-native MoE serving system that \"turns open weights into deployable local software, making the machines users already own a practical platform for frontier-scale intelligence.\"\n\nThe CyberFactory paper [3] introduces \"a unified open-source framework that connects data construction, trajectory synthesis, and model training across proof-of-concept (PoC) generation, vulnerability patching, and cybersecurity question answering (CyberQA).\"\n\nThe YouTube video [5] discusses a \"Free and Open-Source\" spy tool that \"is 100% free to use\" and allows users to \"have more access to information at my fingertips.\"\n\nVideo [6] states that \"open source or open weight software\" is \"tiny\" and can \"run on a snack studio, whereas these other closed source devices or closed source models are running on multiple racks.\"\n\nVideo [22] specifically mentions \"GLM Flash\" and \"GLM 5.3, which is now the best open model you can use right now\" as well as \"Tencent's best model Hi 4, which is also open source\" and \"Alibaba's latest model Qwen 3.8 Flash Next, which is also very close to Frontier.\"\n\nVideo [29] discusses \"Ornith 1.5\" as \"a new family of open-source models\" that uses a \"self-improvement loop where the system proposes new problems and builds the tools or scaffolds needed to solve and verify those problems.\"",
+   "incomplete": false,
+   "prompt_eval_count": 11296,
+   "sources": {
+    "1": [
+     "2608.16157",
+     "2026-08-19",
+     "FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution"
+    ],
+    "2": [
+     "2609.07099",
+     "2026-09-14",
+     "Ambient @ EgoProactive 2026 : Proactive Egocentric Assistance with Visually Grounded Supervision"
+    ],
+    "3": [
+     "2608.23181",
+     "2026-08-26",
+     "CyberFactory: Scaling Cyber Security Capabilities with Instances from the Wild"
+    ],
+    "4": [
+     "2609.05463",
+     "2026-09-10",
+     "A Three-Layer Caching Architecture for Low-Latency LLM Web Search on Commodity CPU Hardware"
+    ],
+    "5": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "6": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "7": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "8": [
+     "L9xXnPqVfnM",
+     "2026-09-02",
+     "OpenAI, NVIDIA And Anthropic Just Split. Here's How I'd Spend $20, $60 Or $200."
+    ],
+    "9": [
+     "1qGH6NwTj3o",
+     "2026-09-06",
+     "GPT-6 Astra Doesn't Need Your Instructions Anymore."
+    ],
+    "10": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "11": [
+     "DcLj_SO8JNk",
+     "2026-09-03",
+     "AI Software Factories Are the Next Big Thing (And I'm Building You One)"
+    ],
+    "12": [
+     "-KcHn0QcSb0",
+     "2026-09-09",
+     "I Asked GPT-6 Astra to Build an AI Slop Detector"
+    ],
+    "13": [
+     "TInwQglNkzo",
+     "2026-08-28",
+     "AI News: OpenAI Made a Massive Move Against NVIDIA"
+    ],
+    "14": [
+     "L9xXnPqVfnM",
+     "2026-09-02",
+     "OpenAI, NVIDIA And Anthropic Just Split. Here's How I'd Spend $20, $60 Or $200."
+    ],
+    "15": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "16": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "17": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ],
+    "18": [
+     "ngyFRCNq0Yc",
+     "2026-09-06",
+     "GPT 6 Astra, Claude Fable 5.1, Gemini 3.8, realtime Minimax, new world models: AI NEWS"
+    ],
+    "19": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "20": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "21": [
+     "n5bZHETCiJA",
+     "2026-09-10",
+     "The Race to Done: Fable 5.1 vs GPT-6 Astra. Who Wins?"
+    ],
+    "22": [
+     "4wjHNgMLeyY",
+     "2026-08-30",
+     "Ox Alpha reveal, realtime Minimax, Qwen Next, Hy4, robot olympics: AI NEWS"
+    ],
+    "23": [
+     "GGzT7zVrRTU",
+     "2026-09-03",
+     "GPT-6 Astra Is Finally Here (And It’s REALLY Good)"
+    ],
+    "24": [
+     "DcLj_SO8JNk",
+     "2026-09-03",
+     "AI Software Factories Are the Next Big Thing (And I'm Building You One)"
+    ],
+    "25": [
+     "GfPZm9yucQo",
+     "2026-09-04",
+     "AI News: The Most Insane Week So Far This Year!"
+    ],
+    "26": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "27": [
+     "Po_Dh7WLgmM",
+     "2026-09-03",
+     "The Most Overhyped and Underhyped New AI Models"
+    ],
+    "28": [
+     "EfGF7QbJItA",
+     "2026-08-21",
+     "AI News: OpenAI Just Put the Brakes on AI"
+    ],
+    "29": [
+     "rQ4yX5qNYdY",
+     "2026-08-23",
+     "New AI waifus, new Deepseek, realtime worlds, Happy Shrimp, tiny TTS: AI NEWS"
+    ]
+   },
+   "scope_note": "The search covered 1184 papers and 41 videos of all dates. 1 of the videos have only a title and description, no transcript. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  },
+  "F15": {
+   "question": "Vad har hänt med AI-agenter den senaste veckan, i både papers och videor?",
+   "answer": "This week has seen several significant developments in AI agents across both papers and videos:\n\nNew agent frameworks and capabilities:\n- Researchers introduced \"HazardAuditor\" to make computer-use agents safer, addressing safety risks that emerge through runtime behavior rather than just generated content [7].\n- \"RSIAgent\" enables autonomous exploration for recursive self-improvement in new environments, allowing agents to adapt without retraining [18].\n- \"Agent as Policy\" (AGP) demonstrates that general-purpose agents can directly drive physical robots without task-specific training, achieving success rates of 100% on some manipulation tasks [11].\n- \"Atria Dawn Preview\" is a foundation agentic language model designed for scientific research, with humans and AI collaborating as \"project-level partners\" rather than just task-level executors [22].\n\nAgent applications and tools:\n- \"Claude Code\" has become a popular skill that drives computer use across applications, with the creator documenting failure modes and building a full workflow for agents [9].\n- \"AI software factories\" powered by GPT-6 Astra are being developed to let agents build applications autonomously, with the creator showing how to set up a 24/7 system for building applications [4].\n- Agents are starting to make purchases on behalf of users, with Stripe building systems to handle agent payments for things like buying coffee [28].\n\nAgent evolution and business integration:\n- \"Occamy-1.0\" presents a cost-efficient co-work model that remains competitive with larger frontier systems while focusing on practical agent capabilities [3].\n- The concept of \"AI second brains\" is evolving into \"team brains\" that extend productivity to collaboration, with creators reporting saving about 20 hours per week [19].\n- \"Gavel\" (from \"The Router Within\" paper) enables skill routing in frozen LLMs, outperforming retrieval pipelines that add up to 16B external parameters [2].\n\nSafety and trust developments:\n- \"Emergence World\" provides adversarial stress-testing for long-horizon multi-agent systems, revealing that individually capable agents can form systems with new failure modes [25].\n- Companies like Stripe are building systems to handle agent payments, with the creator noting they \"would trust AI to buy me coffee\" but not yet to \"sign up for a subscription\" [28].",
+   "incomplete": false,
+   "prompt_eval_count": 11446,
+   "sources": {
+    "1": [
+     "2609.07099",
+     "2026-09-14",
+     "Ambient @ EgoProactive 2026 : Proactive Egocentric Assistance with Visually Grounded Supervision"
+    ],
+    "2": [
+     "2609.15982",
+     "2026-09-16",
+     "The Router Within: Eliciting Native Skill Routing from a Frozen LLM"
+    ],
+    "3": [
+     "2609.11977",
+     "2026-09-14",
+     "Occamy-1.0: Open Pareto-frontier 35B Intelligence for Co-work"
+    ],
+    "4": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "5": [
+     "2609.11115",
+     "2026-09-14",
+     "Benchmark Radar: A Living Database and Search Engine for AI Benchmarks and Evaluation"
+    ],
+    "6": [
+     "zDPuEPDXCpU",
+     "2026-09-11",
+     "Is Omarchy The Last Desktop You'll Ever Need?"
+    ],
+    "7": [
+     "2609.15134",
+     "2026-09-15",
+     "HazardAuditor: From Executable Threats to Safer Computer-Use Agents"
+    ],
+    "8": [
+     "zDPuEPDXCpU",
+     "2026-09-11",
+     "Is Omarchy The Last Desktop You'll Ever Need?"
+    ],
+    "9": [
+     "SWEThyRHMgQ",
+     "2026-09-15",
+     "My NEW FAVORITE Skill - Claude Code Drives My Whole Computer (Better Computer Use)"
+    ],
+    "10": [
+     "2609.08418",
+     "2026-09-14",
+     "Feyospace-v1: How the Cyber Mercury Seven Trained Frontier Cyber Models"
+    ],
+    "11": [
+     "2609.12541",
+     "2026-09-15",
+     "Agent as Policy for Robotic Manipulation"
+    ],
+    "12": [
+     "mjQlZrteMIY",
+     "2026-09-17",
+     "You Built Your AI Second Brain. Now What? (Here's How to Evolve It)"
+    ],
+    "13": [
+     "SWEThyRHMgQ",
+     "2026-09-15",
+     "My NEW FAVORITE Skill - Claude Code Drives My Whole Computer (Better Computer Use)"
+    ],
+    "14": [
+     "2609.16679",
+     "2026-09-16",
+     "AI for Games in the Foundation Model Era"
+    ],
+    "15": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "16": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "17": [
+     "joKb_QMmglM",
+     "2026-09-12",
+     "GPT-6 Astra Just Made AI Software Factories Real (Here's How to Run One)"
+    ],
+    "18": [
+     "2609.15364",
+     "2026-09-15",
+     "RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments"
+    ],
+    "19": [
+     "mjQlZrteMIY",
+     "2026-09-17",
+     "You Built Your AI Second Brain. Now What? (Here's How to Evolve It)"
+    ],
+    "20": [
+     "XIt87tJHm-g",
+     "2026-09-14",
+     "Sam Altman and Apple's New CEO are Fighting Over One Thing. It's Not What You Think."
+    ],
+    "21": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "22": [
+     "2609.15818",
+     "2026-09-15",
+     "Atria Dawn: The Dawn of Agentic Superintelligence"
+    ],
+    "23": [
+     "nZYJdwM-_nI",
+     "2026-09-13",
+     "New Deepseek, human genome map, Navier Stokes, GPT finance, Suno v6, YuE2: AI NEWS"
+    ],
+    "24": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "25": [
+     "2609.17320",
+     "2026-09-16",
+     "Emergence World: Adversarial Stress-Testing of Long-Horizon Multi-Agent Systems"
+    ],
+    "26": [
+     "duv4A1gDZOY",
+     "2026-09-14",
+     "Intelligence is Everywhere: Why the AI 'Race' is Already Over"
+    ],
+    "27": [
+     "S2VJU5DQqlU",
+     "2026-09-16",
+     "He Built The Ultimate Spy Tool (Free and Open-Source)"
+    ],
+    "28": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "29": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ],
+    "30": [
+     "YTG0rdHPTDE",
+     "2026-09-17",
+     "AI Agents Are Starting To Buy. Stripe Is Building How They Pay."
+    ],
+    "31": [
+     "JwTCjarfJYw",
+     "2026-09-11",
+     "AI News: The AI World is REALLY Scared Right Now"
+    ]
+   },
+   "scope_note": "The search covered 105 papers and 11 videos dated 2026-09-11 to 2026-09-17. If the sources don't answer the question, say it was not found in these sources for this period; don't say it was never mentioned anywhere."
+  }
+ }
+}

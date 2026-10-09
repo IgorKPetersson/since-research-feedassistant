@@ -1,0 +1,1960 @@
+{
+ "code": "before: v2-development 8fd743b (retrieval and prompt as in v1-pre-improvement)",
+ "version": "v1",
+ "results": {
+  "F01": {
+   "question": "I området Recursive self-improvement, vad är de två senaste nyheterna och vad handlar de om?",
+   "filter": null,
+   "ranking": true,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "2609.11873",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14857",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.17523",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15975",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.13680",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.06986",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14803",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14858",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15364",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15504",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.14708",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.12419",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.14973",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.13463",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.08418",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.06107",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.07099",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.08230",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.08365",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2608.15380",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.09076",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.11929",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.06490",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.06806",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.09113",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.08183",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.00787",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.04280",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.07816",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    }
+   ],
+   "packed_chunks": 33,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F02": {
+   "question": "Vad har hänt med GUI agents den senaste månaden?",
+   "filter": [
+    "2026-08-17",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "qYe1GsMRElw",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "2609.00028",
+     "source": "hf",
+     "feed_date": "2026-09-02"
+    },
+    {
+     "doc_id": "IpEaSa7tgfc",
+     "source": "youtube",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "6XgSpFdD3EU",
+     "source": "youtube",
+     "feed_date": "2026-08-25"
+    },
+    {
+     "doc_id": "2608.15930",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "Po_Dh7WLgmM",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "CSCwaqVqHGE",
+     "source": "youtube",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "2608.19861",
+     "source": "hf",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "msfMqW92Y8Q",
+     "source": "youtube",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "2609.13287",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2608.24099",
+     "source": "hf",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "EfGF7QbJItA",
+     "source": "youtube",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "2608.30478",
+     "source": "hf",
+     "feed_date": "2026-09-02"
+    },
+    {
+     "doc_id": "ngyFRCNq0Yc",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "2608.14667",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "rQ4yX5qNYdY",
+     "source": "youtube",
+     "feed_date": "2026-08-23"
+    },
+    {
+     "doc_id": "1lO8aNSLPJc",
+     "source": "youtube",
+     "feed_date": "2026-08-31"
+    },
+    {
+     "doc_id": "zDPuEPDXCpU",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "4wjHNgMLeyY",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "UbylWXukvR8",
+     "source": "youtube",
+     "feed_date": "2026-09-01"
+    }
+   ],
+   "packed_chunks": 30,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F03": {
+   "question": "Vad är det absolut  senaste inom Video genereation och är det hårdvaru- eller mjukvarurelaterat?",
+   "filter": null,
+   "ranking": true,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "2609.17521",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15863",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.14462",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15478",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.11638",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "9RtywbN--QE",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "SWEThyRHMgQ",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.11548",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.01515",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.11929",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.07369",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.10355",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.10540",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.09187",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "q9tpIc8PVKM",
+     "source": "youtube",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.05779",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.06373",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.08108",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.06652",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.06758",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.04190",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "2609.02780",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    }
+   ],
+   "packed_chunks": 31,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F04": {
+   "question": "Den senaste veckan, vad har sagts om Copding Agents. Vänligen sammanfatta.",
+   "filter": [
+    "2026-09-11",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.11977",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "SWEThyRHMgQ",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "joKb_QMmglM",
+     "source": "youtube",
+     "feed_date": "2026-09-12"
+    },
+    {
+     "doc_id": "zDPuEPDXCpU",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.17320",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.08418",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.12541",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.15134",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "mjQlZrteMIY",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "2609.11682",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.05903",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.07154",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.15364",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.13498",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15818",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.14708",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15982",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    }
+   ],
+   "packed_chunks": 31,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F05": {
+   "question": "Har NeoHorse nämnts de senaste två veckorna?",
+   "filter": [
+    "2026-09-04",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2609.08183",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "ngyFRCNq0Yc",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "joKb_QMmglM",
+     "source": "youtube",
+     "feed_date": "2026-09-12"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "55rDzRkUVdE",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "2609.05663",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.08418",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.10712",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.07099",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.15504",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.04304",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    }
+   ],
+   "packed_chunks": 30,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F06": {
+   "question": "Vad är det senaste inom benchmarking av coding agents?",
+   "filter": null,
+   "ranking": true,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "2609.14857",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15478",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15134",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15818",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15364",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15078",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.15309",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.11115",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.08418",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.11682",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.11977",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.10824",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.05903",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.08149",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "SGodxQHnVxc",
+     "source": "youtube",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.09264",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.11042",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.09113",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.08965",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.08126",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.08572",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.10226",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.07369",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.06966",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.04280",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.04611",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    }
+   ],
+   "packed_chunks": 32,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F07": {
+   "question": "Vad säger forskningen om text-to-video den senaste månaden?",
+   "filter": [
+    "2026-08-17",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "2609.07369",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.10355",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2608.21839",
+     "source": "hf",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "2609.01515",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "rQ4yX5qNYdY",
+     "source": "youtube",
+     "feed_date": "2026-08-23"
+    },
+    {
+     "doc_id": "2609.08365",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2608.25529",
+     "source": "hf",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "2609.02367",
+     "source": "hf",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2608.16320",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "2609.09143",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2608.29847",
+     "source": "hf",
+     "feed_date": "2026-09-01"
+    },
+    {
+     "doc_id": "2608.15869",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "2609.03586",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "2609.07099",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "TInwQglNkzo",
+     "source": "youtube",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "4wjHNgMLeyY",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "2608.13210",
+     "source": "hf",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "2609.00551",
+     "source": "hf",
+     "feed_date": "2026-09-02"
+    },
+    {
+     "doc_id": "2609.04173",
+     "source": "hf",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2608.14718",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "EfGF7QbJItA",
+     "source": "youtube",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "2609.06652",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2608.24845",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "2608.23383",
+     "source": "hf",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "2609.04190",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "Po_Dh7WLgmM",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    }
+   ],
+   "packed_chunks": 32,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F08": {
+   "question": "Nämns LEGO i någon artikel och i så fall, sammanfatta vad de handlar om.",
+   "filter": null,
+   "ranking": false,
+   "source": "hf",
+   "packed_docs": [
+    {
+     "doc_id": "2608.17393",
+     "source": "hf",
+     "feed_date": "2026-08-19"
+    },
+    {
+     "doc_id": "2608.01851",
+     "source": "hf",
+     "feed_date": "2026-08-07"
+    },
+    {
+     "doc_id": "2609.04753",
+     "source": "hf",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "2608.08160",
+     "source": "hf",
+     "feed_date": "2026-08-13"
+    },
+    {
+     "doc_id": "2609.16679",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2606.13610",
+     "source": "hf",
+     "feed_date": "2026-08-25"
+    },
+    {
+     "doc_id": "2608.28600",
+     "source": "hf",
+     "feed_date": "2026-09-01"
+    },
+    {
+     "doc_id": "2609.09158",
+     "source": "hf",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "2609.05463",
+     "source": "hf",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "2609.03199",
+     "source": "hf",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2608.13567",
+     "source": "hf",
+     "feed_date": "2026-08-17"
+    },
+    {
+     "doc_id": "2608.25832",
+     "source": "hf",
+     "feed_date": "2026-08-27"
+    },
+    {
+     "doc_id": "2608.23149",
+     "source": "hf",
+     "feed_date": "2026-08-31"
+    },
+    {
+     "doc_id": "2607.25614",
+     "source": "hf",
+     "feed_date": "2026-08-04"
+    },
+    {
+     "doc_id": "2608.20965",
+     "source": "hf",
+     "feed_date": "2026-08-31"
+    },
+    {
+     "doc_id": "2609.04010",
+     "source": "hf",
+     "feed_date": "2026-09-08"
+    },
+    {
+     "doc_id": "2608.30428",
+     "source": "hf",
+     "feed_date": "2026-09-01"
+    },
+    {
+     "doc_id": "2608.01973",
+     "source": "hf",
+     "feed_date": "2026-08-04"
+    },
+    {
+     "doc_id": "2608.16590",
+     "source": "hf",
+     "feed_date": "2026-08-20"
+    },
+    {
+     "doc_id": "2607.13429",
+     "source": "hf",
+     "feed_date": "2026-07-23"
+    },
+    {
+     "doc_id": "2608.24877",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "2608.15875",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "2609.03254",
+     "source": "hf",
+     "feed_date": "2026-09-08"
+    },
+    {
+     "doc_id": "2608.14138",
+     "source": "hf",
+     "feed_date": "2026-08-17"
+    },
+    {
+     "doc_id": "2608.12875",
+     "source": "hf",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "2608.09096",
+     "source": "hf",
+     "feed_date": "2026-08-11"
+    },
+    {
+     "doc_id": "2609.00474",
+     "source": "hf",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "2608.08466",
+     "source": "hf",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "2608.23172",
+     "source": "hf",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "2607.28624",
+     "source": "hf",
+     "feed_date": "2026-07-31"
+    },
+    {
+     "doc_id": "2608.23181",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "2608.24569",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "2608.04570",
+     "source": "hf",
+     "feed_date": "2026-08-06"
+    }
+   ],
+   "packed_chunks": 33,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F09": {
+   "question": "Har AutoDev nämnts de senaste veckorna?",
+   "filter": null,
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "Po_Dh7WLgmM",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "EfGF7QbJItA",
+     "source": "youtube",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "TInwQglNkzo",
+     "source": "youtube",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "GGzT7zVrRTU",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "joKb_QMmglM",
+     "source": "youtube",
+     "feed_date": "2026-09-12"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "6XgSpFdD3EU",
+     "source": "youtube",
+     "feed_date": "2026-08-25"
+    },
+    {
+     "doc_id": "rQ4yX5qNYdY",
+     "source": "youtube",
+     "feed_date": "2026-08-23"
+    },
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2608.13560",
+     "source": "hf",
+     "feed_date": "2026-08-14"
+    },
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "2608.16391",
+     "source": "hf",
+     "feed_date": "2026-08-18"
+    },
+    {
+     "doc_id": "rKo9iLGjUbs",
+     "source": "youtube",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "1lO8aNSLPJc",
+     "source": "youtube",
+     "feed_date": "2026-08-31"
+    },
+    {
+     "doc_id": "2608.23041",
+     "source": "hf",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "4wjHNgMLeyY",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "55rDzRkUVdE",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "2609.01437",
+     "source": "hf",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    }
+   ],
+   "packed_chunks": 29,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F10": {
+   "question": "Vad är nytt den 16 september?",
+   "filter": [
+    "2026-09-16",
+    "2026-09-16"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.17523",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.11873",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.16679",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15975",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.13680",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.17320",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.16034",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14857",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.16816",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.17521",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15195",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14005",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14803",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.06986",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15972",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.13770",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14011",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15982",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.16204",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.17524",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    }
+   ],
+   "packed_chunks": 22,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F11": {
+   "question": "Vad hände i forskningen förra veckan?",
+   "filter": [
+    "2026-09-11",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.17523",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.15635",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.13770",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.13680",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14011",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14803",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "2609.14708",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.11115",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.10539",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "mjQlZrteMIY",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "2609.10728",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.17320",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.14302",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.10895",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.10016",
+     "source": "hf",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.16679",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.06107",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.14857",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.06986",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    }
+   ],
+   "packed_chunks": 31,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F12": {
+   "question": "Har Palantir nämnts i någon video?",
+   "filter": null,
+   "ranking": false,
+   "source": "youtube",
+   "packed_docs": [
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "rQ4yX5qNYdY",
+     "source": "youtube",
+     "feed_date": "2026-08-23"
+    },
+    {
+     "doc_id": "TInwQglNkzo",
+     "source": "youtube",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "rKo9iLGjUbs",
+     "source": "youtube",
+     "feed_date": "2026-08-26"
+    },
+    {
+     "doc_id": "GGzT7zVrRTU",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "Po_Dh7WLgmM",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "55rDzRkUVdE",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "4wjHNgMLeyY",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "EfGF7QbJItA",
+     "source": "youtube",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "ngyFRCNq0Yc",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "6XgSpFdD3EU",
+     "source": "youtube",
+     "feed_date": "2026-08-25"
+    }
+   ],
+   "packed_chunks": 29,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F13": {
+   "question": "Vad har sagts om OpenAI de senaste två veckorna?",
+   "filter": [
+    "2026-09-04",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "ngyFRCNq0Yc",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "joKb_QMmglM",
+     "source": "youtube",
+     "feed_date": "2026-09-12"
+    },
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "2609.14803",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "zDPuEPDXCpU",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "9RtywbN--QE",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "55rDzRkUVdE",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "ix8SsXjBc7M",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    },
+    {
+     "doc_id": "Ji4amrxrzVM",
+     "source": "youtube",
+     "feed_date": "2026-09-07"
+    }
+   ],
+   "packed_chunks": 30,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F14": {
+   "question": "Har det sagts något om open source-alternativ till stora AI-verktyg, både i videor och i artiklar?",
+   "filter": null,
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "rQ4yX5qNYdY",
+     "source": "youtube",
+     "feed_date": "2026-08-23"
+    },
+    {
+     "doc_id": "EfGF7QbJItA",
+     "source": "youtube",
+     "feed_date": "2026-08-21"
+    },
+    {
+     "doc_id": "Po_Dh7WLgmM",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "GfPZm9yucQo",
+     "source": "youtube",
+     "feed_date": "2026-09-04"
+    },
+    {
+     "doc_id": "DcLj_SO8JNk",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "GGzT7zVrRTU",
+     "source": "youtube",
+     "feed_date": "2026-09-03"
+    },
+    {
+     "doc_id": "4wjHNgMLeyY",
+     "source": "youtube",
+     "feed_date": "2026-08-30"
+    },
+    {
+     "doc_id": "n5bZHETCiJA",
+     "source": "youtube",
+     "feed_date": "2026-09-10"
+    },
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "ngyFRCNq0Yc",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "L9xXnPqVfnM",
+     "source": "youtube",
+     "feed_date": "2026-09-02"
+    },
+    {
+     "doc_id": "TInwQglNkzo",
+     "source": "youtube",
+     "feed_date": "2026-08-28"
+    },
+    {
+     "doc_id": "-KcHn0QcSb0",
+     "source": "youtube",
+     "feed_date": "2026-09-09"
+    },
+    {
+     "doc_id": "1qGH6NwTj3o",
+     "source": "youtube",
+     "feed_date": "2026-09-06"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "9RtywbN--QE",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "rKo9iLGjUbs",
+     "source": "youtube",
+     "feed_date": "2026-08-26"
+    }
+   ],
+   "packed_chunks": 29,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  },
+  "F15": {
+   "question": "Vad har hänt med AI-agenter den senaste veckan, i både papers och videor?",
+   "filter": [
+    "2026-09-11",
+    "2026-09-17"
+   ],
+   "ranking": false,
+   "source": null,
+   "packed_docs": [
+    {
+     "doc_id": "JwTCjarfJYw",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "YTG0rdHPTDE",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "S2VJU5DQqlU",
+     "source": "youtube",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "duv4A1gDZOY",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.17320",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "nZYJdwM-_nI",
+     "source": "youtube",
+     "feed_date": "2026-09-13"
+    },
+    {
+     "doc_id": "2609.15818",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "XIt87tJHm-g",
+     "source": "youtube",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "mjQlZrteMIY",
+     "source": "youtube",
+     "feed_date": "2026-09-17"
+    },
+    {
+     "doc_id": "2609.15364",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "joKb_QMmglM",
+     "source": "youtube",
+     "feed_date": "2026-09-12"
+    },
+    {
+     "doc_id": "2609.16679",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "SWEThyRHMgQ",
+     "source": "youtube",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.12541",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.08418",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "zDPuEPDXCpU",
+     "source": "youtube",
+     "feed_date": "2026-09-11"
+    },
+    {
+     "doc_id": "2609.15134",
+     "source": "hf",
+     "feed_date": "2026-09-15"
+    },
+    {
+     "doc_id": "2609.11115",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.11977",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    },
+    {
+     "doc_id": "2609.15982",
+     "source": "hf",
+     "feed_date": "2026-09-16"
+    },
+    {
+     "doc_id": "2609.07099",
+     "source": "hf",
+     "feed_date": "2026-09-14"
+    }
+   ],
+   "packed_chunks": 31,
+   "absent_text_in_packed": 0,
+   "name_doc_counts": {}
+  }
+ }
+}

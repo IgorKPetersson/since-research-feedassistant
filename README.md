@@ -192,6 +192,12 @@ A few things worth knowing before you use it:
   words Since can't turn into dates, such as "recently", "two weeks ago" or "this weekend",
   it doesn't search. It asks you to choose the last 7 days, the last 30 days or all dates,
   or to set a custom range.
+- **Under every answer, Since says what it searched:** how many papers and videos fell in
+  the period, how many videos have no transcript, how many sources contain each name
+  from your question ("AutoDev" in no source), and any gaps in the YouTube coverage for
+  that period, such as a channel whose last check failed. A "not found" answer means
+  not found in that scope. A question that asks for both papers and videos always gets
+  some of each into the answer's sources.
 - Every answer lists its real sources underneath: title, feed date, and a clickable link
   (a YouTube source links to the exact timestamp it was drawn from). If the model's answer
   contains a citation-shaped bracket that couldn't be resolved to a real source, that's

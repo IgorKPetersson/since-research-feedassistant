@@ -919,6 +919,41 @@ whose dates need hour precision.
 
 ---
 
+## D-023 — Exact names are matched as text, both-source questions get both sources, and the app states the search scope
+**Status:** accepted (2026-10-09, T-095)
+
+**Decision:** retrieval keeps semantic search as its base and adds three narrow things.
+(1) Names in the question (by shape: CamelCase, capitals, letters with digits, quotes,
+a capitalised word mid-sentence) are matched case-insensitively as text inside the same
+date and source filter; when a name occurs in at most 25 documents its best chunks go
+to the front. (2) A question that names both papers and videos gets at least 4 chunks
+of each source in its context, taken in turns, then put back in relevance order; every
+question without a source filter also gets each source's 20 best candidates in its pool.
+(3) The app computes what was searched (documents per source, title-only videos, exact
+name counts, YouTube coverage gaps), shows it under the answer and gives the model a
+one-line version, without the name counts, so a negative answer names its scope.
+
+**Why:** measured on the frozen set with identical explicit date filters
+(`docs/eval-results/2026-10-09-t095-retrieval.md`). Exact-name matching found all of
+F02's five expected sources (four before). The scope makes "not found" a fact about a
+named scope rather than a model's guess.
+
+**Rejected:** giving the model the exact-name counts — it repeated them instead of
+reading the sources (F04's typo "Copding", F12's "Palantir"). BM25 keyword ranking fused with the semantic ranking — prototyped, it moved
+no expected F14 paper into reach (Swedish question, English abstracts) and pushed F15's
+papers lower. A both-source quota for every question — it added four off-topic papers to
+F14's context and pushed out an expected video, and moved F13 for no gain. A larger
+candidate pool — already ruled out by T-069.
+
+**Cost:** 160 tokens of the chunk budget for the scope line (11560 → 11400). F14, which
+asks for both sources, still gets no on-topic paper and now loses one expected video to
+the quota. Names are found by shape, so a lower-case name ("autodev") is not matched.
+
+**Would change our mind:** an embedding or query step that closes the gap between Swedish
+questions and English abstracts; then a general quota could be measured again.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

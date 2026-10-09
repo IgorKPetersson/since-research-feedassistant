@@ -1,0 +1,224 @@
+{
+  "dataset": {
+    "archive": "data-raw-frozen-hf20260916-yt20260917.zip",
+    "manifest": "docs/eval-dataset-manifest.txt",
+    "reference_date": "2026-09-17"
+  },
+  "about": "Versioned retrieval expectations for the 15 frozen evaluation questions. 'filter' is the explicit date filter used for every before/after retrieval comparison, the same for both code versions, so date-parser changes can't look like retrieval changes. v1 is the answer key in docs/eval-questions.md as written; it is never edited. Later versions list only what they change.",
+  "versions": {
+    "v1": {
+      "source": "docs/eval-questions.md (T-014, frozen in T-020); filters from the original parser (v1-pre-improvement)",
+      "questions": {
+        "F01": {
+          "question": "I området Recursive self-improvement, vad är de två senaste nyheterna och vad handlar de om?",
+          "expected": [
+            "2609.11873",
+            "2609.17523",
+            "2609.14857"
+          ],
+          "filter": null,
+          "ranking": true
+        },
+        "F02": {
+          "question": "Vad har hänt med GUI agents den senaste månaden?",
+          "expected": [
+            "2608.15930",
+            "2608.24099",
+            "2609.00028",
+            "2609.10297",
+            "2609.13287"
+          ],
+          "filter": [
+            "2026-08-17",
+            "2026-09-17"
+          ],
+          "ranking": false
+        },
+        "F03": {
+          "question": "Vad är det absolut  senaste inom Video genereation och är det hårdvaru- eller mjukvarurelaterat?",
+          "expected": [
+            "2609.17521"
+          ],
+          "filter": null,
+          "ranking": true
+        },
+        "F04": {
+          "question": "Den senaste veckan, vad har sagts om Copding Agents. Vänligen sammanfatta.",
+          "expected": [
+            "2608.27831",
+            "2609.04611"
+          ],
+          "filter": [
+            "2026-09-11",
+            "2026-09-17"
+          ],
+          "ranking": false
+        },
+        "F05": {
+          "question": "Har NeoHorse nämnts de senaste två veckorna?",
+          "expected": [
+            "2609.08183"
+          ],
+          "filter": [
+            "2026-09-04",
+            "2026-09-17"
+          ],
+          "ranking": false
+        },
+        "F06": {
+          "question": "Vad är det senaste inom benchmarking av coding agents?",
+          "expected": [
+            "2609.08149"
+          ],
+          "filter": null,
+          "ranking": true
+        },
+        "F07": {
+          "question": "Vad säger forskningen om text-to-video den senaste månaden?",
+          "expected": [
+            "2608.21839"
+          ],
+          "filter": [
+            "2026-08-17",
+            "2026-09-17"
+          ],
+          "ranking": false
+        },
+        "F08": {
+          "question": "Nämns LEGO i någon artikel och i så fall, sammanfatta vad de handlar om.",
+          "expected": [
+            "2608.17393"
+          ],
+          "filter": null,
+          "ranking": false
+        },
+        "F09": {
+          "question": "Har AutoDev nämnts de senaste veckorna?",
+          "expected": [],
+          "filter": null,
+          "ranking": false,
+          "absence": true,
+          "absent_text": "AutoDev"
+        },
+        "F10": {
+          "question": "Vad är nytt den 16 september?",
+          "expected": [
+            "2609.06986",
+            "2609.11873",
+            "2609.13680",
+            "2609.13770",
+            "2609.14005",
+            "2609.14011",
+            "2609.14803",
+            "2609.14857",
+            "2609.15195",
+            "2609.15972",
+            "2609.15975",
+            "2609.15982",
+            "2609.16034",
+            "2609.16204",
+            "2609.16679",
+            "2609.16816",
+            "2609.17320",
+            "2609.17521",
+            "2609.17523",
+            "2609.17524",
+            "S2VJU5DQqlU"
+          ],
+          "filter": [
+            "2026-09-16",
+            "2026-09-16"
+          ],
+          "ranking": false
+        },
+        "F11": {
+          "question": "Vad hände i forskningen förra veckan?",
+          "expected": [],
+          "filter": [
+            "2026-09-11",
+            "2026-09-17"
+          ],
+          "ranking": false,
+          "expected_open_set": {
+            "source": "hf",
+            "from": "2026-09-10",
+            "through": "2026-09-16",
+            "documents": 137
+          },
+          "discrepancy": "The answer key's window is 2026-09-10 to 2026-09-16 (137 papers); the graded runs searched 2026-09-11 to 2026-09-17 (the parser at the reference date, D-012), which holds 105 of them. The 32 papers dated 2026-09-10 that the key accepts were outside the filter; no paper is dated after 2026-09-16."
+        },
+        "F12": {
+          "question": "Har Palantir nämnts i någon video?",
+          "expected": [
+            "S2VJU5DQqlU"
+          ],
+          "filter": null,
+          "ranking": false
+        },
+        "F13": {
+          "question": "Vad har sagts om OpenAI de senaste två veckorna?",
+          "expected": [
+            "GGzT7zVrRTU",
+            "ngyFRCNq0Yc",
+            "JwTCjarfJYw",
+            "nZYJdwM-_nI",
+            "XIt87tJHm-g"
+          ],
+          "filter": [
+            "2026-09-04",
+            "2026-09-17"
+          ],
+          "ranking": false
+        },
+        "F14": {
+          "question": "Har det sagts något om open source-alternativ till stora AI-verktyg, både i videor och i artiklar?",
+          "expected": [
+            "2607.24653",
+            "2607.24280",
+            "9RtywbN--QE",
+            "S2VJU5DQqlU"
+          ],
+          "filter": null,
+          "ranking": false,
+          "cross_source": true
+        },
+        "F15": {
+          "question": "Vad har hänt med AI-agenter den senaste veckan, i både papers och videor?",
+          "expected": [
+            "2609.08149",
+            "2609.10297",
+            "2609.13287",
+            "2609.14857",
+            "YTG0rdHPTDE",
+            "joKb_QMmglM"
+          ],
+          "filter": [
+            "2026-09-11",
+            "2026-09-17"
+          ],
+          "ranking": false,
+          "cross_source": true,
+          "discrepancy": "Expected source 2609.08149 is dated 2026-09-10, outside the graded runs' filter 2026-09-11 to 2026-09-17; the answer key's HF window is 2026-09-10 to 2026-09-16."
+        }
+      }
+    },
+    "v2": {
+      "source": "v1 with F11 under T-105 (\"förra veckan\" = the previous Monday to Sunday)",
+      "changes": {
+        "F11": {
+          "filter": [
+            "2026-09-07",
+            "2026-09-13"
+          ],
+          "expected_open_set": {
+            "source": "hf",
+            "from": "2026-09-07",
+            "through": "2026-09-13",
+            "documents": 146
+          },
+          "note": "Checked against the frozen archive on 2026-10-09: 146 papers dated 2026-09-07 to 2026-09-13 (none on 09-12 and 09-13, a weekend). Grade an answer as in v1 (at least three papers, all inside the window), with this window."
+        }
+      }
+    }
+  }
+}
