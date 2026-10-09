@@ -13,6 +13,37 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-105 — "Last week" and "last month" mean calendar periods
+
+**Status:** in-progress
+**Size:** S  ·  **Branch:** `t/T-105-calendar-week-month`  ·  **Phase:** v2-1 (P1-06 follow-up)
+
+**Goal:** "last week", "this week", "last month" and "this month" mean the calendar periods
+people expect, while explicitly rolling phrases keep their rolling meaning.
+
+**Why:** my review of T-094 (2026-10-09). T-094 kept "last week", "this week" and "förra
+veckan" as the last 7 days to match the evaluation's old convention; that is not what
+the words mean.
+
+**Acceptance criteria**
+- [ ] "Last week" / "förra veckan": the previous Monday to Sunday. "This week" / "denna
+  vecka": this Monday through today. "Last month" / "förra månaden": the previous whole
+  calendar month. "This month" / "denna månad": the 1st through today. Matrix cases and
+  parser-to-retrieval tests cover each
+- [ ] Rolling phrases ("the last 7 days", "past month", "senaste veckan", "in the last
+  week") keep their meaning, with exact definitions in `docs/date-phrases.md`
+- [ ] The interval shown names its weekdays and length, so a calendar week is visible as
+  Monday to Sunday
+- [ ] The frozen dataset, its reference date and the historical results are unchanged;
+  evaluation questions that now resolve differently are recorded, direct-parser results
+  kept apart from what the app does (F09)
+
+**Out of scope:** re-running or re-grading the evaluation.
+
+**Depends on:** T-094
+
+---
+
 ### T-104 — Stop looking up members-only and private videos on every update
 
 **Status:** todo
