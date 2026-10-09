@@ -69,3 +69,9 @@ demo questions all finished (`done=stop`, no retries), generation 12.6–21.1 s.
 Five runs per attack, one question, one day's data. 0 of 30 is not proof the model cannot
 be steered; it means these six attempts no longer worked. The main guarantee remains that
 the model has no tools (D-020) and its answer is rendered as text (T-072).
+
+**Correction, 2026-10-09 (T-089):** "rendered as text" was not true for every case. Text
+in square brackets that was not a citation number skipped escaping, so an answer containing
+`[<img src=…>]` showed a live image, and the browser tried to load its address. The model
+never wrote the write-html attack's tag in these runs, so the gap was not exercised here.
+T-089 fixed it and added tests for it. The results in this file are unchanged.

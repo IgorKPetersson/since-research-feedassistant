@@ -415,7 +415,7 @@ needs Update now.
 
 ### T-089 — Escape HTML in bracketed answer text
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-089-escape-bracket-html`  ·  **Phase:** v2-1 (P1-01)
 
 **Goal:** nothing in the model's answer can become active HTML, including text in square
@@ -426,19 +426,44 @@ and is rendered with HTML enabled. On 2026-10-09 a direct call turned a brackete
 into a live tag with an outside URL. That breaks D-020.
 
 **Acceptance criteria**
-- [ ] A regression test reproduces the bypass with an inert local fixture and passes after
-  the fix
-- [ ] Tests cover bracketed HTML, image tags, event-handler attributes, malformed and
-  unlinked citations, descriptive ranges, and text outside brackets
-- [ ] Unlinked brackets and bracketed prose stay visible as escaped text; valid citation
-  chips still link
-- [ ] Every other path that renders answer or source text with HTML is checked
-- [ ] D-020, `docs/OVERVIEW.md` and the T-073 results describe the verified behaviour,
-  without claiming prompt injection is solved
+- [x] A regression test reproduces the bypass with an inert local fixture and passes after
+  the fix → `BracketedAnswerTextSafetyTests`: 3 of 6 fail with the fix removed, all pass
+  with it; image URL is `127.0.0.1:9`, where nothing listens
+- [x] Tests cover bracketed HTML, image tags, event-handler attributes, malformed and
+  unlinked citations, descriptive ranges, and text outside brackets → same class, run
+  through `build_citations()` first as the app does
+- [x] Unlinked brackets and bracketed prose stay visible as escaped text; valid citation
+  chips still link → unit tests, a browser check of a fixture page, and one real question
+  in the running app (11 chips, no other links in the answer)
+- [x] Every other path that renders answer or source text with HTML is checked → see Notes
+- [x] D-020, `docs/OVERVIEW.md` and the T-073 results describe the verified behaviour,
+  without claiming prompt injection is solved → D-020 note, DESIGN § Security baseline,
+  OVERVIEW security table, correction in the T-073 results
 
 **Out of scope:** other prompt-injection defences.
 
 **Depends on:** T-088
+**Notes:** full suite 368 tests OK (354 before, 14 new).
+
+Paths checked beyond the answer body:
+- *Unlinked-references caption and quote warning:* Streamlit's markdown escapes HTML there
+  but turned model-written URLs into links. In a real browser before the fix, the caption
+  had 2 such links and the warning 3. Backslash-escaping alone did not stop Streamlit's
+  GFM autolinks, which unit tests with markdown-it-py can't show; a word joiner before
+  `:`, `@` and `.` does. After the fix the only link on the fixture page is the chip.
+  Added during the ticket because it is the same failure, model text becoming active
+  markup. Trade-off: text copied from these notes contains the invisible joiners.
+- *Header notes and the text-source badge:* app HTML that includes text read from disk
+  (the update status file, stored metadata). Now escaped. Not reachable by the model, so
+  checked by reading rather than by a test.
+- *Source card titles, reasoning, other messages:* titles go through
+  `escape_markdown_link_text()` without HTML (T-029); reasoning is `st.text`; the rest
+  is the app's own text or validated handles. Unchanged.
+- In the browser before the fix, React refused the injected `onerror` string, so no
+  script ran; the image load was attempted and failed only because port 9 is blocked.
+
+Not fixed here: in a bracket mixing valid and invalid numbers, such as `[1, 99]`, the
+answer shows only the chip for 1; 99 appears only in the caption below. That is T-099.
 
 ---
 

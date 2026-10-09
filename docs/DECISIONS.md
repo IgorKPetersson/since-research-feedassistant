@@ -842,6 +842,11 @@ used from a phone on the same network.
 **Would change our mind:** a feature that truly needs a tool, which would then need its own
 confirmation step (Y/N before any action) and a new decision.
 
+**Note (2026-10-09, T-089):** "nothing it writes is rendered as HTML" did not hold for
+bracketed text the citation step could not link, nor for links Streamlit's markdown forms
+from URLs in the captions and quote warning. Both are fixed; the decision is unchanged.
+See `docs/DESIGN.md` § Security baseline.
+
 ---
 
 ## D-0NN — <template>

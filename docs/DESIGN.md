@@ -601,9 +601,17 @@ rest of this section narrows what text can do.
 **Behaviour:**
 1. *Network (T-071):* Streamlit binds `127.0.0.1` only (`.streamlit/config.toml`
    `server.address`), XSRF protection stays on. Verified with `netstat` in a real run.
-2. *Rendering (T-072):* the model's answer is HTML-escaped before the citation chips are
-   inserted; only chips the app builds are HTML. A chip's `href` is only ever an
-   `https://` URL to huggingface.co, arxiv.org or youtube.com, built by the app.
+2. *Rendering (T-072, T-089):* the model's answer is HTML-escaped before the citation chips
+   are inserted; only chips the app builds are HTML. A chip's `href` is only ever an
+   `https://` URL to huggingface.co, arxiv.org or youtube.com, built by the app. Every
+   bracket is escaped, including one the citation step reports as unlinked: until T-089
+   that branch returned the model's text raw, and `[<img src=…>]` reached the browser as
+   a live image that the browser tried to load (reproduced 2026-10-09). Model text in the
+   captions and the quote warning goes through Streamlit's markdown, which escapes HTML
+   but turns bare URLs into links even when backslash-escaped; `escape_markdown_text()`
+   escapes all punctuation and puts a word joiner before `:`, `@` and `.` so no link can
+   form. Text from the update status file and stored metadata is escaped before it goes
+   into the app's own HTML.
 3. *Prompt (T-073):* each excerpt is wrapped in explicit begin/end markers; the system
    prompt says the excerpts are untrusted data to be quoted or summarised, never
    instructions, and that the answer contains no HTML and no links. Planted documents
@@ -621,7 +629,9 @@ openly instead).
 
 **Verification:** per ticket; the decisive checks are the `netstat` bind address in a real
 run, an injected `<img onerror>`/`<a href="javascript:…">` answer rendering as text in a
-real browser, and the planted-injection runs' recorded results.
+real browser, and the planted-injection runs' recorded results. T-089 added the case those
+checks missed: tests that classify brackets with `build_citations()` first, as the app
+does, and a browser check of the answer, captions and warning before and after the fix.
 
 **Risks:** the prompt change shifts answers, so T-069's graded numbers describe the app
 before it (stated in OVERVIEW and on the deck); a small local model can still follow an
