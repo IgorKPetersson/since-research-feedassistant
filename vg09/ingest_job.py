@@ -215,6 +215,7 @@ class _Job:
         self.update(hf_papers=result["total_papers"])
 
     def _youtube(self, config) -> None:
+        from vg09.youtube_backfill import catch_up_start
         from vg09.youtube_backfill import run as run_youtube
 
         def progress(result) -> None:
@@ -236,7 +237,7 @@ class _Job:
             # Nothing has ever completed: every channel gets the full window.
             new, old = dict(config.channels), {}
         if old:
-            start = date.fromisoformat(watermark) + timedelta(days=1)
+            start = catch_up_start(watermark)  # T-090: rechecks the last days
             result = run_youtube(start=start, today=self.today, channels=old, on_progress=progress)
             self.videos_before = (result.fetched_captions + result.fetched_whisper
                                   + result.fetched_fallback)

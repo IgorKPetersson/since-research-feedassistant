@@ -256,3 +256,147 @@ class ListChannelTests(YoutubeBackfillTestCase):
         videos, _ = self.list_channel(["broken", "fine"], details)
 
         self.assertEqual([v["id"] for v in videos], ["fine"])
+
+
+class LateUploadRecheckTests(YoutubeBackfillTestCase):
+    """T-090: a video that appears after an update, dated on or just before the day the
+    watermark was written, is found by the next update. Each `update()` is one whole
+    catch-up run as `vg09.catchup` does it, so the start date comes from the real
+    watermark. Only YouTube itself is faked: `self.published` is the channel's listing,
+    newest first, and `_list_channel()` runs for real, so already-fetched videos take
+    the same known-on-disk path as in production."""
+
+    def setUp(self):
+        super().setUp()
+        self.published: list[tuple[str, str]] = []  # (video id, feed date), newest first
+        self.details_fetched: list[str] = []
+        self.normalized: list[str] = []
+
+    def publish(self, video_id: str, feed_date: str) -> None:
+        self.published.insert(0, (video_id, feed_date))
+
+    def update(self, today: date):
+        from vg09.catchup import catch_up_youtube
+
+        dates = dict(self.published)
+
+        def details(video_id):
+            self.details_fetched.append(video_id)
+            return fake_video(video_id, dates[video_id])
+
+        def normalize(video):
+            self.normalized.append(video["id"])
+            return fake_document(video["id"], f"{video['upload_date'][:4]}-"
+                                              f"{video['upload_date'][4:6]}-{video['upload_date'][6:]}")
+
+        with patch("vg09.youtube_backfill.list_video_ids",
+                   return_value=[video_id for video_id, _ in self.published]), \
+             patch("vg09.youtube_backfill._fetch_single_video_metadata", side_effect=details), \
+             patch("vg09.youtube_backfill.normalize", side_effect=normalize):
+            if read_watermark("youtube") is None:  # the first run is the backfill
+                return run(start=date(2026, 9, 20), today=today)
+            return catch_up_youtube(today=today)
+
+    def fetched(self, video_id: str, feed_date: str) -> bool:
+        return document.exists("youtube", feed_date, video_id)
+
+    def test_a_video_uploaded_after_the_days_update_is_found_the_next_day(self):
+        self.publish("morning", "2026-10-08")
+        self.update(date(2026, 10, 8))
+        self.publish("evening", "2026-10-08")  # uploaded after that update had run
+
+        self.update(date(2026, 10, 9))
+
+        self.assertTrue(self.fetched("evening", "2026-10-08"))
+
+    def test_a_second_update_on_the_same_day_finds_a_later_upload(self):
+        self.update(date(2026, 10, 8))
+        self.publish("later", "2026-10-08")
+
+        self.update(date(2026, 10, 8))
+
+        self.assertTrue(self.fetched("later", "2026-10-08"))
+
+    def test_across_midnight_a_video_dated_the_day_before_the_watermark_is_found(self):
+        """yt-dlp's upload_date is a UTC date, and the update's "today" is the local
+        date. Sweden runs ahead of UTC, so an update just after local midnight on the 9th
+        writes the watermark 2026-10-09 while a video uploaded minutes later, before UTC
+        midnight, is dated the 8th."""
+        self.update(date(2026, 10, 9))  # 00:30 local, 22:30 UTC on the 8th
+        self.publish("late_utc", "2026-10-08")  # uploaded at 23:00 UTC on the 8th
+
+        self.update(date(2026, 10, 10))
+
+        self.assertTrue(self.fetched("late_utc", "2026-10-08"))
+
+    def test_a_video_dated_after_the_local_date_is_found_the_next_day(self):
+        """West of UTC the UTC date runs ahead: a video dated tomorrow is left alone
+        today and picked up by the next update."""
+        self.publish("ahead", "2026-10-09")
+        self.update(date(2026, 10, 8))
+        self.assertFalse(self.fetched("ahead", "2026-10-09"))
+
+        self.update(date(2026, 10, 9))
+
+        self.assertTrue(self.fetched("ahead", "2026-10-09"))
+
+    def test_the_recheck_reaches_back_two_days_and_no_further(self):
+        """The documented bound: the watermark day and the day before. A video that
+        shows up later still, dated earlier, is outside every window and is not
+        fetched; T-091's per-channel recovery does not cover it either."""
+        self.update(date(2026, 10, 9))
+        # Published in date order, as a channel normally lists them. When a later
+        # listing entry carries an older date, the walk in _list_channel() stops at it
+        # before reaching the entries below - a separate limit, recorded on T-090.
+        self.publish("two_days_back", "2026-10-07")
+        self.publish("one_day_back", "2026-10-08")
+
+        self.update(date(2026, 10, 10))
+
+        self.assertTrue(self.fetched("one_day_back", "2026-10-08"))
+        self.assertFalse(self.fetched("two_days_back", "2026-10-07"))
+
+    def test_catch_up_after_several_days_off_includes_the_weekend(self):
+        """Last update Friday 2026-10-02, next one Thursday 2026-10-08. Videos from the
+        weekend and the weekdays in between are fetched, and so is one uploaded late on
+        the Friday itself."""
+        self.publish("friday_morning", "2026-10-02")
+        self.update(date(2026, 10, 2))
+        for video_id, day in (("friday_late", "2026-10-02"), ("saturday", "2026-10-03"),
+                              ("sunday", "2026-10-04"), ("monday", "2026-10-05"),
+                              ("wednesday", "2026-10-07")):
+            self.publish(video_id, day)
+
+        self.update(date(2026, 10, 8))
+
+        for video_id, day in self.published:
+            self.assertTrue(self.fetched(video_id, day), video_id)
+        self.assertEqual(read_watermark("youtube"), "2026-10-08")
+
+    def test_repeated_and_overlapping_updates_fetch_each_video_once(self):
+        self.publish("a", "2026-10-07")
+        self.publish("b", "2026-10-08")
+        for today in (date(2026, 10, 8), date(2026, 10, 8), date(2026, 10, 9), date(2026, 10, 9)):
+            result = self.update(today)
+
+        self.assertEqual(sorted(self.normalized), ["a", "b"])  # one transcript fetch each
+        self.assertEqual(sorted(self.details_fetched), ["a", "b"])  # details asked for once
+        self.assertEqual(result.already_done, 1)  # the last run's window holds only "b"
+        stored = sorted(p.stem for p in document.RAW_DIR.glob("youtube/*/*.json"))
+        self.assertEqual(stored, ["a", "b"])  # one file per video id, nothing duplicated
+
+
+class CatchUpStartTests(unittest.TestCase):
+    """T-090: the documented recheck window, in one place for both callers."""
+
+    def test_the_watermark_day_and_the_day_before_are_rechecked(self):
+        from vg09.youtube_backfill import RECHECK_DAYS, catch_up_start
+
+        self.assertEqual(RECHECK_DAYS, 2)
+        self.assertEqual(catch_up_start("2026-10-09"), date(2026, 10, 8))
+
+    def test_month_and_year_boundaries(self):
+        from vg09.youtube_backfill import catch_up_start
+
+        self.assertEqual(catch_up_start("2026-11-01"), date(2026, 10, 31))
+        self.assertEqual(catch_up_start("2027-01-01"), date(2026, 12, 31))

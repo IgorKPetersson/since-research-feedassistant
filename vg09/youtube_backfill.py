@@ -43,6 +43,7 @@ BACKFILL_WEEKS = 4  # halved from T-017's original 8-week plan to roughly halve
 LIST_COUNT_PER_CHANNEL = 50  # yt-dlp's channel listing is not the blocked call
 # (KB-008 - only the caption fetch itself was affected); generous here is cheap
 # and just gets filtered down to the window afterwards
+RECHECK_DAYS = 2  # T-090: see catch_up_start()
 SHORT_PAUSE_SECONDS = (3.0, 8.0)  # randomized pause between every video
 LONG_PAUSE_EVERY = 20  # every Nth video (by attempt count, across pending +
 # channel videos combined), pause longer instead of the short pause
@@ -85,6 +86,22 @@ def _fetch_single_video_metadata(video_id: str) -> dict:
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         return ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+
+
+def catch_up_start(watermark: str) -> date:
+    """T-090: where a catch-up starts, given the date the last full run covered up to.
+
+    The watermark is that run's own date, so the run saw only the videos uploaded
+    before it started; one uploaded later that day was never listed. A catch-up
+    therefore looks at the watermark day again, and the day before it as well, since
+    yt-dlp dates a video in UTC while the watermark is the local date: just after local
+    midnight in Sweden, UTC is still on the previous day. Hugging Face re-checks its
+    last two days for a similar reason (T-015, `vg09.sync.REOPEN_DAYS`).
+
+    Rechecking costs little: a video already on disk is listed with its stored date and
+    is neither looked up nor fetched again (`_list_channel()`, `document.exists()`).
+    A video that appears even later with an older date stays outside the window."""
+    return date.fromisoformat(watermark) - timedelta(days=RECHECK_DAYS - 1)
 
 
 def _known_video_dates() -> dict[str, str]:

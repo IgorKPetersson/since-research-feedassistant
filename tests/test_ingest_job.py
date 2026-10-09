@@ -226,7 +226,7 @@ class RunJobTests(IngestJobTestCase):
         self.run_job()
 
         catch_up, backfill = self.youtube_calls
-        self.assertEqual((list(catch_up["channels"]), catch_up["start"]), (["alpha"], date(2026, 10, 1)))
+        self.assertEqual((list(catch_up["channels"]), catch_up["start"]), (["alpha"], date(2026, 9, 29)))  # T-090 recheck
         self.assertEqual((list(backfill["channels"]), backfill["start"]), (["newone"], date(2026, 9, 5)))
 
     def test_a_failing_stage_is_recorded_and_the_store_is_still_rebuilt(self):

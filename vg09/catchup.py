@@ -14,6 +14,7 @@ from datetime import date, timedelta
 from vg09 import sources
 from vg09.sync import sync_hf
 from vg09.watermark import read_watermark
+from vg09.youtube_backfill import catch_up_start
 from vg09.youtube_backfill import run as run_youtube_backfill
 
 
@@ -43,7 +44,7 @@ def catch_up_youtube(today: date | None = None):
         print("No youtube watermark found - run the backfill (T-017/T-019) first. Skipping "
               "YouTube catch-up (no YouTube call made).")
         return None
-    start = date.fromisoformat(watermark) + timedelta(days=1)
+    start = catch_up_start(watermark)  # T-090: rechecks the last days, not just after them
     print(f"YouTube watermark: {watermark} -> catching up from {start.isoformat()}")
     return run_youtube_backfill(start=start, today=today)
 

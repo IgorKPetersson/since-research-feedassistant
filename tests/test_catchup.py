@@ -76,13 +76,14 @@ class CatchUpYoutubeTests(unittest.TestCase):
         mock_run.assert_not_called()
         self.assertIsNone(result)
 
-    def test_watermark_present_calls_backfill_from_the_day_after(self):
+    def test_watermark_present_calls_backfill_from_the_day_before_it(self):
+        """T-090: the watermark day and the day before are checked again."""
         write_watermark("youtube", "2026-09-10")
         with patch("vg09.catchup.run_youtube_backfill") as mock_run:
             mock_run.return_value = "fake result"
             result = catch_up_youtube(today=date(2026, 9, 16))
 
-        mock_run.assert_called_once_with(start=date(2026, 9, 11), today=date(2026, 9, 16))
+        mock_run.assert_called_once_with(start=date(2026, 9, 9), today=date(2026, 9, 16))
         self.assertEqual(result, "fake result")
 
 
