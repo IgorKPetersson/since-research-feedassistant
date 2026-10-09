@@ -180,7 +180,15 @@ A few things worth knowing before you use it:
   answer says which period from the question it did not use. A start date after the end
   date is refused.
 - Dates are compared as calendar dates: a paper's date is its Daily Papers day, a video's
-  is its upload date in UTC. Close to midnight a video can count for the neighbouring day.
+  is its upload date in UTC. Close to midnight a video can count for the neighbouring day,
+  and the app says so next to the date filter.
+- **Which date phrases work**, in English and Swedish, is listed in
+  [`docs/date-phrases.md`](docs/date-phrases.md): single days ("two days ago", "i
+  förrgår", "2026-10-05"), rolling periods ("the past three weeks"), "since" periods,
+  week numbers ("vecka 41"), months and explicit ranges. If a question asks about time in
+  words Since can't turn into dates, such as "recently", "two weeks ago" or "this weekend",
+  it doesn't search. It asks you to choose the last 7 days, the last 30 days or all dates,
+  or to set a custom range.
 - Every answer lists its real sources underneath: title, feed date, and a clickable link
   (a YouTube source links to the exact timestamp it was drawn from). If the model's answer
   contains a citation-shaped bracket that couldn't be resolved to a real source, that's

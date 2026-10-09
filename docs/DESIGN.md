@@ -627,8 +627,17 @@ configured time zone (`data/sources.json` `timezone`, default `Europe/Stockholm`
 `resolve_date_range()`, to the retrieval filter (through the resolved range) and to
 `generate_answer(today=...)`, which states it in the prompt. Nothing below the app reads
 the clock for a question. The header's freshness note, the date picker's defaults and the
-update job (`ingest_job`, `sync_hf`, the YouTube run) use the same calendar date. Phrase
-support itself is unchanged here; T-094 owns it.
+update job (`ingest_job`, `sync_hf`, the YouTube run) use the same calendar date.
+
+**Phrases (T-094).** What each phrase means, the boundary rules and the 76-case test
+matrix are in [`docs/date-phrases.md`](date-phrases.md). A question with time words that
+don't resolve to dates (`date_range.unresolved_time_phrase()`) is not searched: the app
+names the words and offers the last 7 days, the last 30 days or all dates
+(`ui_helpers.clarify_choices()`), or the sidebar range. A choice reruns the same question
+with that period and the mode line says "chosen when asked". Next to any date filter that
+includes videos, the app notes that video dates are UTC upload days
+(`ui_helpers.video_date_note()`). `tests/test_app_question_dates.py` checks that the
+interval shown is the `where` clause the vector store receives.
 
 **Three dates, kept apart** (`ui_helpers.dates_note()`, shown under the answer's mode line):
 1. *Requested period* — the resolved range, or none.

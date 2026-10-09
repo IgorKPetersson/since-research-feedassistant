@@ -351,7 +351,7 @@ v2 Phase 1, so its report is the phase checkpoint.
 
 ### T-094 — Audit and fix natural-language date interpretation
 
-**Status:** todo
+**Status:** done
 **Size:** M  ·  **Branch:** `t/T-094-date-phrases-audit`  ·  **Phase:** v2-1 (P1-06)
 
 **Goal:** every supported date phrase has a defined, tested meaning, and the interval
@@ -361,20 +361,62 @@ actually searched is shown.
 right filter was applied.
 
 **Acceptance criteria**
-- [ ] At least 30 English and Swedish phrases tested at a fixed reference date, covering
+- [x] At least 30 English and Swedish phrases tested at a fixed reference date, covering
   single days, rolling periods, "since" periods, calendar weeks and months, explicit dates,
-  ranges, and month, year and leap-year boundaries
-- [ ] Boundary rules are written down: inclusive ends, Monday-based weeks, month
-  arithmetic, omitted years, "since Monday" on a Monday
-- [ ] A question with time intent that can't be resolved asks for a date or offers the
-  manual range; it never searches all dates silently
-- [ ] An integration test shows the resolved interval reaches the retrieval filter
-- [ ] The UI shows the interval actually searched
+  ranges, and month, year and leap-year boundaries → `tests/test_date_matrix.py`, 76 cases
+  (27 Swedish), five reference dates including 31 March, 5 January and 1 March 2028
+- [x] Boundary rules are written down: inclusive ends, Monday-based weeks, month
+  arithmetic, omitted years, "since Monday" on a Monday → `docs/date-phrases.md`, whose
+  table a test keeps identical to the matrix
+- [x] A question with time intent that can't be resolved asks for a date or offers the
+  manual range; it never searches all dates silently → `unresolved_time_phrase()`; the app
+  offers the last 7 days, the last 30 days, all dates, or the sidebar range
+- [x] An integration test shows the resolved interval reaches the retrieval filter →
+  `AppDateFilterTests` runs the real `app.py` and real retrieval; the `where` clause
+  equals the interval shown
+- [x] The UI shows the interval actually searched → mode line, including "chosen when
+  asked"; the UTC note for video dates sits next to it
 
 **Out of scope:** an LLM-based date parser.
 
 **Depends on:** T-093
 **Notes:** any change to a phrase that already works is listed for my review.
+
+**For my review: phrases whose result changed** (old results checked on the pre-T-094
+code at 2026-10-09):
+
+| Phrase | Before | Now |
+|---|---|---|
+| between October 5 and October 1 | 2026-10-05 only | asks (range written backwards) |
+| mellan den 5 och den 1 oktober | 2026-10-01 only | asks |
+| the week after October 1 | 2026-10-01 only | asks (period relative to a date) |
+| October 5, 2025 / den 5 oktober 2025 | 2026-10-05 (year ignored) | 2025-10-05 |
+| Vad hände senaste året? | sorted by latest, no filter | the past 12 months |
+| February 29 (in 2026), 2026-02-30, week 54 | no filter, all dates | asks |
+| recent…, two weeks ago, last year, de senaste veckorna, this weekend, Q3, i höstas | no filter, all dates | asks |
+
+Kept on purpose: "last week", "this week", "förra veckan" and "senaste veckan" stay the
+last 7 days, the convention the evaluation questions are written with. "Earlier this
+week" reads as "this week".
+
+Added: idag, the day before yesterday / i förrgår, N days ago / för N dagar sedan, ISO
+dates and ranges, dates and months with a year, ISO week numbers, this year / i år, the
+past year / senaste året, den här månaden, förra månaden.
+
+Evaluation: all 15 Swedish questions and their 15 English translations resolve exactly as
+before at the frozen reference date 2026-09-17; the scripts and their reference date are
+unchanged. In the app, F09 ("de senaste veckorna", ambiguous by design in the facit) now
+asks for a period; the evaluation scripts call the parser directly and are not affected.
+
+Checks: full suite 437 tests OK. Real app on 2026-10-09: "What are recent advances in AI
+agents?" was not searched until "The last 7 days" was chosen; then the mode line read
+"Date filter (chosen when asked): 2026-10-03 – 2026-10-09", the UTC note appeared, and the
+answer had 10 citations.
+
+Not supported (listed in `docs/date-phrases.md`): times of day, holidays, other
+languages, number words above ten. Weekends, quarters, seasons and periods relative to a
+date are asked about, not interpreted. Video dates stay UTC days; the midnight effect is
+tested and shown, not corrected.
 
 ---
 
