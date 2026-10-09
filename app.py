@@ -33,7 +33,12 @@ import chromadb.errors
 from vg09 import coverage, ingest_job, reference_date, sources, sources_page
 from vg09.answer import generate_answer
 from vg09.citations import build_citations
-from vg09.date_range import detect_recency_ranking, manual_range_error, resolve_date_range
+from vg09.date_range import (
+    detect_recency_ranking,
+    manual_range_error,
+    resolve_date_range,
+    unresolved_time_phrase,
+)
 from vg09.quote_links import misattributed_quotes, quote_times
 from vg09.source_filter import detect_source
 from vg09.retrieval import NUM_CTX, retrieve
@@ -45,6 +50,8 @@ from vg09.ui_helpers import (
     LOGO_MARK_PATH,
     build_retrieval_ranks,
     citation_source_type,
+    clarify_choices,
+    clarify_message,
     dates_note,
     describe_retrieval_mode,
     escape_markdown_link_text,
@@ -58,6 +65,7 @@ from vg09.ui_helpers import (
     staleness_note,
     text_source_label,
     update_note,
+    video_date_note,
 )
 
 _SOURCE_TYPE_LABEL = {"paper": "PAPER", "video": "VIDEO", "unknown": "SOURCE"}
@@ -123,6 +131,11 @@ def _fill_question(text: str) -> None:
     st.session_state["question_input"] = text
 
 
+def _choose_period(question: str, period) -> None:
+    """T-094: remember the period chosen for this question; the rerun answers it."""
+    st.session_state["time_choice"] = {"question": question, "range": period}
+
+
 def ask_page() -> None:
     if is_empty():
         st.info("No data yet. Choose your sources and fetch them on the Sources page.")
@@ -166,6 +179,14 @@ def ask_page() -> None:
         )
         ask = st.form_submit_button("Ask", type="primary")
 
+    # T-094: a period chosen for this question after it was asked about runs the question
+    # again on its own, without another click on Ask.
+    choice = st.session_state.get("time_choice")
+    chosen = choice is not None and choice["question"] == question.strip()
+    if choice is not None:
+        del st.session_state["time_choice"]
+    ask = ask or chosen
+
     if ask and not question.strip():
         st.warning("Write a question first.")
         return
@@ -195,6 +216,19 @@ def ask_page() -> None:
     ranking = detect_recency_ranking(question)
     source = detect_source(question)  # T-068: "papers" or "videos" narrows the search
 
+    # T-094: time words without dates ("recently", "two weeks ago", an impossible date)
+    # are asked about, not searched across every date. A custom range answers it already.
+    if chosen:
+        date_range = choice["range"]
+    elif date_range is None and not ranking:
+        phrase = unresolved_time_phrase(question, today)
+        if phrase:
+            st.warning(clarify_message(phrase))
+            for col, (label, period) in zip(st.columns(3), clarify_choices(today)):
+                col.button(label, key=f"period_{label}", use_container_width=True,
+                           on_click=_choose_period, args=(question.strip(), period))
+            return
+
     # --- Pipeline strip (T-042/T-044): filled in progressively, real data per stage,
     # as each stage actually completes - not one spinner wrapping the whole call.
     # Wrapped in a keyed container so CUSTOM_CSS can size these five metrics down
@@ -220,7 +254,11 @@ def ask_page() -> None:
         # mode (neither has a bounded window) - describe_retrieval_mode() right below
         # still tells those two apart in full.
         date_range_slot.metric("Date range", format_date_range_short(date_range))
-    st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range, source=source))
+    st.caption(describe_retrieval_mode(date_range if chosen else interpreted_range, ranking,
+                                       manual_range, source=source, chosen=chosen))
+    video_note = video_date_note(date_range, source)  # T-094
+    if video_note:
+        st.caption(video_note)
     config = sources.load()
     st.caption(dates_note(today, config.timezone, newest, coverage.papers_checked_through(),
                           coverage.videos_checked_through(config.channels)))

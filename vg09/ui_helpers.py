@@ -15,7 +15,7 @@ from __future__ import annotations
 import base64
 import re
 import string
-from datetime import date
+from datetime import date, timedelta
 from html import escape as escape_html
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -102,6 +102,7 @@ def describe_retrieval_mode(
     ranking: bool,
     manual_override: tuple[date, date] | None,
     source: str | None = None,
+    chosen: bool = False,
 ) -> str:
     """T-068: a source filter is appended with its reason, so narrowing a search to
     papers or videos is never silent.
@@ -112,7 +113,10 @@ def describe_retrieval_mode(
     override always wins over whatever was (or wasn't) interpreted. English text per
     D-016 - was Swedish before T-042; the logic (which mode fired, and why) is
     unchanged."""
-    if manual_override is not None:
+    if chosen:  # T-094: the user picked the period after the question was asked about
+        mode = (f"Date filter (chosen when asked): {date_range[0]} – {date_range[1]}"
+                if date_range else "No date filter — all dates, as chosen")
+    elif manual_override is not None:
         start, end = manual_override
         mode = f"Date filter (manually set): {start} – {end}"
         # T-093: the custom range wins; a different period in the question is named,
@@ -263,6 +267,30 @@ def dates_note(today: date, timezone: str, newest: date | None,
 
 
 _WEEKDAY_ABBR = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def clarify_choices(today: date) -> list[tuple[str, tuple[date, date] | None]]:
+    """T-094: the periods offered when a question asks about time in words the parser
+    can't turn into dates. "All dates" is offered, but only as a choice the user makes."""
+    return [("The last 7 days", (today - timedelta(days=6), today)),
+            ("The last 30 days", (today - timedelta(days=29), today)),
+            ("All dates", None)]
+
+
+def clarify_message(phrase: str) -> str:
+    """T-094: the question is not searched until a period is chosen. The phrase is the
+    user's own text, shown through markdown, so it is escaped (T-089)."""
+    return (f"“{escape_markdown_text(phrase)}” doesn't say which dates to search. "
+            "Choose a period below, or set a custom range in the sidebar.")
+
+
+def video_date_note(date_range: tuple[date, date] | None, source: str | None) -> str | None:
+    """T-094 (D-022, KB-040): next to a date filter that includes videos, say what a
+    video's date is. Stored dates are never converted."""
+    if date_range is None or source == "hf":
+        return None
+    return ("Videos are dated by their upload day in UTC, not your local day, so near "
+            "midnight a video can count for the neighbouring day.")
 
 
 def past_newest_note(date_range: tuple[date, date] | None, newest: date | None) -> str | None:

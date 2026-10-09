@@ -11,12 +11,13 @@ import unittest
 from contextlib import ExitStack
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from streamlit.testing.v1 import AppTest
 
 from vg09.answer import AnswerResult
 from vg09.retrieval import RetrievalResult
+from vg09.retrieval import retrieve as _REAL_RETRIEVE
 from vg09.sources import Sources
 
 APP = Path(__file__).resolve().parent.parent / "app.py"
@@ -24,7 +25,9 @@ TODAY = date(2026, 10, 12)  # a Monday
 NEWEST = date(2026, 9, 18)  # the index stopped 24 days earlier
 
 
-class AppQuestionDatesTests(unittest.TestCase):
+class _AppTestCase(unittest.TestCase):
+    """The stubs and helpers; no tests of its own."""
+
     def setUp(self):
         self.calls: dict = {}
         stack = ExitStack()
@@ -76,6 +79,7 @@ class AppQuestionDatesTests(unittest.TestCase):
     def texts(elements) -> list[str]:
         return [e.value for e in elements]
 
+class AppQuestionDatesTests(_AppTestCase):
     def test_one_reference_date_reaches_parsing_filter_and_answer_on_a_stale_index(self):
         at = self.ask("What happened in the last 7 days?")
 
@@ -112,6 +116,82 @@ class AppQuestionDatesTests(unittest.TestCase):
         self.assertEqual(len(at.exception), 0)
         self.assertTrue(any("No data yet" in i for i in self.texts(at.info)))
         self.assertNotIn("retrieve_range", self.calls)
+
+
+class AppDateFilterTests(_AppTestCase):
+    """T-094: the interval the app shows is the filter the vector store receives.
+
+    Unlike the class above, retrieval runs for real here; only the vector store and the
+    question's embedding are stubs, so the `where` clause is the one the app builds."""
+
+    def setUp(self):
+        super().setUp()
+        self.collection = MagicMock()
+        self.collection.query.return_value = {"ids": [[]], "documents": [[]], "metadatas": [[]]}
+        stack = ExitStack()
+        self.addCleanup(stack.close)
+        stack.enter_context(patch("vg09.retrieval.retrieve", _REAL_RETRIEVE))
+        stack.enter_context(patch("vg09.retrieval.get_collection", return_value=self.collection))
+        stack.enter_context(patch("vg09.retrieval.embed_question", return_value=[0.0] * 4))
+
+    def where(self) -> dict | None:
+        return self.collection.query.call_args.kwargs["where"]
+
+    def shown_interval(self, at) -> str:
+        return next(c for c in self.texts(at.caption) if c.startswith(("Date filter", "No date")))
+
+    def assert_filter(self, at, start: date, end: date):
+        self.assertEqual(self.where(), {"$and": [{"feed_date_ordinal": {"$gte": start.toordinal()}},
+                                                  {"feed_date_ordinal": {"$lte": end.toordinal()}}]})
+        self.assertIn(f"{start} – {end}", self.shown_interval(at))
+
+    def test_parsed_intervals_reach_the_vector_store_filter_as_shown(self):
+        for question, start, end in (
+            ("What happened in week 41?", date(2026, 10, 5), date(2026, 10, 11)),
+            ("Vad kom för två dagar sedan?", date(2026, 10, 10), date(2026, 10, 10)),
+            ("What is new since 2026-10-01?", date(2026, 10, 1), TODAY),
+            ("Vad hände mellan den 1 och den 5 oktober?", date(2026, 10, 1), date(2026, 10, 5)),
+        ):
+            with self.subTest(question=question):
+                at = self.ask(question)
+                self.assert_filter(at, start, end)
+                self.assertIn("upload day in UTC", " ".join(self.texts(at.caption)))
+
+    def test_a_vague_question_is_asked_about_and_searched_only_after_a_choice(self):
+        at = self.ask("What are recent advances in agents?")
+
+        self.collection.query.assert_not_called()
+        self.assertTrue(any("“recent” doesn't say which dates to search" in w
+                            for w in self.texts(at.warning)))
+        next(b for b in at.button if b.label == "The last 30 days").click().run()
+
+        self.assert_filter(at, date(2026, 9, 13), TODAY)
+        self.assertIn("chosen when asked", self.shown_interval(at))
+        self.assertEqual(self.calls["answer_range"], (date(2026, 9, 13), TODAY))
+
+    def test_choosing_all_dates_searches_without_a_filter_and_says_so(self):
+        at = self.ask("Vad har hänt nyligen?")
+        next(b for b in at.button if b.label == "All dates").click().run()
+
+        self.assertIsNone(self.where())
+        self.assertEqual(self.shown_interval(at), "No date filter — all dates, as chosen")
+
+    def test_an_impossible_date_is_asked_about(self):
+        self.ask("What came out on February 30?")
+        self.collection.query.assert_not_called()
+
+    def test_an_ordinary_question_searches_every_date_without_asking(self):
+        at = self.ask("What is a transformer?")
+
+        self.assertIsNone(self.where())
+        self.assertEqual(self.texts(at.warning), [])
+        self.assertNotIn("upload day in UTC", " ".join(self.texts(at.caption)))
+
+    def test_a_papers_only_filter_has_no_video_date_note(self):
+        at = self.ask("Which papers came out in week 41?")
+
+        self.assertIn({"source": "hf"}, self.where()["$and"])
+        self.assertNotIn("upload day in UTC", " ".join(self.texts(at.caption)))
 
 
 if __name__ == "__main__":

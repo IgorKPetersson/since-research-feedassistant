@@ -160,8 +160,70 @@ def _weekday_back(today: date, weekday: int, strictly_before: bool) -> date:
     return today - timedelta(days=days)
 
 
+# T-094: dates written with their year. An ISO date ("2026-10-05") or a month and day
+# followed by a year ("October 5, 2025", "5 oktober 2025") is taken as written, never
+# moved to another year; an impossible one ("2026-02-29") resolves to nothing, which the
+# app then asks about instead of searching every date.
+_ISO_RE = r"(\d{4})-(\d{1,2})-(\d{1,2})"
+_DAY_BEFORE_YESTERDAY_RE = r"(?:the\s+)?day\s+before\s+yesterday|i\s*f[oö]rrg[aå]r"
+
+
+def _iso(m: re.Match, offset: int = 0) -> date | None:
+    return _dated(int(m.group(offset + 1)), int(m.group(offset + 2)), int(m.group(offset + 3)))
+
+
+def _dated(year: int, month: int, day: int) -> date | None:
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def _month_day_year(text: str) -> list[date | None]:
+    """Every "Month D, YYYY" / "D Month YYYY" / "den D månad YYYY" in `text`, in order;
+    None for an impossible one."""
+    found = []
+    for m in re.finditer(r"\b" + _ANY_MONTH_RE + r"\s+" + _DAY + r",?\s+(\d{4})\b", text):
+        found.append((m.start(), _dated(int(m.group(3)), _ANY_MONTH[m.group(1)], int(m.group(2)))))
+    for m in re.finditer(r"\b(?:den\s+|the\s+)?" + _DAY + r"\s+(?:of\s+)?" + _ANY_MONTH_RE
+                         + r",?\s+(\d{4})\b", text):
+        found.append((m.start(), _dated(int(m.group(3)), _ANY_MONTH[m.group(2)], int(m.group(1)))))
+    return [d for _, d in sorted(found, key=lambda pair: pair[0])]
+
+
+_RELATIVE_TO_A_DATE_RE = re.compile(
+    r"\b(?:week|weeks|day|days|month|months)\s+(?:after|before(?!\s+yesterday)|following|prior\s+to|leading\s+up\s+to)\b"
+    r"|\b(?:veckan|veckorna|dagen|dagarna|m[aå]naden)\s+(?:efter|f[oö]re|innan)\b")
+
+
+def _iso_week(week: int, year: int | None, today: date) -> DateRange | None:
+    """T-094: "week 41" / "vecka 41" - the ISO week, Monday to Sunday. Without a year it
+    is this year's week, or last year's if this year's hasn't started yet."""
+    try:
+        if year is not None:
+            monday = date.fromisocalendar(year, week, 1)
+        else:
+            monday = date.fromisocalendar(today.isocalendar()[0], week, 1)
+            if monday > today:
+                monday = date.fromisocalendar(today.isocalendar()[0] - 1, week, 1)
+    except ValueError:
+        return None
+    return monday, monday + timedelta(days=6)
+
+
 def _start_of(text: str, today: date) -> date | None:
     """The date a "since ..." phrase starts from, or None if what follows isn't one."""
+    # T-094: an ISO date, a date with its year, or the day before yesterday.
+    m = re.match(_ISO_RE + r"\b", text)
+    if m:
+        return _iso(m)
+    if re.match(r"(?:" + _DAY_BEFORE_YESTERDAY_RE + r")\b", text):
+        return today - timedelta(days=2)
+    with_year = re.match(r"(?:" + _ANY_MONTH_RE + r"\s+" + _DAY + r",?\s+\d{4}"
+                         r"|(?:den\s+|the\s+)?" + _DAY + r"\s+(?:of\s+)?" + _ANY_MONTH_RE
+                         + r",?\s+\d{4})\b", text)
+    if with_year:
+        return _month_day_year(with_year.group(0))[0]
     if re.match(_YESTERDAY_RE + r"\b", text):
         return today - timedelta(days=1)
     # T-084: "since 3 days (ago)", "sedan 2 veckor" - N days back, that day included,
@@ -193,6 +255,13 @@ def _two_date_range(q: str, today: date) -> DateRange | None:
     """"between September 20 and 25", "September 20-25", "from Sept 20 to Sept 25",
     "mellan den 20 och den 25 september". The year comes from the start date."""
     sep = r"\s*(?:and|to|through|until|och|till|-|–)\s*"
+    # T-094: "between 2026-10-01 and 2026-10-05", "2026-10-01 to 2026-10-05". A plain
+    # hyphen without spaces isn't a separator here: it reads as part of a date.
+    m = re.search(r"\b(?:(?:between|from|mellan)\s+)?" + _ISO_RE
+                  + r"\s+(?:and|to|through|until|och|till|-|–)\s+" + _ISO_RE + r"\b", q)
+    if m:
+        start, end = _iso(m), _iso(m, 3)
+        return (start, end) if start and end and start <= end else ()
     m = re.search(r"\b(?:between|from)\s+" + _ANY_MONTH_RE + r"\s+" + _DAY + sep
                   + r"(?:" + _ANY_MONTH_RE + r"\s+)?" + _DAY + r"\b", q) or \
         re.search(r"\b" + _ANY_MONTH_RE + r"\s+" + _DAY + r"\s*(?:-|–|to|through|until)\s*"
@@ -209,21 +278,23 @@ def _two_date_range(q: str, today: date) -> DateRange | None:
         first_day, first_month, second_day, second_month = m.groups()
         end_month = _ANY_MONTH[second_month]
         start_month = _ANY_MONTH[first_month] if first_month else end_month
+    # T-094: a range was written; if it isn't a real one, say so with () so that no
+    # single-date pattern later reads its first date as the whole question.
     start = _day_in_past_year(start_month, int(first_day), today)
     if start is None:
-        return None
+        return ()
     try:
         end = date(start.year + (end_month < start_month), end_month, int(second_day))
     except ValueError:
-        return None
-    return (start, end) if start <= end else None
+        return ()
+    return (start, end) if start <= end else ()
 
 
 def _phrases_checked_first(q: str, today: date) -> DateRange | None:
     """Two-date ranges and "since ..." - checked before the single-date patterns
     below, which would otherwise take the first date of a range as the whole range."""
     span = _two_date_range(q, today)
-    if span:
+    if span is not None:
         return span
     m = re.search(r"\b(?:since|sedan|sen)\s+(.*)", q)
     if m:
@@ -254,12 +325,69 @@ def _phrases_checked_last(q: str, today: date) -> DateRange | None:
     return None
 
 
+def _t094_phrases(q: str, today: date) -> DateRange | tuple[()] | None:
+    """T-094 additions, checked after ranges and "since", before the older single-date
+    patterns (which would read "October 5, 2025" as this year's October 5).
+
+    Returns a range, `()` when the question names a date that doesn't exist (so nothing
+    older may guess at it), or None when none of these phrases is present."""
+    # A period relative to a named date ("the week after October 1") is not supported;
+    # without this, the date alone would be read as the whole question.
+    if _RELATIVE_TO_A_DATE_RE.search(q):
+        return ()
+    # Single days.
+    m = re.search(_ISO_RE, q)
+    if m and not re.search(_ISO_RE + r".*" + _ISO_RE, q):
+        d = _iso(m)
+        return (d, d) if d else ()
+    with_year = _month_day_year(q)
+    if len(with_year) == 1:
+        d = with_year[0]
+        return (d, d) if d else ()
+    if len(with_year) > 1:
+        return ()  # several dates but no range the range patterns could read: ask
+    if re.search(r"\b(?:" + _DAY_BEFORE_YESTERDAY_RE + r")\b", q):
+        d = today - timedelta(days=2)
+        return d, d
+    m = (re.search(r"\b" + _ANY_NUM + r"\s+days?\s+ago\b", q)
+         or re.search(r"\bf[oö]r\s+" + _ANY_NUM + r"\s+dag(?:ar)?\s+sedan\b", q))
+    if m:
+        d = today - timedelta(days=_ANY_NUMBER_WORDS.get(m.group(1)) or int(m.group(1)))
+        return d, d
+    if re.search(r"\b(?:idag|i\s+dag)\b", q):
+        return today, today
+
+    # Calendar periods: an ISO week, a month of a given year, this year.
+    m = re.search(r"\b(?:week|vecka|v\.)\s*(\d{1,2})(?:\s*,?\s*(\d{4}))?\b", q)
+    if m:
+        return _iso_week(int(m.group(1)), int(m.group(2)) if m.group(2) else None, today) or ()
+    m = re.search(r"\b(?:in|during|i|under)\s+" + _FULL_MONTH_RE + r"\s+(\d{4})\b", q)
+    if m:
+        year, month = int(m.group(2)), _ANY_MONTH[m.group(1)]
+        return date(year, month, 1), date(year + (month == 12), month % 12 + 1, 1) - timedelta(days=1)
+    if re.search(r"\b(?:this\s+year|i\s+år)\b", q):
+        return today.replace(month=1, day=1), today
+    if re.search(r"\b(?:den\s+h[aä]r\s+m[aå]naden|denna\s+m[aå]nad(?:en)?)\b", q):
+        return today.replace(day=1), today
+
+    # Rolling periods ending today, same convention as "last month" / "senaste veckan".
+    if re.search(r"\bf[oö]rra\s+m[aå]naden\b", q):
+        return _subtract_months(today, 1), today
+    if re.search(r"\b(?:the\s+past\s+year|past\s+year|(?:det\s+)?senaste\s+[aå]ret)\b", q):
+        return _subtract_months(today, 12), today
+    return None
+
+
 def extract_date_range(question: str, today: date) -> DateRange | None:
     q = question.lower()
 
     first = _phrases_checked_first(q, today)
-    if first:
-        return first
+    if first is not None:
+        return first or None  # () means a range was written but isn't a real one
+
+    added = _t094_phrases(q, today)
+    if added is not None:
+        return added or None  # () means "a date was named, but it isn't a real one"
 
     # Absolute date: "den 16 september" - resolves to this year unless that's still in
     # the future relative to `today`, in which case it must mean last year.
@@ -371,7 +499,7 @@ def extract_date_range(question: str, today: date) -> DateRange | None:
     return _phrases_checked_last(q, today)
 
 
-_TIME_UNIT_AFTER_SENASTE = r"(veckan|veckorna|dagarna|m[aå]naden|m[aå]naderna)"
+_TIME_UNIT_AFTER_SENASTE = r"(veckan|veckorna|dagarna|m[aå]naden|m[aå]naderna|[aå]ret|[aå]ren)"
 _EN_TIME_UNIT_WORDS = r"(week|weeks|day|days|month|months)"
 
 
@@ -406,6 +534,41 @@ def detect_recency_ranking(question: str) -> bool:
             return False
         return True
     return False
+
+
+# T-094: words that ask about time without saying which dates. A question with one of
+# these and no resolved range is asked about, never searched across every date.
+_VAGUE_TIME_RE = re.compile(
+    r"\b(?:recent|recently|lately|nowadays|these\s+days|nyligen|p[aå]\s+sistone"
+    r"|(?:de\s+)?senaste\s+(?:veckorna|dagarna|m[aå]naderna|[aå]ren)"
+    r"|recent\s+(?:weeks|days|months)|earlier\s+this\s+(?:week|month|year)"
+    r"|tidigare\s+(?:i\s+veckan|i\s+m[aå]naden|i\s+[aå]r)"
+    r"|last\s+year|f[oö]rra\s+[aå]ret|i\s+fjol"
+    r"|(?:this|last|the)\s+weekend|i\s+helgen|f[oö]rra\s+helgen"
+    r"|q[1-4]|quarter|kvartal(?:et)?|i\s+(?:h[oö]stas|v[aå]ras|somras|vintras)"
+    r"|(?:week|weeks|day|days|month|months)\s+(?:after|before(?!\s+yesterday)|following|prior\s+to|leading\s+up\s+to)"
+    r"|(?:veckan|veckorna|dagen|dagarna|m[aå]naden)\s+(?:efter|f[oö]re|innan)"
+    r"|(?:a|an|one|\d+|" + "|".join(_ANY_NUMBER_WORDS) + r")\s+(?:weeks?|months?|years?)\s+ago"
+    r"|f[oö]r\s+(?:en|ett|\d+|" + "|".join(_NUMBER_WORDS) + r")\s+"
+    r"(?:vecka|veckor|m[aå]nad|m[aå]nader|[aå]r)\s+sedan)\b")
+# Something shaped like a date that the parser could not turn into one: an impossible
+# ISO date or day of a month, a week number out of range, or a range written backwards.
+_DATE_SHAPED_RE = re.compile(
+    r"\b\d{4}-\d{1,2}-\d{1,2}\b|\b(?:week|vecka|v\.)\s*\d{1,2}\b"
+    r"|\b" + _ANY_MONTH_RE + r"\s+\d{1,2}(?:st|nd|rd|th)?\b"
+    r"|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?" + _FULL_MONTH_RE + r"\b")
+
+
+def unresolved_time_phrase(question: str, today: date) -> str | None:
+    """T-094: the words in `question` that ask about a time this module can't turn into
+    dates, or None. None as well when a range or a "latest" ranking was found, or when
+    the question doesn't ask about time at all (an ordinary question searches every date,
+    as before). The app shows the words and asks for a period instead of searching."""
+    if extract_date_range(question, today) is not None or detect_recency_ranking(question):
+        return None
+    q = question.lower()
+    m = _VAGUE_TIME_RE.search(q) or _DATE_SHAPED_RE.search(q)
+    return question[m.start():m.end()] if m else None
 
 
 def manual_range_error(start: date | None, end: date | None) -> str | None:
