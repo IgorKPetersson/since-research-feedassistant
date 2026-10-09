@@ -849,6 +849,38 @@ See `docs/DESIGN.md` § Security baseline.
 
 ---
 
+## D-021 — Each YouTube channel keeps its own coverage record; the shared watermark is retired
+**Status:** accepted (2026-10-09, T-091, by my approval of P1-03)
+
+**Decision:** YouTube progress is stored per channel in `data/youtube_channels.json`
+(`vg09/channel_state.py`), not in the shared `watermark_youtube.json`. A channel's check
+advances only when its own listing covers the window completely. A failed listing, or a
+listed video that can't be read for any reason other than members-only or private, keeps
+the channel's interval for the next run, however long the failure lasts. A listing that
+can't reach back to the window start is recorded as a gap that is shown, not retried.
+The listing is walked whole: no upload-date order is assumed. Existing channels start
+unverified and get a full check of the backfill window; the old watermark is noted, never
+trusted. Hugging Face keeps its shared watermark.
+
+**Why:** the shared watermark advanced even when one channel's listing failed, so that
+channel's missing days were lost while the update looked successful. The old walk also
+stopped at the first new video dated before the window, which let one out-of-order entry
+hide in-window videos (KB-040).
+
+**Rejected:** copying the shared watermark into every channel record, which would turn a
+date that never proved per-channel coverage into a claim that it did; retrying a
+listing-limit gap forever, which can never succeed; treating every unreadable video as a
+failure, which would keep a channel with one members-only video unchecked for good.
+
+**Cost:** one extra state file and its migration. The first check of each channel looks
+up every listed video it has not seen, once. Members-only videos are still looked up on
+every run (T-104). Coverage before a channel's `unverified_before` date is never checked.
+
+**Would change our mind:** YouTube offering a listing by date range, or a need to check
+history older than the newest 50 videos, which would need a different listing approach.
+
+---
+
 ## D-0NN — <template>
 **Status:** proposed | accepted | superseded by D-0NN
 

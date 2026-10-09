@@ -422,7 +422,7 @@ labelled.
 
 ### T-091 — Track YouTube completion per channel so a failed channel recovers its gap
 
-**Status:** todo
+**Status:** done
 **Size:** L  ·  **Branch:** `t/T-091-per-channel-watermarks`  ·  **Phase:** v2-1 (P1-03)
 
 **Goal:** a channel whose listing fails keeps its missing interval and fetches it on a later
@@ -432,21 +432,46 @@ run, while other channels keep their progress.
 channel's missed videos are forgotten while the update reports success.
 
 **Acceptance criteria**
-- [ ] A test with one failing and one working channel reproduces the loss; the test that
-  asserts the old behaviour is replaced
-- [ ] Each channel records last attempted check, last successful check and newest content;
-  a failed or incomplete listing never advances its completed interval
-- [ ] A failed channel recovers its interval on a later run, also beyond the T-090 overlap
-- [ ] Migration from the shared watermark is backed up first, idempotent, survives
-  interruption, and does not mark old gaps as verified coverage; tests cover all three
-- [ ] Sources and the update status show channel failures and partial success
+- [x] A test with one failing and one working channel reproduces the loss; the test that
+  asserts the old behaviour is replaced → `ChannelRecordTests`; the old watermark tests
+  are gone; on the pre-T-091 code the same scenario lost two of three videos
+- [x] Each channel records last attempted check, last successful check and newest content;
+  a failed or incomplete listing never advances its completed interval →
+  `vg09/channel_state.py`, `ChannelRecordTests`, `CheckChannelTests`
+- [x] A failed channel recovers its interval on a later run, also beyond the T-090 overlap
+  → failing for 8 days, then all three missed videos fetched
+- [x] Migration from the shared watermark is backed up first, idempotent, survives
+  interruption, and does not mark old gaps as verified coverage; tests cover all three →
+  fresh data backup at 20:31 before the real run; `MigrationTests`
+- [x] Sources and the update status show channel failures and partial success → coverage
+  line per channel on Sources (real browser check of the complete state); channel
+  problems become job errors (`test_a_channel_problem_is_recorded_as_partial_success`)
 
 **Out of scope:** per-video retry redesign, beyond investigating it.
 
 **Depends on:** T-090
-**Notes:** changes stored state (`data/watermark_youtube.json`), which needs my approval
-of the design before coding. L because the format change and the migration must ship
-together.
+**Notes:** design D-021; KB-041. Stored state is the new `data/youtube_channels.json`.
+`watermark_youtube.json` is no longer read or written for YouTube and is left in place,
+so the earlier code still runs after a rollback. Approved by me on 2026-10-09 with the
+out-of-order listing problem added to the scope.
+
+Also in scope, from T-090: the listing is walked whole with no date-order assumption
+(an older video listed first, a scheduled upload, tests). yt-dlp's listing now raises on
+an incomplete page (KB-041) instead of returning a short list.
+
+Real migration run, 2026-10-09 20:41–20:47, after a fresh data backup: all 5 channels
+started unverified from 2026-09-12 and finished complete through 2026-10-09 with no gaps.
+One missing in-window video was recovered (mreflow, dated 2026-10-02), adding 22 chunks
+(3455 to 3477). The first check looked up 156 older listed videos once and cached their
+dates. A second run took 19 seconds, fetched nothing, wrote no chunks, and looked up only
+matthew_berman's 12 members-only videos (T-104). 82 video files, no duplicate ids.
+
+Not verifiable and documented (DESIGN § Sources page item 10): anything before
+2026-09-12, anything older than a channel's newest 50 listed videos, and videos YouTube
+no longer lists. Follow-ups: T-103 (videos discovered after their recheck window; this
+ticket records them as `late` but does not fetch them) and T-104 (members-only lookups).
+The failed and gap states on Sources are checked by unit tests only; no failure was
+faked in the live data to show them in a browser.
 
 ---
 

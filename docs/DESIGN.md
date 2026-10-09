@@ -549,17 +549,43 @@ original Definition of done, added by explicit instruction (2026-10-02).
    The header follows the job every 3 seconds ("Updating… <step>"), reloads its counts
    when the job finishes without rerunning the page, and says in plain words when the
    last update failed ("Ollama isn't running" for a refused connection to port 11434).
-9. **YouTube recheck window (T-090, KB-040):** a catch-up starts at the day before the
-   YouTube watermark, not the day after it (`youtube_backfill.catch_up_start()`,
-   `RECHECK_DAYS = 2`). The watermark is the date of the last full run, and that run saw
-   only videos uploaded before it started; yt-dlp also dates videos in UTC, a day behind
-   local time just after midnight in Sweden. A video uploaded after an update is fetched
-   by the next one: Update now on the same day, or the automatic update on the first
-   opening of the next day (item 8 runs once a day). Rechecking is cheap and idempotent:
-   a video on disk is listed with its stored date and not fetched again, and its chunks
-   keep their ids, so the index stage skips them. Not covered: a video that appears more
-   than a day after its upload date, and in-window videos listed below an out-of-order
-   older entry, where the listing walk stops.
+9. **YouTube recheck window (T-090, KB-040):** a channel's catch-up starts at the day
+   before its last complete check, not the day after it
+   (`youtube_backfill.catch_up_start()`, `RECHECK_DAYS = 2`). That check saw only videos
+   uploaded before it started; yt-dlp also dates videos in UTC, a day behind local time
+   just after midnight in Sweden. A video uploaded after an update is fetched by the next
+   one: Update now on the same day, or the automatic update on the first opening of the
+   next day (item 8 runs once a day). Rechecking is cheap and idempotent: a video on disk
+   is listed with its stored date and not fetched again, and its chunks keep their ids,
+   so the index stage skips them. Not covered: a video that appears more than a day after
+   its upload date (recorded as a late discovery, T-103).
+10. **Per-channel coverage (T-091, D-021):** each channel has a record in
+   `data/youtube_channels.json` (`vg09/channel_state.py`). The run walks the channel's
+   whole listing of the newest 50 ids, with no date-order assumption: a video on disk or
+   looked up before costs no request; a new one is looked up once. The check is complete
+   when the listing is shorter than 50 (the whole channel; a broken page raises, KB-041),
+   or contains an id from the last complete listing (publication order puts everything
+   newer above it), or, on a first check, its oldest entry is dated before the window.
+   - *Complete:* `checked_through` = today, the kept interval is cleared.
+   - *Listing can't reach the window start:* the listed videos are fetched, the rest is
+     recorded as a gap (`gaps`) and shown on Sources; retrying can't help.
+   - *Listing failed, or a listed video failed to load for another reason than
+     members-only or private:* `pending_from` keeps the interval; the next run starts
+     there, however long the failure lasted. Other channels keep their progress, and the
+     job reports the channel as a problem (header and Sources).
+   - The record is saved after each channel, through a temporary file and a rename, so
+     a crash keeps finished channels and an interrupted write keeps the previous file.
+   - Removing a channel removes its record, so adding it back starts unverified.
+
+   **Migration policy (conservative):** a configured channel without a record, including
+   every channel that existed under the shared watermark, gets `pending_from` and
+   `unverified_before` = the start of the backfill window (`youtube_weeks`, 4 by
+   default). Its first check therefore re-verifies the whole window and fetches any
+   in-window video that is missing. The shared watermark's value is kept in
+   `migrated_from` with `"trusted": false` and is not read again; its file is left in
+   place, so the earlier code still runs against it after a rollback. Not verifiable:
+   anything before `unverified_before`, anything the newest 50 listed ids no longer
+   reach (recorded as a gap), and videos YouTube no longer lists at all.
 
 **Not included:** scheduled ingest with the app closed (still a non-goal, D-018); choosing individual papers or
 filtering Hugging Face by topic; sources other than HF Daily Papers and YouTube;

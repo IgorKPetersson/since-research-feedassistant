@@ -166,9 +166,12 @@ comparison (T-033). See
 - **Questions are refused for a few seconds at the end of an update**, while the new
   content is written to the search index. The app says so and you ask again.
 - **At most 5 YouTube channels**, a deliberate limit to keep updates short.
-- **YouTube's channel listing only exposes the latest ~15 videos per channel.** A long gap
-  between catch-up runs on a very active channel can miss older videos that scrolled off
-  that list before you caught up.
+- **Each update looks at a channel's newest 50 videos.** After a long gap, a very active
+  channel can have older videos that are no longer among them. Sources then shows that
+  stretch as "not verified" for that channel rather than claiming it was checked.
+- **A channel that fails to update keeps its place.** If YouTube can't be reached for one
+  channel, the others go ahead. Sources and the header say which channel had a problem,
+  and the next update checks that channel again from where it was last complete.
 - **A video uploaded after an update arrives with the next update.** That is either
   **Update now** on the same day or the automatic update when you first open the app the
   next day. Each YouTube update looks back over the last two days again, so a late upload

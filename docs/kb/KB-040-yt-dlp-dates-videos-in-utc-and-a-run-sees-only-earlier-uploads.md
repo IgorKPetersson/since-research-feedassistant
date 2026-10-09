@@ -14,8 +14,8 @@
    made this the normal case, not an edge case.
 3. A channel's listing is in publication order, and `_list_channel()` stops at the first
    unknown video dated before the window. If a later-listed video carries an older date,
-   the walk stops there and in-window videos below it are not reached. This is still
-   true after T-090.
+   the walk stops there and in-window videos below it are not reached. Fixed by T-091,
+   which walks the whole listing (D-021).
 
 ## Evidence
 - `yt_dlp/extractor/common.py` in the installed version: "upload_date: Video upload date
