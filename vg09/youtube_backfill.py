@@ -32,7 +32,7 @@ from datetime import date, datetime, timedelta
 
 import yt_dlp
 
-from vg09 import channel_state, document, sources
+from vg09 import channel_state, document, reference_date, sources
 from vg09.document import RAW_DIR, Document
 from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_video_ids, normalize
 
@@ -267,7 +267,7 @@ def run(
     record yet, as the start of its first, unverified check. A channel whose listing
     fails or is incomplete keeps its window for the next run; the others move on.
     `on_progress` is called after every video, for the background job's status file."""
-    today = today or date.today()
+    today = today or reference_date.today()  # T-093
     if start is None:
         start = today - timedelta(days=weeks_back * 7 - 1)
     result = BackfillResult()

@@ -28,8 +28,9 @@ wired in by T-025).
 
 `today` is always an explicit parameter, never `date.today()` internally - so relative
 phrases resolve the same way on every run against the frozen eval dataset (T-020),
-regardless of the real wall-clock date. Callers building the real UI pass the real
-`date.today()` explicitly; tests and eval runs pass a fixed date.
+regardless of the real wall-clock date. The app passes the reference date from
+`vg09.reference_date` (T-093, D-022: the user's calendar date in the configured time
+zone); evaluation runs pass a fixed date.
 """
 
 from __future__ import annotations
@@ -407,14 +408,31 @@ def detect_recency_ranking(question: str) -> bool:
     return False
 
 
+def manual_range_error(start: date | None, end: date | None) -> str | None:
+    """T-093: why a range from the date picker can't be used, or None when it can. A
+    future end is allowed; the app says separately when a period runs past the newest
+    source (D-022)."""
+    if start is None or end is None:
+        return "Choose both a start and an end date."
+    if start > end:
+        return f"The start date ({start}) is after the end date ({end})."
+    return None
+
+
 def resolve_date_range(
     question: str, today: date, manual_override: DateRange | None = None
 ) -> DateRange | None:
     """The one function T-022 (retrieval) and T-025 (the chat UI) both call - the
     manual override, whenever the UI's date picker sets one, always wins over
-    whatever (if anything) was extracted from the question text. `None` either way
-    means "no range" - retrieval runs unfiltered by date, per T-021's acceptance
-    criteria (no range is ever invented)."""
+    whatever (if anything) was extracted from the question text, including a date the
+    question names. `None` either way means "no range" - retrieval runs unfiltered by
+    date, per T-021's acceptance criteria (no range is ever invented).
+
+    `today` is the reference date (T-093, D-022): the user's calendar date in the
+    configured time zone, resolved once per question by the caller."""
     if manual_override is not None:
+        error = manual_range_error(*manual_override)
+        if error:
+            raise ValueError(error)
         return manual_override
     return extract_date_range(question, today)

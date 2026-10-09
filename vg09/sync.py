@@ -17,6 +17,7 @@ import time
 from datetime import date, timedelta
 
 from vg09 import hf_papers
+from vg09 import reference_date
 from vg09.watermark import write_watermark
 
 PAUSE_BETWEEN_DAYS = 0.3  # seconds - no rate limit observed (KB-002, 14 days), a courtesy pause anyway
@@ -27,7 +28,7 @@ def sync_hf(start: date, today: date | None = None) -> dict:
     """Fetch HF papers for every day from `start` through `today` (inclusive),
     write them to data/raw/hf/, and advance the hf watermark through the day
     before the reopen window. Returns a summary dict."""
-    today = today or date.today()
+    today = today or reference_date.today()  # T-093
     if start > today:
         start = today
     days = [start + timedelta(days=i) for i in range((today - start).days + 1)]

@@ -11,7 +11,7 @@ from datetime import date
 
 import streamlit as st
 
-from vg09 import channel_state, ingest_job, sources
+from vg09 import channel_state, ingest_job, reference_date, sources
 from vg09.store import channel_stats, corpus_stats, latest_feed_date, remove_channel_data
 from vg09.ui_helpers import escape_markdown_text, staleness_note
 
@@ -178,7 +178,7 @@ def render() -> None:
     # --- Update ---
     st.divider()
     latest = latest_feed_date()
-    stale = staleness_note(latest, date.today())
+    stale = staleness_note(latest, reference_date.today())  # T-093
     if latest is None:
         st.markdown("**Nothing has been fetched yet.**")
     elif stale:

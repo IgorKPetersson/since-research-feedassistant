@@ -138,7 +138,12 @@ def build_user_message(question: str, source_map: dict[int, Candidate],
         sources_block = "(No sources were retrieved for this question.)"
     else:
         sources_block = "\n\n".join(format_source(c, n) for n, c in source_map.items())
-    dates = date_context(today or date.today(), date_range)
+    # T-093 (D-022): callers pass the reference date; the fallback is the same one.
+    if today is None:
+        from vg09 import reference_date
+
+        today = reference_date.today()
+    dates = date_context(today, date_range)
     return f"Sources:\n\n{sources_block}\n\n{dates}\n\nQuestion: {question}"
 
 

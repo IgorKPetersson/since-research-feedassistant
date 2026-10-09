@@ -25,6 +25,7 @@ import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from vg09 import reference_date
 from vg09 import sources as sources_config
 from vg09.document import RAW_DIR
 from vg09.watermark import read_watermark
@@ -120,7 +121,8 @@ def should_start_on_open(config: sources_config.Sources, job: dict, today: date)
 
 def start_on_open(today: date | None = None) -> bool:
     """Start an update if `should_start_on_open()` says so. True when one was started."""
-    if not should_start_on_open(sources_config.load(), status(), today or date.today()):
+    today = today or reference_date.today()  # T-093: the same calendar as questions
+    if not should_start_on_open(sources_config.load(), status(), today):
         return False
     try:
         start()
@@ -255,7 +257,7 @@ class _Job:
 
 
 def run_job(today: date | None = None) -> dict:
-    return _Job(today or date.today()).run()
+    return _Job(today or reference_date.today()).run()
 
 
 if __name__ == "__main__":

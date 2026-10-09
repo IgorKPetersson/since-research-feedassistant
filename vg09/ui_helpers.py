@@ -115,6 +115,10 @@ def describe_retrieval_mode(
     if manual_override is not None:
         start, end = manual_override
         mode = f"Date filter (manually set): {start} – {end}"
+        # T-093: the custom range wins; a different period in the question is named,
+        # so the user sees which dates were not used.
+        if date_range is not None and date_range != manual_override:
+            mode += f" · the question's own period ({date_range[0]} – {date_range[1]}) is not used"
     elif date_range is not None:
         start, end = date_range
         mode = f"Date filter (interpreted from the question): {start} – {end}"
@@ -242,6 +246,36 @@ def staleness_note(latest: date | None, today: date) -> str | None:
     if days <= STALE_AFTER_DAYS:
         return None
     return f"{days} days old"
+
+
+def dates_note(today: date, timezone: str, newest: date | None,
+               papers_checked: date | None, videos_checked: date | None) -> str:
+    """T-093 (D-022): the three dates a question depends on, each said separately - the
+    reference date relative phrases are measured from, the newest source in the index,
+    and how far each source has been checked."""
+    def checked(d: date | None) -> str:
+        return f"through {d.isoformat()}" if d else "not complete"
+
+    newest_text = newest.isoformat() if newest else "none"
+    return (f"Today: {_WEEKDAY_ABBR[today.weekday()]} {today.isoformat()} ({timezone}) · "
+            f"Newest source: {newest_text} · Checked: papers {checked(papers_checked)}, "
+            f"videos {checked(videos_checked)}")
+
+
+_WEEKDAY_ABBR = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def past_newest_note(date_range: tuple[date, date] | None, newest: date | None) -> str | None:
+    """T-093 (D-022): a requested period that runs past the newest source is said so,
+    never quietly moved back to fit the index."""
+    if date_range is None or newest is None or date_range[1] <= newest:
+        return None
+    start, end = date_range
+    if start > newest:
+        return (f"The whole period asked about ({start} – {end}) is after the newest source "
+                f"in the index ({newest}), so nothing from it can be found. Update on Sources.")
+    return (f"The period asked about runs to {end}, but the newest source in the index is "
+            f"from {newest}. Nothing after {newest} can be found until the next update.")
 
 
 MAX_QUOTE_CHARS = 90

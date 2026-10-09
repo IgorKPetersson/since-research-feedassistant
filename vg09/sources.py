@@ -36,6 +36,8 @@ class Sources:
     channels: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_CHANNELS))
     # D-018: start an update when the app is opened and nothing was fetched today.
     update_on_open: bool = True
+    # T-093 (D-022): the time zone "today" is measured in, an IANA name.
+    timezone: str = "Europe/Stockholm"
     saved: bool = False  # False: no file yet, these are the defaults offered as a start
 
 
@@ -50,6 +52,8 @@ def load() -> Sources:
         channels={c["handle"]: c["url"] for c in raw["youtube"]["channels"]},
         # Absent in files written before D-018: those read as on, the default.
         update_on_open=raw.get("update_on_open", True),
+        # Absent in files written before T-093: those use the default.
+        timezone=raw.get("timezone", Sources.timezone),
         saved=True,
     )
 
@@ -57,6 +61,7 @@ def load() -> Sources:
 def save(sources: Sources) -> None:
     payload = {
         "update_on_open": sources.update_on_open,
+        "timezone": sources.timezone,
         "hf": {"enabled": sources.hf_enabled, "backfill_weeks": sources.hf_weeks},
         "youtube": {
             "backfill_weeks": sources.youtube_weeks,

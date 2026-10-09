@@ -30,10 +30,10 @@ import streamlit as st
 
 import chromadb.errors
 
-from vg09 import ingest_job, sources, sources_page
+from vg09 import coverage, ingest_job, reference_date, sources, sources_page
 from vg09.answer import generate_answer
 from vg09.citations import build_citations
-from vg09.date_range import detect_recency_ranking, resolve_date_range
+from vg09.date_range import detect_recency_ranking, manual_range_error, resolve_date_range
 from vg09.quote_links import misattributed_quotes, quote_times
 from vg09.source_filter import detect_source
 from vg09.retrieval import NUM_CTX, retrieve
@@ -45,12 +45,14 @@ from vg09.ui_helpers import (
     LOGO_MARK_PATH,
     build_retrieval_ranks,
     citation_source_type,
+    dates_note,
     describe_retrieval_mode,
     escape_markdown_link_text,
     format_corpus_summary,
     format_date_range_short,
     logo_mark_html,
     misattribution_note,
+    past_newest_note,
     reference_note,
     render_citation_chips,
     staleness_note,
@@ -59,6 +61,16 @@ from vg09.ui_helpers import (
 )
 
 _SOURCE_TYPE_LABEL = {"paper": "PAPER", "video": "VIDEO", "unknown": "SOURCE"}
+
+
+def _reference_today() -> date | None:
+    """T-093 (D-022): the user's calendar date in the configured time zone, or None
+    after saying why when the configured zone is not a real one."""
+    try:
+        return reference_date.today()
+    except reference_date.TimezoneError as exc:
+        st.error(str(exc))
+        return None
 
 st.set_page_config(page_title=APP_NAME, page_icon=str(LOGO_MARK_PATH))
 st.html(CUSTOM_CSS)
@@ -91,7 +103,9 @@ def _header() -> None:
         st.session_state["header_seen_finish"] = job.get("finished")
         st.session_state["header_counts"] = (corpus_stats(), latest_feed_date())
     counts, latest = st.session_state["header_counts"]
-    notes = [n for n in (staleness_note(latest, date.today()), update_note(job)) if n]
+    today = _reference_today()  # T-093: the same calendar date the questions use
+    stale = staleness_note(latest, today) if today else None
+    notes = [n for n in (stale, update_note(job)) if n]
     # T-089 (D-020): a note can carry the job's detail, read back from the status file.
     notes_html = "".join(f' · <span class="app-stale">{escape_html(n)}</span>' for n in notes)
     st.markdown(
@@ -129,11 +143,16 @@ def ask_page() -> None:
         )
         use_manual_range = st.checkbox("Set a custom date range")
         manual_range: tuple[date, date] | None = None
+        manual_error: str | None = None
         if use_manual_range:
-            today = latest_feed_date() or date.today()
-            start = st.date_input("From", value=today - timedelta(days=7))
-            end = st.date_input("To", value=today)
-            if start and end:
+            # T-093: the picker starts from the user's date, not the newest source.
+            picker_today = _reference_today() or date.today()
+            start = st.date_input("From", value=picker_today - timedelta(days=7))
+            end = st.date_input("To", value=picker_today)
+            manual_error = manual_range_error(start, end)
+            if manual_error:
+                st.error(manual_error)
+            else:
                 manual_range = (start, end)
 
     # T-051: a form, so that Enter in the field or one click on Ask each submit on their
@@ -158,7 +177,15 @@ def ask_page() -> None:
         st.info("New content is being made searchable right now. Ask again in a moment.")
         return
 
-    today = latest_feed_date()
+    if manual_error:
+        st.error(f"The custom date range can't be used: {manual_error} Fix it or switch it off.")
+        return
+    # T-093 (D-022): one reference date for this question, passed to parsing, the date
+    # filter and the answer prompt. The newest source date is shown apart from it.
+    today = _reference_today()
+    if today is None:
+        return
+    newest = latest_feed_date()
     # T-029: the manual-override-always-wins precedence lives in resolve_date_range()
     # itself (T-021's own contract) - called once here for the value actually used,
     # and separately (override=None) only so describe_retrieval_mode() can show what
@@ -194,6 +221,12 @@ def ask_page() -> None:
         # still tells those two apart in full.
         date_range_slot.metric("Date range", format_date_range_short(date_range))
     st.caption(describe_retrieval_mode(interpreted_range, ranking, manual_range, source=source))
+    config = sources.load()
+    st.caption(dates_note(today, config.timezone, newest, coverage.papers_checked_through(),
+                          coverage.videos_checked_through(config.channels)))
+    beyond = past_newest_note(date_range, newest)
+    if beyond:
+        st.warning(beyond)
 
     try:
         retrieval = retrieve(question, date_range=date_range, ranking=ranking, source=source)
@@ -202,7 +235,7 @@ def ask_page() -> None:
         packed_slot.metric("Packed", len(retrieval.chunks))
 
         start_t = time.monotonic()
-        result = generate_answer(question, retrieval.chunks, date_range=date_range)
+        result = generate_answer(question, retrieval.chunks, date_range=date_range, today=today)
         elapsed = time.monotonic() - start_t
         time_slot.metric("Time", f"{elapsed:.1f}s")
 
