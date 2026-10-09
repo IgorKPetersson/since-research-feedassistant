@@ -2,27 +2,47 @@
 
 from __future__ import annotations
 
+import re
+import string
 import unittest
 from datetime import date
+from html import unescape as html_unescape
 from pathlib import Path
 
-from vg09.citations import Citation
+from markdown_it import MarkdownIt
+
+from vg09.citations import Citation, build_citations
 from vg09.retrieval import Candidate
 from vg09.ui_helpers import (
     ACCENT_COLOR,
     APP_NAME,
     CUSTOM_CSS,
     LOGO_MARK_PATH,
+    WORD_JOINER,
     build_retrieval_ranks,
     citation_source_type,
     describe_retrieval_mode,
     escape_markdown_link_text,
+    escape_markdown_text,
     format_corpus_summary,
     format_date_range_short,
     logo_mark_html,
+    misattribution_note,
+    reference_note,
     render_citation_chips,
     text_source_label,
 )
+
+# CommonMark, as a stand-in for Streamlit's markdown in the T-089 tests. It doesn't turn
+# bare URLs into links as Streamlit does; that part was checked in the running app.
+_MARKDOWN = MarkdownIt("commonmark")
+
+
+def rendered_text(markdown: str) -> str:
+    """What a reader sees once the markdown is rendered: tags dropped, entities decoded,
+    and the invisible word joiners (T-089) left out."""
+    shown = html_unescape(re.sub(r"<[^>]+>", "", _MARKDOWN.render(markdown)))
+    return shown.replace(WORD_JOINER, "")
 
 # T-029: a real title, not synthetic - copied verbatim from
 # data/raw/youtube/2026-09-16/S2VJU5DQqlU.json's "title" field (data/raw/ is
@@ -442,6 +462,129 @@ class AnswerRenderingSafetyTests(unittest.TestCase):
         self.assertIn("code&#10;&#10;more", result)  # line breaks inside code survive
 
 
+# Tags the app itself puts around an answer; anything else in the output came from the model.
+_APP_TAGS = {"div", "p"}
+_CHIP_RE = re.compile(r'<a class="citation-chip" [^>]*>\d+</a>')
+# An address nothing listens on, so a rendered fixture can never send anything anywhere.
+_INERT_URL = "http://127.0.0.1:9/leak.png?q=question"
+
+
+class BracketedAnswerTextSafetyTests(unittest.TestCase):
+    """T-089 (D-020): text in square brackets is escaped like the rest of the answer.
+
+    These go through `build_citations()` first, as `app.py` does. The tests above pass
+    empty unlinked lists, which is how a bracket that `build_citations()` reports as
+    unlinked reached the page unescaped (reproduced 2026-10-09)."""
+
+    def render(self, answer, urls=None):
+        urls = {1: "https://huggingface.co/papers/1"} if urls is None else urls
+        source_map = {
+            n: Candidate(id=f"doc{n}:0", text="chunk text", metadata={
+                "doc_id": f"doc{n}", "url": u, "title": f"Title {n}", "feed_date": "2026-10-01",
+            })
+            for n, u in urls.items()
+        }
+        found = build_citations(answer, source_map)
+        return render_citation_chips(answer, source_map, found.citations,
+                                     found.unlinked_references, found.descriptive_ranges)
+
+    def model_tags(self, html):
+        """Every tag left once the app's own chips are removed."""
+        return set(re.findall(r"<\s*/?\s*([a-zA-Z][\w-]*)", _CHIP_RE.sub("", html))) - _APP_TAGS
+
+    def test_html_inside_brackets_is_escaped_and_valid_chips_still_link(self):
+        for injected in (f'<img src="{_INERT_URL}">',
+                         '<img src=x onerror="alert(1)">',
+                         '<svg onload="alert(1)"></svg>',
+                         "<script>alert(1)</script>",
+                         f'<a href="{_INERT_URL}">log in</a>',
+                         f'<iframe src="{_INERT_URL}"></iframe>',
+                         '<div style="position:fixed;inset:0">x</div>',
+                         "<b>bold</b>"):
+            result = self.render(f"Claim [1]. See [{injected}].")
+            self.assertEqual(self.model_tags(result), set(), injected)
+            self.assertIn("&lt;", result, injected)  # the attempt stays visible, as text
+            self.assertEqual(result.count('class="citation-chip"'), 1, injected)
+            self.assertIn('href="https://huggingface.co/papers/1"', result, injected)
+
+    def test_bracketed_prose_stays_visible_as_text(self):
+        result = self.render("As shown [Title, 2026-09-09] and [<b>this</b>].")
+        self.assertIn("[Title, 2026-09-09]", result)
+        self.assertIn("[&lt;b&gt;this&lt;/b&gt;]", result)
+        self.assertNotIn("citation-chip", result)
+
+    def test_unlinked_number_and_descriptive_range_stay_visible(self):
+        result = self.render("Claim [1]. Also [99], and all of them [1-20].")
+        self.assertIn("[99]", result)
+        self.assertIn("[1-20]", result)
+        self.assertEqual(result.count('class="citation-chip"'), 1)
+
+    def test_malformed_brackets_with_html_are_escaped(self):
+        for answer in ("Odd [1,, <i>2</i>] here.", "Odd [1-<b>3</b>] here.",
+                       "Odd [<img src=x onerror=alert(1)> here.",
+                       "Odd ]<img src=x onerror=alert(1)>[ here.",
+                       "Nested [[<img src=x onerror=alert(1)>]] here."):
+            self.assertEqual(self.model_tags(self.render(answer)), set(), answer)
+
+    def test_entity_encoded_html_in_brackets_stays_text(self):
+        """The markdown parser decodes `&lt;` to `<` before the chip step sees the text."""
+        for answer in ("See [&lt;img src=x onerror=alert(1)&gt;].",
+                       "See [&#60;img src=x onerror=alert(1)&#62;].",
+                       "See [\\<img src=x onerror=alert(1)\\>]."):
+            self.assertEqual(self.model_tags(self.render(answer)), set(), answer)
+
+    def test_html_outside_brackets_is_still_escaped(self):
+        result = self.render('Before <img src=x onerror="alert(1)"> after [1].')
+        self.assertEqual(self.model_tags(result), set())
+        self.assertIn("&lt;img", result)
+
+
+class EscapeMarkdownTextTests(unittest.TestCase):
+    """T-089: model text shown through Streamlit's markdown outside the answer."""
+
+    ATTEMPTS = ("<https://evil.example>", "[x](https://evil.example)",
+                "![i](https://evil.example/p.png)", "*em* **strong** `code`",
+                "# heading", "- item", "> quote", "$x^2$", "a \\[b\\] c", "1. first")
+
+    def test_every_ascii_punctuation_mark_is_escaped(self):
+        self.assertEqual(escape_markdown_text(string.punctuation).replace(WORD_JOINER, ""),
+                         "".join(f"\\{ch}" for ch in string.punctuation))
+
+    def test_bare_urls_www_and_emails_are_broken_up(self):
+        """Streamlit's GFM autolinks ignore backslashes; the word joiner stops them."""
+        escaped = escape_markdown_text("https://a.example www.b.example me@c.example mailto:x")
+        for pattern in ("https\\:", "www\\.", "me\\@", "mailto\\:"):
+            self.assertNotIn(pattern, escaped)
+        self.assertEqual(escaped.count(WORD_JOINER), 7)  # 2 + 2 + 2 + 1
+
+    def test_no_markdown_forms_and_the_text_reads_unchanged(self):
+        for attempt in self.ATTEMPTS:
+            html = _MARKDOWN.render(escape_markdown_text(attempt))
+            self.assertEqual(re.findall(r"<(\w+)", html), ["p"], attempt)
+            self.assertEqual(rendered_text(escape_markdown_text(attempt)).strip(), attempt, attempt)
+
+    def test_line_breaks_become_spaces(self):
+        self.assertEqual(escape_markdown_text("one\n\n- two"), "one \\- two")
+
+
+class ReferenceNoteTests(unittest.TestCase):
+    """T-089: the captions listing unlinked brackets and descriptive ranges."""
+
+    def test_nothing_to_list_gives_no_note(self):
+        self.assertIsNone(reference_note("Unlinked: ", []))
+
+    def test_brackets_are_listed_as_they_were_written(self):
+        note = reference_note("Unlinked: ", ["[99]", "[Title, 2026-09-09]"])
+        self.assertEqual(rendered_text(note).strip(), "Unlinked: [99], [Title, 2026-09-09]")
+
+    def test_a_bracket_cannot_become_a_link_or_image(self):
+        note = reference_note("Unlinked: ", ["[<https://evil.example>]", "[![i]",
+                                             "[<img src=x onerror=alert(1)>]"])
+        html = _MARKDOWN.render(note)
+        self.assertEqual(re.findall(r"<(\w+)", html), ["p"])
+        self.assertIn("&lt;img", html)
+
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -478,11 +621,21 @@ class MisattributionNoteTests(unittest.TestCase):
 
         note = misattribution_note([("I've been working in Claude Code and Codex", [23], 25),
                                     ("the model is cheaper and faster", [3, 4], None)])
-        self.assertIn("not in the source the answer credits them to", note)
+        shown = rendered_text(note)  # T-089: the quote is escaped, so compare what is shown
+        self.assertIn("not in the source the answer credits them to", shown)
         self.assertIn("\"I've been working in Claude Code and Codex\" "
-                      "(credited to source 23; it is in source 25)", note)
+                      "(credited to source 23; it is in source 25)", shown)
         self.assertIn('"the model is cheaper and faster" '
-                      "(credited to sources 3, 4; not found in any source of this answer)", note)
+                      "(credited to sources 3, 4; not found in any source of this answer)", shown)
+
+    def test_a_quote_cannot_become_a_link_image_or_list(self):
+        """T-089: the quote is the model's own text; markdown in it stays text."""
+        quote = "see <https://evil.example> and [x](https://evil.example) ![i](https://evil.example/p.png)\n- item"
+        html = _MARKDOWN.render(misattribution_note([(quote, [1], None)]))
+        self.assertNotIn("<a ", html)
+        self.assertNotIn("<img", html)
+        self.assertEqual(html.count("<li>"), 1)  # the note's own bullet only
+        self.assertIn("[x](https://evil.example)", rendered_text(misattribution_note([(quote, [1], None)])))
 
     def test_a_long_quote_is_shortened(self):
         from vg09.ui_helpers import misattribution_note

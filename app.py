@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import time
 from datetime import date, timedelta
+from html import escape as escape_html
 
 import requests
 import streamlit as st
@@ -50,6 +51,7 @@ from vg09.ui_helpers import (
     format_date_range_short,
     logo_mark_html,
     misattribution_note,
+    reference_note,
     render_citation_chips,
     staleness_note,
     text_source_label,
@@ -90,7 +92,8 @@ def _header() -> None:
         st.session_state["header_counts"] = (corpus_stats(), latest_feed_date())
     counts, latest = st.session_state["header_counts"]
     notes = [n for n in (staleness_note(latest, date.today()), update_note(job)) if n]
-    notes_html = "".join(f' · <span class="app-stale">{n}</span>' for n in notes)
+    # T-089 (D-020): a note can carry the job's detail, read back from the status file.
+    notes_html = "".join(f' · <span class="app-stale">{escape_html(n)}</span>' for n in notes)
     st.markdown(
         f'<div class="app-header"><span class="app-brand">{logo_mark_html()}'
         f'<span class="app-name">{APP_NAME}</span></span>'
@@ -260,7 +263,8 @@ def ask_page() -> None:
             )
             ts_label = text_source_label(c.text_source)
             if ts_label:
-                badges_html += f'<span class="text-source-badge">{ts_label}</span>'
+                # T-089 (D-020): an unknown stored value is shown as it is, so escape it.
+                badges_html += f'<span class="text-source-badge">{escape_html(ts_label)}</span>'
             rank = ranks.get(c.doc_id)
             if rank:
                 badges_html += f'<span class="retrieval-rank">retrieval rank #{rank}</span>'
@@ -270,16 +274,14 @@ def ask_page() -> None:
                 arxiv_note = f" · arXiv {c.arxiv_published_at[:10]}" if c.arxiv_published_at else ""
                 st.markdown(f"**[{title}]({c.url})**  \n{c.feed_date}{arxiv_note}")
 
-    if citations.unlinked_references:
-        st.caption(
-            "References in the answer that couldn't be linked to a source: "
-            + ", ".join(citations.unlinked_references)
-        )
-    if citations.descriptive_ranges:
-        st.caption(
-            "Descriptive ranges (e.g. \"all N sources\") — not source citations: "
-            + ", ".join(citations.descriptive_ranges)
-        )
+    for note in (
+        reference_note("References in the answer that couldn't be linked to a source: ",
+                       citations.unlinked_references),
+        reference_note("Descriptive ranges (e.g. \"all N sources\") — not source citations: ",
+                       citations.descriptive_ranges),
+    ):
+        if note:
+            st.caption(note)
 
 
 # T-056: a first start - nothing stored and no saved choice of sources - opens on

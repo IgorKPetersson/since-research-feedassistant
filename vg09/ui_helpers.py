@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import re
+import string
 from datetime import date
 from html import escape as escape_html
 from pathlib import Path
@@ -60,6 +61,40 @@ def escape_markdown_link_text(text: str) -> str:
     for ch in _MARKDOWN_SPECIAL_CHARS[1:]:
         result = result.replace(ch, f"\\{ch}")
     return result
+
+
+_ASCII_PUNCTUATION = frozenset(string.punctuation)
+WORD_JOINER = "\u2060"  # invisible, and no line break at it
+_AUTOLINK_BREAKERS = frozenset(":@.")
+
+
+def escape_markdown_text(text: str) -> str:
+    """T-089 (D-020): model text shown through Streamlit's markdown, outside a link.
+    Streamlit escapes HTML there, but markdown still turns `<https://...>`, a bare URL,
+    `[x](url)` or `$...$` into links or math. CommonMark lets a backslash make any ASCII
+    punctuation literal, so escaping all of it leaves no markup to form. Line breaks
+    become spaces so the text can't start a list or heading of its own.
+
+    Backslashes do not stop Streamlit's GFM autolinks: a bare `https://`, `www.` or
+    `name@host` became a link even when escaped (checked in the running app,
+    2026-10-09). An invisible word joiner before `:`, `@` and `.` breaks those
+    patterns while the text looks the same."""
+    flat = " ".join(text.split())
+    out = []
+    for ch in flat:
+        if ch in _AUTOLINK_BREAKERS:
+            out.append(WORD_JOINER)
+        out.append(f"\\{ch}" if ch in _ASCII_PUNCTUATION else ch)
+    return "".join(out)
+
+
+
+def reference_note(intro: str, references: list[str]) -> str | None:
+    """T-089: the caption listing brackets from the answer that are not chips. The
+    brackets are the model's own text, so they are escaped."""
+    if not references:
+        return None
+    return intro + ", ".join(escape_markdown_text(r) for r in references)
 
 
 def describe_retrieval_mode(
@@ -225,7 +260,7 @@ def misattribution_note(items: list[tuple[str, list[int], int | None]]) -> str |
             "sources " + ", ".join(str(n) for n in numbers)
         where = f"credited to {credited}; it is in source {actual}" if actual is not None \
             else f"credited to {credited}; not found in any source of this answer"
-        lines.append(f'- "{escape_markdown_link_text(shown)}" ({where})')
+        lines.append(f'- "{escape_markdown_text(shown)}" ({where})')  # T-089
     return ("Some quotes are not in the source the answer credits them to. "
             "Check them before relying on them:\n" + "\n".join(lines))
 
@@ -352,9 +387,11 @@ def render_citation_chips(
     descriptive_set = set(descriptive_ranges)
 
     def replace(match: re.Match) -> str:
+        """Returns HTML: every path escapes the model's text (T-089, D-020). An unlinked
+        bracket can hold anything the model wrote, such as "[<img ...>]"."""
         raw = match.group(0)
         if raw in unlinked_set or raw in descriptive_set:
-            return raw
+            return escape_html(raw, quote=False)
 
         chips = []
         for n in _numbers_in_resolved_bracket(match.group(1)):
