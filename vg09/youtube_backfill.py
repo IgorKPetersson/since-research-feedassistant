@@ -32,9 +32,8 @@ from datetime import date, datetime, timedelta
 
 import yt_dlp
 
-from vg09 import document, sources
+from vg09 import channel_state, document, sources
 from vg09.document import RAW_DIR, Document
-from vg09.watermark import write_watermark
 from vg09.youtube import YT_DLP_SOCKET_TIMEOUT, list_video_ids, normalize
 
 BACKFILL_WEEKS = 4  # halved from T-017's original 8-week plan to roughly halve
@@ -58,6 +57,7 @@ class BackfillResult:
     already_done: int = 0
     attempts: int = 0
     channels_reached: list[str] = field(default_factory=list)
+    channel_problems: dict[str, str] = field(default_factory=dict)  # T-091
 
 
 def _feed_date_from_upload_date(upload_date: str) -> str:
@@ -99,7 +99,7 @@ def catch_up_start(watermark: str) -> date:
     last two days for a similar reason (T-015, `vg09.sync.REOPEN_DAYS`).
 
     Rechecking costs little: a video already on disk is listed with its stored date and
-    is neither looked up nor fetched again (`_list_channel()`, `document.exists()`).
+    is neither looked up nor fetched again (`_check_channel()`, `document.exists()`).
     A video that appears even later with an older date stays outside the window."""
     return date.fromisoformat(watermark) - timedelta(days=RECHECK_DAYS - 1)
 
@@ -114,30 +114,95 @@ def _known_video_dates() -> dict[str, str]:
     }
 
 
-def _list_channel(channel_url: str, start: date) -> list[dict]:
-    """The channel's latest videos, newest first, asking YouTube for a video's details
-    only when it is not on disk yet (T-055). `list_videos()` asks for the details of all
-    50, one request each, which made an update with nothing new take over five minutes
-    for four channels. Here the ids come from one request for the whole channel; a known
-    video is returned with the date it was stored under; and the walk stops at the first
-    new video older than the window, since everything after it is older still."""
-    known = _known_video_dates()
-    videos: list[dict] = []
-    for video_id in list_video_ids(channel_url, LIST_COUNT_PER_CHANNEL):
+# T-091: YouTube's own refusals, which retrying won't change. Any other error reading a
+# listed video leaves the channel's check incomplete, to be retried.
+_UNREADABLE = (("members-only", "members-only"), ("Join this channel", "members-only"),
+               ("Private video", "private"))
+
+
+def _unreadable_reason(exc: Exception) -> str | None:
+    text = str(exc)
+    return next((reason for marker, reason in _UNREADABLE if marker in text), None)
+
+
+@dataclass
+class ChannelCheck:
+    """T-091: what one channel's listing showed for the window [start, today]."""
+    listing: list[str]
+    to_fetch: list[dict] = field(default_factory=list)  # in the window, not on disk
+    already_done: int = 0
+    dates: dict[str, str] = field(default_factory=dict)  # looked up, not on disk
+    unreadable: dict[str, str] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    late: list[list[str]] = field(default_factory=list)  # new since last check, dated before the window
+    oldest_listed: str | None = None
+    reaches_back: bool = False
+
+
+def _check_channel(channel_url: str, record: dict, start: date, today: date,
+                   known: dict[str, str]) -> ChannelCheck:
+    """T-091: walk the channel's whole listing and decide what to fetch and whether
+    the listing covers the window.
+
+    No date order is assumed. Until T-091 the walk stopped at the first new video dated
+    before the window, so a video listed above others with an older date (a scheduled
+    upload, for instance) hid every in-window video below it (KB-040). Now every listed
+    id is classified: on disk (its stored date, no request), looked up before (its
+    cached date, no request), or new (one request for its details, once).
+
+    The listing covers the window when it has fewer ids than asked for (the whole
+    channel; `list_video_ids()` raises on a broken page instead of returning a short
+    list), or it still contains an id from the last complete listing (YouTube lists in
+    publication order, so everything published since is above it), or, on a first
+    check, its oldest listed video is dated before the window. Otherwise older videos
+    may have scrolled out of the newest `LIST_COUNT_PER_CHANNEL`."""
+    ids = list_video_ids(channel_url, LIST_COUNT_PER_CHANNEL)
+    check = ChannelCheck(listing=ids)
+    window = (start.isoformat(), today.isoformat())
+    previous = set(record["listing"])
+    first_anchor = next((i for i, video_id in enumerate(ids) if video_id in previous), None)
+
+    for position, video_id in enumerate(ids):
         if video_id in known:
-            videos.append({"id": video_id, "upload_date": known[video_id].replace("-", ""),
-                           "title": None})
-            continue
-        try:
-            video = _fetch_single_video_metadata(video_id)
-        except Exception as exc:  # noqa: BLE001 - one unavailable video isn't the channel
-            print(f"  could not read {video_id}: {exc!r} - skipping this video")
-            continue
-        videos.append(video)
-        upload_date = video.get("upload_date")
-        if upload_date and _feed_date_from_upload_date(upload_date) < start.isoformat():
-            break
-    return videos
+            feed_date = known[video_id]
+            if window[0] <= feed_date <= window[1]:
+                check.already_done += 1
+        elif (video_id in record["dates"]
+              and not window[0] <= record["dates"][video_id] <= window[1]):
+            feed_date = check.dates[video_id] = record["dates"][video_id]
+        else:
+            # New, or looked up before while outside the window and now inside it (a
+            # video dated ahead of the local date, say): its details are needed to fetch.
+            try:
+                video = _fetch_single_video_metadata(video_id)
+            except Exception as exc:  # noqa: BLE001 - sorted into unreadable or retry below
+                reason = _unreadable_reason(exc)
+                if reason:
+                    check.unreadable[video_id] = reason
+                else:
+                    check.errors.append(f"{video_id}: {exc}")
+                print(f"  could not read {video_id}: {reason or repr(exc)}")
+                continue
+            if not video.get("upload_date"):
+                check.errors.append(f"{video_id}: no upload date")
+                continue
+            feed_date = _feed_date_from_upload_date(video["upload_date"])
+            if window[0] <= feed_date <= window[1]:
+                if not document.pending_path("youtube", feed_date, video_id).exists():
+                    check.to_fetch.append(video)
+            else:
+                check.dates[video_id] = feed_date
+                newly_published = previous and (first_anchor is None or position < first_anchor)
+                if feed_date < window[0] and newly_published:
+                    check.late.append([video_id, feed_date])  # T-103
+        check.oldest_listed = feed_date
+
+    check.reaches_back = (
+        len(ids) < LIST_COUNT_PER_CHANNEL
+        or first_anchor is not None
+        or (not previous and check.oldest_listed is not None and check.oldest_listed < window[0])
+    )
+    return check
 
 
 def _report(result: BackfillResult) -> None:
@@ -195,20 +260,16 @@ def run(
     channels: dict[str, str] | None = None,
     on_progress: Callable[[BackfillResult], None] | None = None,
 ) -> BackfillResult:
-    """`start`/`today` let a caller (T-013's `catch_up_youtube()`) reuse this
-    same paced/three-tier-fallback logic for a narrow catch-up window instead
-    of the full `weeks_back` backfill window - same idea as `vg09.sync.sync_hf`
-    serving both T-015's backfill and T-013's HF catch-up from one
-    implementation. `channels` restricts the run to those channels (T-055: a newly
-    added channel gets a backfill window of its own while the others only catch up);
+    """Fetch every channel's videos that its own record says are still unchecked.
+
+    T-091 (D-021): each channel has its own window from `vg09.channel_state`. `start`
+    (default: `weeks_back` weeks before `today`) only applies to a channel that has no
+    record yet, as the start of its first, unverified check. A channel whose listing
+    fails or is incomplete keeps its window for the next run; the others move on.
     `on_progress` is called after every video, for the background job's status file."""
     today = today or date.today()
     if start is None:
         start = today - timedelta(days=weeks_back * 7 - 1)
-        print(f"YouTube backfill window: {start.isoformat()} .. {today.isoformat()} ({weeks_back} weeks)")
-    else:
-        print(f"YouTube catch-up window: {start.isoformat()} .. {today.isoformat()}")
-
     result = BackfillResult()
 
     pending = _pending_videos()
@@ -227,36 +288,61 @@ def run(
     # vg09/channels.py's four are only the default when nothing has been saved.
     if channels is None:
         channels = sources.load().channels
+    state = channel_state.load()
+    added = channel_state.ensure_channels(state, channels, start)
+    channel_state.save(state)  # before any fetch, so new records survive a crash
+    if added:
+        print(f"New, unverified channel records from {start.isoformat()}: {added}")
+
     for handle, url in channels.items():
-        print(f"\n== {handle} ==")
+        record = state["channels"][handle]
+        window_start = channel_state.window_start(record)
+        print(f"\n== {handle} == window {window_start.isoformat()} .. {today.isoformat()}")
         result.channels_reached.append(handle)
         if on_progress is not None:
             on_progress(result)  # listing a channel can take a minute: say which one
         try:
-            videos = _list_channel(url, start)
-        except Exception as exc:  # noqa: BLE001 - a listing failure isn't a transcript block
-            print(f"  could not list videos for {handle}: {exc!r} - skipping channel")
+            check = _check_channel(url, record, window_start, today, _known_video_dates())
+        except Exception as exc:  # noqa: BLE001 - this channel waits, the others go on
+            print(f"  could not list videos for {handle}: {exc!r} - kept for the next run")
+            channel_state.record_failure(record, window_start, channel_state.RESULT_FAILED,
+                                         f"listing failed: {exc}")
+            channel_state.save(state)
+            result.channel_problems[handle] = record["last_error"]
             continue
 
-        for video in videos:
-            video_id = video.get("id")
-            upload_date = video.get("upload_date")
-            if not video_id or not upload_date:
-                continue
-            feed_date = _feed_date_from_upload_date(upload_date)
-            if feed_date < start.isoformat() or feed_date > today.isoformat():
-                continue
-            if document.exists("youtube", feed_date, video_id):
-                result.already_done += 1
-                continue
-            if document.pending_path("youtube", feed_date, video_id).exists():
-                continue  # already retried in the pending pass above
-
-            print(f"  {video_id} ({feed_date}) {video.get('title')!r}")
+        result.already_done += check.already_done
+        for video in check.to_fetch:
+            print(f"  {video['id']} ({_feed_date_from_upload_date(video['upload_date'])}) "
+                  f"{video.get('title')!r}")
             _process_video(video, result, channel=handle, on_progress=on_progress)
 
-    write_watermark("youtube", today.isoformat())
-    print(f"\nDone - full window covered. YouTube watermark set to {today.isoformat()}.")
+        on_disk = _known_video_dates()
+        listed_dates = [on_disk[v] for v in check.listing if v in on_disk]
+        record["newest_content"] = max(listed_dates) if listed_dates else None
+        record["dates"] = check.dates
+        record["unreadable"] = check.unreadable
+        record["late"] = check.late
+        if check.late:
+            print(f"  appeared after the window had passed, not fetched (T-103): {check.late}")
+        if check.errors:
+            channel_state.record_failure(
+                record, window_start, channel_state.RESULT_INCOMPLETE,
+                f"{len(check.errors)} listed video(s) could not be read, first: {check.errors[0]}")
+            result.channel_problems[handle] = record["last_error"]
+        elif not check.reaches_back:
+            gap = {"from": window_start.isoformat(),
+                   "through": check.oldest_listed or today.isoformat(),
+                   "reason": f"older than the newest {LIST_COUNT_PER_CHANNEL} videos YouTube lists"}
+            channel_state.record_success(record, today, channel_state.RESULT_COMPLETE_WITH_GAP,
+                                         check.listing, gap=gap)
+            result.channel_problems[handle] = f"not verified {gap['from']} to {gap['through']}"
+        else:
+            channel_state.record_success(record, today, channel_state.RESULT_COMPLETE, check.listing)
+        channel_state.save(state)
+        print(f"  {record['last_result']}; checked through {record['checked_through']}, "
+              f"retry from {record['pending_from']}")
+
     if result.fetched_whisper:
         print(f"({result.fetched_whisper} video(s) needed the Whisper fallback - "
               f"captions were blocked for them, D-009)")

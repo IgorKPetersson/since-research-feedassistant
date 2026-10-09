@@ -163,18 +163,6 @@ def refresh_store_if_updated() -> bool:
     return True
 
 
-def channels_with_documents() -> set[str]:
-    """Handles that already have at least one fetched video on disk."""
-    found: set[str] = set()
-    for path in (RAW_DIR / "youtube").rglob("*.json"):
-        if path.name.endswith(".pending.json"):
-            continue
-        handle = json.loads(path.read_text(encoding="utf-8")).get("channel")
-        if handle:
-            found.add(handle)
-    return found
-
-
 class _Job:
     def __init__(self, today: date) -> None:
         self.today = today
@@ -215,36 +203,26 @@ class _Job:
         self.update(hf_papers=result["total_papers"])
 
     def _youtube(self, config) -> None:
-        from vg09.youtube_backfill import catch_up_start
         from vg09.youtube_backfill import run as run_youtube
 
         def progress(result) -> None:
             fetched = result.fetched_captions + result.fetched_whisper + result.fetched_fallback
             channel = result.channels_reached[-1] if result.channels_reached else ""
-            total = self.videos_before + fetched
-            self.update(youtube_videos=total,
+            self.update(youtube_videos=fetched,
                         detail=f"YouTube: checking @{channel} "
-                               f"({total} new video{'' if total == 1 else 's'} so far)")
+                               f"({fetched} new video{'' if fetched == 1 else 's'} so far)")
 
-        self.videos_before = 0
+        # T-091 (D-021): each channel's window comes from its own record. The backfill
+        # start only applies to a channel without one: newly added, or not yet checked
+        # since the shared watermark was retired.
         backfill_start = self.today - timedelta(days=config.youtube_weeks * 7 - 1)
-        watermark = read_watermark("youtube")
-        known = channels_with_documents()
-        new = {h: u for h, u in config.channels.items() if h not in known}
-        old = {h: u for h, u in config.channels.items() if h in known}
-
-        if watermark is None:
-            # Nothing has ever completed: every channel gets the full window.
-            new, old = dict(config.channels), {}
-        if old:
-            start = catch_up_start(watermark)  # T-090: rechecks the last days
-            result = run_youtube(start=start, today=self.today, channels=old, on_progress=progress)
-            self.videos_before = (result.fetched_captions + result.fetched_whisper
-                                  + result.fetched_fallback)
-        if new:
-            # A channel with nothing on disk yet gets the whole backfill window, not
-            # only the days since the last run.
-            run_youtube(start=backfill_start, today=self.today, channels=new, on_progress=progress)
+        result = run_youtube(start=backfill_start, today=self.today, channels=config.channels,
+                             on_progress=progress)
+        if result.channel_problems:
+            # Partial success: the other channels' progress is kept, these are retried
+            # or shown as not verified on Sources.
+            self.update(errors=self.state["errors"] + [
+                f"youtube @{handle}: {problem}" for handle, problem in result.channel_problems.items()])
 
     def _index(self) -> None:
         from vg09.store import build_store

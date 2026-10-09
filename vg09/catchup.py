@@ -14,7 +14,6 @@ from datetime import date, timedelta
 from vg09 import sources
 from vg09.sync import sync_hf
 from vg09.watermark import read_watermark
-from vg09.youtube_backfill import catch_up_start
 from vg09.youtube_backfill import run as run_youtube_backfill
 
 
@@ -32,21 +31,10 @@ def catch_up_hf(today: date | None = None) -> dict | None:
 
 
 def catch_up_youtube(today: date | None = None):
-    """Reuses `vg09.youtube_backfill.run()`'s paced, three-tier-fallback
-    logic (D-009/T-019) for the narrow window since the last watermark,
-    instead of a full backfill window - same factoring idea as
-    `vg09.sync.sync_hf` sharing one implementation between T-015's backfill
-    and this. If no YouTube watermark exists yet (no backfill has completed,
-    T-017/T-019), that's reported and skipped - no YouTube call is made in
-    that case."""
-    watermark = read_watermark("youtube")
-    if watermark is None:
-        print("No youtube watermark found - run the backfill (T-017/T-019) first. Skipping "
-              "YouTube catch-up (no YouTube call made).")
-        return None
-    start = catch_up_start(watermark)  # T-090: rechecks the last days, not just after them
-    print(f"YouTube watermark: {watermark} -> catching up from {start.isoformat()}")
-    return run_youtube_backfill(start=start, today=today)
+    """T-091 (D-021): the same per-channel catch-up the app's update runs. Each channel
+    starts where its own record says; a channel without one gets the configured backfill
+    window. Catch-up and backfill are therefore one operation."""
+    return run_youtube_backfill(weeks_back=sources.load().youtube_weeks, today=today)
 
 
 def catch_up(today: date | None = None) -> dict:

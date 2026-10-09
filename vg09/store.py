@@ -236,4 +236,9 @@ def remove_channel_data(handle: str) -> dict:
         if json.loads(path.read_text(encoding="utf-8")).get("channel") == handle:
             path.unlink()
             removed_files += 1
+    # T-091: its coverage record goes too, or adding the channel back would trust
+    # coverage whose files are gone.
+    from vg09 import channel_state
+
+    channel_state.remove(handle)
     return {"chunks": before - collection.count(), "documents": removed_files}

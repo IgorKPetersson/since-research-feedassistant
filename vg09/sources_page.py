@@ -11,9 +11,9 @@ from datetime import date
 
 import streamlit as st
 
-from vg09 import ingest_job, sources
+from vg09 import channel_state, ingest_job, sources
 from vg09.store import channel_stats, corpus_stats, latest_feed_date, remove_channel_data
-from vg09.ui_helpers import staleness_note
+from vg09.ui_helpers import escape_markdown_text, staleness_note
 
 UPDATE_WARNING = (
     "An update takes roughly 10–20 minutes, longer the first time. Most of that is "
@@ -133,6 +133,7 @@ def render() -> None:
     st.caption(f"Up to {sources.MAX_CHANNELS} channels. Each one adds a few minutes to "
                "every update, because videos are fetched slowly on purpose.")
     per_channel = channel_stats()
+    coverage = channel_state.load()  # T-091
     full = len(config.channels) >= sources.MAX_CHANNELS
     if not config.channels:
         st.caption("No channels yet.")
@@ -144,6 +145,10 @@ def render() -> None:
                           f"latest {info['latest']}")
         else:
             left.markdown(f"**@{handle}**  \nNot fetched yet — searchable after the next update")
+        # T-091: how far this channel is verified, and what isn't. The text can carry an
+        # error message from YouTube, so it is escaped like model text (T-089).
+        left.caption(escape_markdown_text(
+            channel_state.coverage_text(coverage["channels"].get(handle))))
         if right.button("Remove", key=f"remove_{handle}", disabled=running):
             _confirm_remove(handle, info["documents"] if info else 0)
 

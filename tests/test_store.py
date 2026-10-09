@@ -216,12 +216,21 @@ class ChannelTests(unittest.TestCase):
             (day / "v1.json").write_text(json.dumps({"id": "v1", "channel": "alpha"}), encoding="utf-8")
             (day / "v3.json").write_text(json.dumps({"id": "v3", "channel": "beta"}), encoding="utf-8")
             (day / "v9.pending.json").write_text(json.dumps({"id": "v9"}), encoding="utf-8")
-            # vg09.store.RAW_DIR, its own imported copy of the name (KB-010)
+            # vg09.store.RAW_DIR, its own imported copy of the name (KB-010). The
+            # watermark folder holds T-091's channel records, so it is redirected too.
+            from vg09 import channel_state
+
             with patch("vg09.store.get_collection", return_value=collection), \
-                 patch("vg09.store.RAW_DIR", Path(tmp)):
+                 patch("vg09.store.RAW_DIR", Path(tmp)), \
+                 patch("vg09.watermark.WATERMARK_DIR", Path(tmp)):
+                channel_state.save({"version": channel_state.VERSION, "channels": {
+                    "alpha": {"checked_through": "2026-09-10"},
+                    "beta": {"checked_through": "2026-09-10"}}})
                 result = remove_channel_data("alpha")
+                records = channel_state.load()["channels"]
 
             self.assertEqual(sorted(p.name for p in day.iterdir()), ["v3.json", "v9.pending.json"])
+            self.assertEqual(list(records), ["beta"])  # T-091: its coverage record goes too
         collection.delete.assert_called_once_with(where={"channel": "alpha"})
         self.assertEqual(result, {"chunks": 3, "documents": 1})
 

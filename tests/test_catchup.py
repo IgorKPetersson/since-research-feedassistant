@@ -62,28 +62,15 @@ class CatchUpHfTests(unittest.TestCase):
 
 
 class CatchUpYoutubeTests(unittest.TestCase):
-    def setUp(self):
-        tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp.cleanup)
-        patcher = patch("vg09.watermark.WATERMARK_DIR", Path(tmp.name))
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    """T-091 (D-021): YouTube catch-up is the per-channel run; there is no shared
+    watermark to require or start from."""
 
-    def test_no_watermark_skips_without_calling_the_backfill(self):
-        with patch("vg09.catchup.run_youtube_backfill") as mock_run:
-            result = catch_up_youtube(today=date(2026, 9, 16))
-
-        mock_run.assert_not_called()
-        self.assertIsNone(result)
-
-    def test_watermark_present_calls_backfill_from_the_day_before_it(self):
-        """T-090: the watermark day and the day before are checked again."""
-        write_watermark("youtube", "2026-09-10")
-        with patch("vg09.catchup.run_youtube_backfill") as mock_run:
+    def test_runs_the_per_channel_catch_up_with_the_configured_backfill_weeks(self):
+        with patch("vg09.sources.load", return_value=Sources(youtube_weeks=3)),              patch("vg09.catchup.run_youtube_backfill") as mock_run:
             mock_run.return_value = "fake result"
             result = catch_up_youtube(today=date(2026, 9, 16))
 
-        mock_run.assert_called_once_with(start=date(2026, 9, 9), today=date(2026, 9, 16))
+        mock_run.assert_called_once_with(weeks_back=3, today=date(2026, 9, 16))
         self.assertEqual(result, "fake result")
 
 

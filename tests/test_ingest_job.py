@@ -215,19 +215,34 @@ class RunJobTests(IngestJobTestCase):
         self.assertEqual(self.youtube_calls[0]["start"], date(2026, 9, 26))  # 7 days
         self.assertEqual(list(self.youtube_calls[0]["channels"]), ["alpha"])
 
-    def test_a_newly_added_channel_gets_the_backfill_window_the_others_only_catch_up(self):
-        write_watermark("youtube", "2026-09-30")
+    def test_every_channel_goes_in_one_run_with_the_backfill_start_for_new_records(self):
+        """T-091 (D-021): each channel's window comes from its own record inside the
+        run; the job only supplies the backfill start for channels without one."""
         save(Sources(hf_enabled=False, youtube_weeks=4, channels={
             "alpha": "https://www.youtube.com/@alpha/videos",
             "newone": "https://www.youtube.com/@newone/videos",
         }))
-        self.add_video("v1", "alpha")  # alpha has data on disk, newone has none
 
         self.run_job()
 
-        catch_up, backfill = self.youtube_calls
-        self.assertEqual((list(catch_up["channels"]), catch_up["start"]), (["alpha"], date(2026, 9, 29)))  # T-090 recheck
-        self.assertEqual((list(backfill["channels"]), backfill["start"]), (["newone"], date(2026, 9, 5)))
+        (call,) = self.youtube_calls
+        self.assertEqual(list(call["channels"]), ["alpha", "newone"])
+        self.assertEqual(call["start"], date(2026, 9, 5))  # 4 weeks, both ends counted
+
+    def test_a_channel_problem_is_recorded_as_partial_success(self):
+        save(Sources(hf_enabled=False, channels={"good": "https://www.youtube.com/@good/videos",
+                                                 "bad": "https://www.youtube.com/@bad/videos"}))
+
+        def youtube(**kwargs):
+            self.calls.append("youtube")
+            return BackfillResult(fetched_captions=1,
+                                  channel_problems={"bad": "listing failed: unreachable"})
+
+        final = self.run_job(youtube=youtube)
+
+        self.assertEqual(self.calls, ["youtube", "index"])
+        self.assertEqual(final["state"], "done_with_errors")
+        self.assertEqual(final["errors"], ["youtube @bad: listing failed: unreachable"])
 
     def test_a_failing_stage_is_recorded_and_the_store_is_still_rebuilt(self):
         save(Sources(channels={"alpha": "https://www.youtube.com/@alpha/videos"}))

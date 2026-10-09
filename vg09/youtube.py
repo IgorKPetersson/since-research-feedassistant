@@ -105,6 +105,10 @@ def list_video_ids(channel_url: str, count: int) -> list[str]:
         "quiet": True,
         "no_warnings": True,
         "socket_timeout": YT_DLP_SOCKET_TIMEOUT,
+        # T-091 (KB-041): by default yt-dlp only warns when a listing page comes back
+        # incomplete and returns what it has, so a broken page looks like a short
+        # channel. With this it raises, and the channel's check is kept for retry.
+        "extractor_args": {"youtube": {"raise_incomplete_data": ["true"]}},
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(channel_url, download=False)
