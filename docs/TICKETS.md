@@ -155,6 +155,14 @@ the answer.
 **Depends on:** Phase v2-2 approved
 **Notes:** reproduce the `[1, 99]` behaviour before changing it.
 
+Follow-up from T-089 (2026-10-09): `escape_markdown_text()` puts an invisible word joiner
+(U+2060) before `:`, `@` and `.` in model text shown in the unlinked-references caption and
+the quote warning, so Streamlit can't turn a URL into a link. Text copied from those notes
+therefore contains the invisible characters, and pasting a copied quote into a search may
+not match. If the notes move into the new source-inspection view, render them as escaped
+HTML text instead, which needs no joiner (the answer body already works this way), and
+check copy and paste in a browser.
+
 ---
 
 ### T-098 — Selectable Ollama, OpenAI and Anthropic answer backends
