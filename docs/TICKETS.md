@@ -399,7 +399,7 @@ the reference date.
 
 ### T-092 — Correct required and optional model instructions in the README
 
-**Status:** todo
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-092-readme-models`  ·  **Phase:** v2-1 (P1-04)
 
 **Goal:** the README lists exactly the models Since needs to run, with optional ones
@@ -408,15 +408,38 @@ labelled.
 **Why:** the README says three models are required but gives two pull commands.
 
 **Acceptance criteria**
-- [ ] The models used at runtime and in evaluation scripts are checked against the code
-- [ ] The README's model count, commands and required/optional labels match the code
-- [ ] `qwen3:8b` is shown as optional for evaluation only, if the code confirms it
-- [ ] No code or model change
+- [x] The models used at runtime and in evaluation scripts are checked against the code →
+  runtime: `qwen3:30b-a3b` (`retrieval.CHAT_MODEL`, answers and token counting), `bge-m3`
+  (`store.EMBED_MODEL`), faster-whisper `small` on CUDA (`youtube.WHISPER_MODEL_SIZE`,
+  caption fallback only); evaluation: `qwen3:8b` only in
+  `scripts/t033_model_size_comparison.py`
+- [x] The README's model count, commands and required/optional labels match the code →
+  two required Ollama models, one optional, and the Whisper model that downloads itself
+- [x] `qwen3:8b` is shown as optional for evaluation only, if the code confirms it
+- [x] No code or model change → diff touches README, DESIGN and TICKETS only; full suite
+  397 tests OK
 
 **Out of scope:** changing the default model.
 
 **Depends on:** T-091
 **Notes:** revisit after v2 Phase 2.
+
+Checked on 2026-10-09: Ollama 0.40.0 is in use (the README said 0.34.0, the version it
+was developed against; both are now stated). `ollama show` resolves all three model names
+locally (`qwen3:30b-a3b` 30.5B Q4_K_M, `bge-m3` 566.7M F16, `qwen3:8b` 8.2B Q4_K_M). The
+Whisper model is in the Hugging Face cache as `Systran/faster-whisper-small`, 464MB.
+`pip install --dry-run --ignore-installed -r requirements.txt` resolves all 103 pins on
+PyPI for Windows and Python 3.12, with no mismatch.
+
+Not run: `git clone`, creating a fresh `.venv`, a real `pip install`, `ollama pull` (it
+could replace the installed model if the tag has moved upstream), and the first-use
+Whisper download. A clean install is T-101. Phase 0 scripts `t004_local_model.py` and
+`t006_needle_test.py` still name other models (such as `qwen2.5:32b` and `llama3.1:8b`); they are historical
+feasibility checks, not part of the documented evaluation, and the README doesn't list
+them.
+
+Also in this ticket, by my instruction: the README and DESIGN now say that a channel
+"checked through" a date is not the same as every listed video being in the index.
 
 ---
 

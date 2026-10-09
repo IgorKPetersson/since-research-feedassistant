@@ -27,17 +27,28 @@ claim tied back to a real, clickable source.
 ## Requirements
 
 - **Python 3.12** (tested with 3.12.10)
-- **[Ollama](https://ollama.com/)**, installed and running (`ollama serve`), tested against
-  version 0.34.0
-- Three Ollama models pulled:
+- **[Ollama](https://ollama.com/)**, installed and running (`ollama serve`). Developed
+  against version 0.34.0; the current version in use is 0.40.0.
+- **Two Ollama models, required:**
   ```
   ollama pull qwen3:30b-a3b
   ollama pull bge-m3
   ```
-  `qwen3:30b-a3b` is the chat model that answers questions; `bge-m3` embeds every document
-  chunk and every question (multilingual — see "Asking a question" below). A third model,
-  `qwen3:8b`, is only needed for the optional model-size evaluation comparison
-  (`docs/eval-results/`, `docs/TICKETS.md` T-033) and isn't required to use the chat UI.
+  `qwen3:30b-a3b` is the chat model that answers questions; Since also uses it to count
+  tokens when it packs sources into the prompt. `bge-m3` embeds every document chunk and
+  every question (multilingual — see "Asking a question" below). Both are set in the code,
+  not chosen in the app.
+- **One Ollama model, optional, for the evaluation only:**
+  ```
+  ollama pull qwen3:8b
+  ```
+  Only `scripts/t033_model_size_comparison.py` uses it, to compare a smaller model with
+  `qwen3:30b-a3b` (`docs/eval-results/`, T-033). The app never calls it.
+- **A Whisper model, downloaded on its own when first needed.** If YouTube blocks a
+  video's captions, the audio is transcribed locally with faster-whisper's `small` model
+  (about 460MB, from Hugging Face, kept in your Hugging Face cache). It runs on the GPU
+  only. Without an NVIDIA GPU, or if the download fails, that video falls back to its
+  title and description. There is nothing to install for it by hand.
 - **A CUDA-capable GPU with real headroom.** Tested on an RTX 4090 (24GB VRAM):
   `qwen3:30b-a3b` (~20GB) and `bge-m3` loaded into Ollama at once leave roughly 2.4GB of
   headroom at this project's context-window settings. A GPU with meaningfully less VRAM
@@ -98,6 +109,22 @@ Everything about what is watched, and fetching it, is on the **Sources** page.
 For each video, real captions are tried first. If YouTube blocks them, the audio is
 transcribed locally with Whisper, and if that fails too, the video's title and
 description are used alone (weaker, but never a hard failure).
+
+**What a channel's "Checked through" line means.** Each channel on Sources shows how far
+its listing has been checked, for example "Checked through 2026-10-09; nothing before
+2026-09-12 checked". It means that every video the channel listed for those dates was
+looked at. It does not mean every one of them is in the search index:
+
+- members-only and private videos are listed but can't be fetched; the line counts them;
+- a video that shows up in the listing more than a day after its own upload date, such as
+  a scheduled premiere, is noticed but not fetched yet (T-103), and the line doesn't
+  show it;
+- a video whose captions were blocked may be stored as a Whisper transcript or only as
+  its title and description.
+
+What has never been checked is said separately: dates before the "nothing before" date,
+any stretch older than the channel's newest 50 videos ("not verified … to …"), and a
+channel whose last check failed ("retrying from …").
 
 **The app updates itself when you open it.** The first time you open it each day, the
 update starts in the background on its own; the header says "Updating…" until it has
@@ -175,8 +202,8 @@ comparison (T-033). See
 - **A video uploaded after an update arrives with the next update.** That is either
   **Update now** on the same day or the automatic update when you first open the app the
   next day. Each YouTube update looks back over the last two days again, so a late upload
-  is not skipped. A video that only appears more than a day after its upload date can
-  still be missed.
+  is not skipped. A video that only appears more than a day after its upload date is
+  noticed but not fetched (T-103).
 - **YouTube may block caption requests outright.** The fallback chain is real captions →
   local Whisper transcription → title and description only — the last of these gives
   noticeably weaker answers for the videos it applies to.

@@ -576,6 +576,11 @@ original Definition of done, added by explicit instruction (2026-10-02).
    - The record is saved after each channel, through a temporary file and a rename, so
      a crash keeps finished channels and an interrupted write keeps the previous file.
    - Removing a channel removes its record, so adding it back starts unverified.
+   - *Checked is not ingested (T-092):* `checked_through` says every video the listing
+     showed for those dates was classified. Not all of them reach the index: members-only
+     and private videos (`unreadable`, counted on Sources), videos noticed after their
+     recheck window (`late`, not fetched and not shown on Sources until T-103), and
+     videos stored as a Whisper transcript or as title and description only.
 
    **Migration policy (conservative):** a configured channel without a record, including
    every channel that existed under the shared watermark, gets `pending_from` and
