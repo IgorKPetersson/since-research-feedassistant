@@ -13,6 +13,34 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ## Open
 
+### T-106 — Ask about "the last week" instead of reading "the" as rolling
+
+**Status:** done
+**Size:** S  ·  **Branch:** `t/T-106-ask-the-last-week`  ·  **Phase:** v2-1 (P1-07 prelude)
+
+**Goal:** no date rule depends on "the" alone; phrases that fit both a calendar and a
+rolling reading are asked about.
+
+**Why:** my approval of P1-07 (2026-10-09): T-105 read "in the last week" as rolling and
+"last week" as calendar, so a single article decided the dates searched.
+
+**Acceptance criteria**
+- [x] "The last week", "in the last week", "the last month" and "in the last month"
+  resolve to no range and are asked about → matrix cases; `unresolved_time_phrase()`
+- [x] "Last week", "previous week", "förra veckan" stay calendar; "the past week", "the
+  last 7 days", "the last two weeks", "senaste veckan" stay rolling → matrix cases
+- [x] `docs/date-phrases.md` states the rule without "the" and lists the evaluation
+  questions affected → English F02, F04, F07, F15 now ask in the app and get no range from
+  the parser; the Swedish originals are unchanged
+
+**Out of scope:** re-running the evaluation.
+
+**Depends on:** T-105
+**Notes:** full suite 437 tests OK. Two tests updated as intentional changes ("in the last
+month" in `test_date_range.py` and the parser-to-filter app test, now "the past month").
+
+---
+
 ### T-105 — "Last week" and "last month" mean calendar periods
 
 **Status:** done

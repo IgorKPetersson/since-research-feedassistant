@@ -81,7 +81,9 @@ written window text and what a literal code re-run computes, not a coincidence r
 Sunday, not the last 7 days. At the reference date 2026-09-17 that is 2026-09-07 –
 2026-09-13. Only F11 is affected; the facit and the graded results above and in
 `docs/eval-results/` are left as they were graded. A re-run under the current rules must
-grade F11 against 2026-09-07 – 2026-09-13. Details, and how the app now handles F09, in
+grade F11 against 2026-09-07 – 2026-09-13. Since T-106 the English translations of F02,
+F04, F07 and F15 ("in the last week/month") get no range from the parser and are asked
+about in the app; the Swedish originals are unaffected. Details, and how the app now handles F09, in
 `docs/date-phrases.md` § The evaluation questions.
 
 ## Questions

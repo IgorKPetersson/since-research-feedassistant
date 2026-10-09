@@ -1,7 +1,7 @@
 # Date phrases
 
 How Since turns time words in a question into the dates it searches (T-094, T-105,
-`vg09/date_range.py`). Every case in the table at the end is a test in
+T-106, `vg09/date_range.py`). Every case in the table at the end is a test in
 `tests/test_date_matrix.py`; a test checks the two lists match.
 
 ## The reference date
@@ -15,7 +15,7 @@ the index never moves it. Both ends of every interval are included.
 | Kind | Meaning | Examples |
 |---|---|---|
 | **Single day** | One calendar day | today, idag, yesterday, igår, the day before yesterday, i förrgår, two days ago, för tre dagar sedan, on Friday, last Friday, i fredags, October 5, den 5 oktober, 2026-10-05, October 5, 2025 |
-| **Rolling period** | A stretch ending on the reference date, the given number of days, weeks or calendar months long | the last 7 days, de senaste 5 dagarna, the past three weeks, de senaste två veckorna, in the last week, the past week, senaste veckan, in the last month, the past month, senaste månaden, the past year |
+| **Rolling period** | A stretch ending on the reference date, the given number of days, weeks or calendar months long | the last 7 days, de senaste 5 dagarna, the past three weeks, de senaste två veckorna, the past week, senaste veckan, the past month, senaste månaden, the past year |
 | **Since-period** | From a start day through the reference date | since yesterday, sedan igår, since Monday, since last Monday, sedan i måndags, since October 1, since 2026-10-01, sedan 1 oktober, since September |
 | **Calendar period** | A named calendar unit, or the part of it up to today | last week, förra veckan, this week, denna vecka, last month, förra månaden, this month, denna månad, in September, i december, in September 2025, week 41, vecka 1, this year, i år |
 | **Explicit range** | Two dates | between October 1 and October 5, mellan den 1 och den 5 oktober, from 2026-10-01 to 2026-10-05, from September 28 to October 2 |
@@ -30,12 +30,14 @@ the index never moves it. Both ends of every interval are included.
   | this week, denna vecka, den här veckan | this Monday through today | Mon 2026-10-05 – Fri 2026-10-09 |
   | last month, previous month, förra månaden | the previous whole calendar month | Tue 2026-09-01 – Wed 2026-09-30 |
   | this month, denna månad, den här månaden | the 1st through today | Thu 2026-10-01 – Fri 2026-10-09 |
-  | the last 7 days, in the last week, the past week, this past week, senaste veckan | 7 days ending today | Sat 2026-10-03 – Fri 2026-10-09 |
-  | in the last month, the past month, senaste månaden | one calendar month back to the same day number, through today | Wed 2026-09-09 – Fri 2026-10-09 |
+  | the last 7 days, the past week, this past week, senaste veckan | 7 days ending today | Sat 2026-10-03 – Fri 2026-10-09 |
+  | the past month, senaste månaden | one calendar month back to the same day number, through today | Wed 2026-09-09 – Fri 2026-10-09 |
+  | the last week, in the last week, the last month, in the last month | asked about: calendar or rolling? | asks for a period |
 
-  "The" makes the difference in English: "last week" is the calendar week before this one,
-  "in the last week" is the 7 days ending today. In Swedish, "förra" is the calendar unit
-  and "senaste" the rolling one. On a Monday, "this week" is that Monday alone. Until
+  The words decide, never "the" alone: "last", "previous" and "förra" name the calendar
+  unit; "past", "senaste" and a number ("the last 7 days", "the last two weeks") name a
+  rolling period. "The last week" and "in the last month" fit both readings, so Since asks
+  (T-106; T-105 briefly read them as rolling). On a Monday, "this week" is that Monday alone. Until
   T-105 (2026-10-09), "last week", "this week" and "förra veckan" meant the last 7 days
   and "förra månaden" the past month; see "The evaluation questions" below.
 - **"Since Monday" on a Monday** means today only. "Since last Monday" and "sedan i
@@ -111,10 +113,17 @@ original code (tag `v1-pre-improvement`) with the current one.
 | F11 en | last week | 2026-09-11 – 2026-09-17 | Mon 2026-09-07 – Sun 2026-09-13 | same as the parser |
 | F09 sv | de senaste veckorna | no range | no range | asks for a period (until T-094: searched all dates) |
 | F09 en | in recent weeks | no range | no range | asks for a period (until T-094: searched all dates) |
+| F02 en | in the last month | 2026-08-17 – 2026-09-17 | no range | asks for a period (T-106) |
+| F07 en | in the last month | 2026-08-17 – 2026-09-17 | no range | asks for a period (T-106) |
+| F04 en | in the last week | 2026-09-11 – 2026-09-17 | no range | asks for a period (T-106) |
+| F15 en | in the last week | 2026-09-11 – 2026-09-17 | no range | asks for a period (T-106) |
 
-The other 26 resolve exactly as before: the rolling phrases in F02, F04, F05, F07, F13 and
-F15 ("in the last week", "senaste månaden", "the last two weeks" …), the absolute date in
-F10, and the rankings and plain questions.
+The other 22 resolve exactly as before: all Swedish originals except F11 and F09 (their
+rolling phrases "senaste veckan", "senaste månaden", "de senaste två veckorna" stay
+rolling), the English "the last two weeks" (F05, F13), the absolute date in F10, and the
+rankings and plain questions. The four English translations above say "in the last week"
+or "in the last month", which T-106 asks about. A direct-parser re-run of the English set
+would search them without a date filter; the graded runs used the Swedish originals.
 
 F11's answer key grades against 2026-09-10 – 2026-09-16 and fails an answer citing a paper
 dated outside it. A re-run under the current rules searches the previous calendar week
@@ -148,10 +157,8 @@ historical F11 grades stay as they were, graded under the old convention.
 | Rolling period | Vad hände de senaste 5 dagarna? | 2026-10-09 Fri | Mon 2026-10-05 – Fri 2026-10-09 (5 days) |
 | Rolling period | How did agents develop over the past three weeks? | 2026-10-09 Fri | Sat 2026-09-19 – Fri 2026-10-09 (21 days) |
 | Rolling period | Vad hände de senaste två veckorna? | 2026-10-09 Fri | Sat 2026-09-26 – Fri 2026-10-09 (14 days) |
-| Rolling period | What happened in the last week? | 2026-10-09 Fri | Sat 2026-10-03 – Fri 2026-10-09 (7 days) |
 | Rolling period | What happened over the past week? | 2026-10-09 Fri | Sat 2026-10-03 – Fri 2026-10-09 (7 days) |
 | Rolling period | Vad hände senaste veckan? | 2026-10-09 Fri | Sat 2026-10-03 – Fri 2026-10-09 (7 days) |
-| Rolling period | What happened in the last month? | 2026-10-09 Fri | Wed 2026-09-09 – Fri 2026-10-09 (31 days) |
 | Rolling period | What happened over the past month? | 2026-10-09 Fri | Wed 2026-09-09 – Fri 2026-10-09 (31 days) |
 | Rolling period | Vad hände senaste månaden? | 2026-03-31 Tue | Sat 2026-02-28 – Tue 2026-03-31 (32 days) |
 | Rolling period | What happened over the past year? | 2026-10-09 Fri | Thu 2025-10-09 – Fri 2026-10-09 (366 days) |
@@ -201,6 +208,8 @@ historical F11 grades stay as they were, graded under the old convention.
 | Ask for a period | Vad har hänt de senaste veckorna? | 2026-10-09 Fri | asks for a period |
 | Ask for a period | What happened between October 5 and October 1? | 2026-10-09 Fri | asks for a period |
 | Ask for a period | What happened in week 54? | 2026-10-09 Fri | asks for a period |
+| Ask for a period | What happened in the last week? | 2026-10-09 Fri | asks for a period |
+| Ask for a period | What has happened in the last month? | 2026-10-09 Fri | asks for a period |
 | Ask for a period | What happened this weekend? | 2026-10-09 Fri | asks for a period |
 | Ask for a period | Vad hände i helgen? | 2026-10-09 Fri | asks for a period |
 | Ask for a period | What happened the week after October 1? | 2026-10-09 Fri | asks for a period |
