@@ -97,6 +97,17 @@ def reference_note(intro: str, references: list[str]) -> str | None:
     return intro + ", ".join(escape_markdown_text(r) for r in references)
 
 
+def format_interval(interval: tuple[date, date]) -> str:
+    """T-105: an interval as shown to the user, with weekdays and its length, so a
+    calendar week reads as Monday to Sunday and a rolling week as 7 days ending today."""
+    start, end = interval
+    days = (end - start).days + 1
+    first = f"{_WEEKDAY_ABBR[start.weekday()]} {start.isoformat()}"
+    if start == end:
+        return f"{first} (1 day)"
+    return f"{first} – {_WEEKDAY_ABBR[end.weekday()]} {end.isoformat()} ({days} days)"
+
+
 def describe_retrieval_mode(
     date_range: tuple[date, date] | None,
     ranking: bool,
@@ -114,18 +125,16 @@ def describe_retrieval_mode(
     D-016 - was Swedish before T-042; the logic (which mode fired, and why) is
     unchanged."""
     if chosen:  # T-094: the user picked the period after the question was asked about
-        mode = (f"Date filter (chosen when asked): {date_range[0]} – {date_range[1]}"
+        mode = (f"Date filter (chosen when asked): {format_interval(date_range)}"
                 if date_range else "No date filter — all dates, as chosen")
     elif manual_override is not None:
-        start, end = manual_override
-        mode = f"Date filter (manually set): {start} – {end}"
+        mode = f"Date filter (manually set): {format_interval(manual_override)}"
         # T-093: the custom range wins; a different period in the question is named,
         # so the user sees which dates were not used.
         if date_range is not None and date_range != manual_override:
-            mode += f" · the question's own period ({date_range[0]} – {date_range[1]}) is not used"
+            mode += f" · the question's own period ({format_interval(date_range)}) is not used"
     elif date_range is not None:
-        start, end = date_range
-        mode = f"Date filter (interpreted from the question): {start} – {end}"
+        mode = f"Date filter (interpreted from the question): {format_interval(date_range)}"
     elif ranking:
         mode = "Mode: sorted by most recent (ranking, no date filter)"
     else:

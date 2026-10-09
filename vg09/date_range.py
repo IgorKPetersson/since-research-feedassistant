@@ -370,9 +370,24 @@ def _t094_phrases(q: str, today: date) -> DateRange | tuple[()] | None:
     if re.search(r"\b(?:den\s+h[aä]r\s+m[aå]naden|denna\s+m[aå]nad(?:en)?)\b", q):
         return today.replace(day=1), today
 
-    # Rolling periods ending today, same convention as "last month" / "senaste veckan".
-    if re.search(r"\bf[oö]rra\s+m[aå]naden\b", q):
+    # T-105: "the last week" / "the last month" (with "the": "in the last week") are
+    # rolling, ending today. Without "the", "last week" and "last month" are the previous
+    # calendar week (Monday to Sunday) and calendar month; "this week" runs from this
+    # Monday through today. Checked before the older rolling patterns below.
+    if re.search(r"\bthe\s+last\s+week\b", q):
+        return _last_n_days(today, 7)
+    if re.search(r"\bthe\s+last\s+month\b", q):
         return _subtract_months(today, 1), today
+    monday = today - timedelta(days=today.weekday())
+    if re.search(r"\b(?:last|previous)\s+week\b|\bf[oö]rra\s+veckan\b", q):
+        return monday - timedelta(days=7), monday - timedelta(days=1)
+    if re.search(r"\bthis\s+week\b|\b(?:denna|den\s+h[aä]r)\s+veckan?\b", q):
+        return monday, today
+    if re.search(r"\b(?:last|previous)\s+month\b|\bf[oö]rra\s+m[aå]naden\b", q):
+        first_of_this = today.replace(day=1)
+        last_of_previous = first_of_this - timedelta(days=1)
+        return last_of_previous.replace(day=1), last_of_previous
+
     if re.search(r"\b(?:the\s+past\s+year|past\s+year|(?:det\s+)?senaste\s+[aå]ret)\b", q):
         return _subtract_months(today, 12), today
     return None

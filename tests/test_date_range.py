@@ -25,10 +25,11 @@ class RelativeWeeksTests(unittest.TestCase):
             (date(2026, 9, 10), date(2026, 9, 16)),
         )
 
-    def test_forra_veckan_is_the_same_7_day_window(self):
+    def test_forra_veckan_is_the_previous_monday_to_sunday(self):
+        """T-105: was the last 7 days until 2026-10-09. 2026-09-16 is a Wednesday."""
         self.assertEqual(
             extract_date_range("Vad hände förra veckan?", date(2026, 9, 16)),
-            (date(2026, 9, 10), date(2026, 9, 16)),
+            (date(2026, 9, 7), date(2026, 9, 13)),
         )
 
     def test_senaste_tva_veckorna_spelled_out_number(self):
@@ -130,16 +131,18 @@ class ResolveDateRangeTests(unittest.TestCase):
 class EnglishRelativeWeeksTests(unittest.TestCase):
     """T-043: same rules as RelativeWeeksTests above, English phrasing."""
 
-    def test_last_week_is_a_7_day_window_ending_today(self):
+    def test_last_week_is_the_previous_monday_to_sunday(self):
+        """T-105: was the last 7 days until 2026-10-09. 2026-09-16 is a Wednesday."""
         self.assertEqual(
             extract_date_range("What happened last week?", date(2026, 9, 16)),
-            (date(2026, 9, 10), date(2026, 9, 16)),
+            (date(2026, 9, 7), date(2026, 9, 13)),
         )
 
-    def test_this_week_is_the_same_7_day_window(self):
+    def test_this_week_runs_from_this_monday_through_today(self):
+        """T-105: was the last 7 days until 2026-10-09."""
         self.assertEqual(
             extract_date_range("What's new this week?", date(2026, 9, 16)),
-            (date(2026, 9, 10), date(2026, 9, 16)),
+            (date(2026, 9, 14), date(2026, 9, 16)),
         )
 
     def test_the_last_two_weeks_spelled_out_number(self):

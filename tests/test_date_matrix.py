@@ -58,12 +58,12 @@ MATRIX = [
     ("Vad hände de senaste 5 dagarna?", FRI, span(d(2026, 10, 5), FRI)),
     ("How did agents develop over the past three weeks?", FRI, span(d(2026, 9, 19), FRI)),
     ("Vad hände de senaste två veckorna?", FRI, span(d(2026, 9, 26), FRI)),
-    ("What happened last week?", FRI, span(d(2026, 10, 3), FRI)),
-    ("Vad hände förra veckan?", FRI, span(d(2026, 10, 3), FRI)),
-    ("What's new this week?", FRI, span(d(2026, 10, 3), FRI)),
+    ("What happened in the last week?", FRI, span(d(2026, 10, 3), FRI)),
+    ("What happened over the past week?", FRI, span(d(2026, 10, 3), FRI)),
+    ("Vad hände senaste veckan?", FRI, span(d(2026, 10, 3), FRI)),
     ("What happened in the last month?", FRI, span(d(2026, 9, 9), FRI)),
+    ("What happened over the past month?", FRI, span(d(2026, 9, 9), FRI)),
     ("Vad hände senaste månaden?", MAR31, span(d(2026, 2, 28), MAR31)),
-    ("Vad hände förra månaden?", FRI, span(d(2026, 9, 9), FRI)),
     ("What happened over the past year?", FRI, span(d(2025, 10, 9), FRI)),
     ("What happened in the last 7 days?", d(2026, 1, 3), span(d(2025, 12, 28), d(2026, 1, 3))),
     # Since-periods, from a start date through the reference date
@@ -79,7 +79,18 @@ MATRIX = [
     ("What is new since December 20?", JAN, span(d(2025, 12, 20), JAN)),
     ("What is new since September?", FRI, span(d(2026, 9, 1), FRI)),
     # Calendar periods
+    ("What happened last week?", FRI, span(d(2026, 9, 28), d(2026, 10, 4))),
+    ("Vad hände förra veckan?", FRI, span(d(2026, 9, 28), d(2026, 10, 4))),
+    ("What happened last week?", MON, span(d(2026, 10, 5), d(2026, 10, 11))),
+    ("Vad hände förra veckan?", JAN, span(d(2025, 12, 29), d(2026, 1, 4))),
+    ("What's new this week?", FRI, span(d(2026, 10, 5), FRI)),
+    ("Vad är nytt denna vecka?", FRI, span(d(2026, 10, 5), FRI)),
+    ("What's new this week?", MON, span(MON, MON)),
+    ("What happened last month?", FRI, span(d(2026, 9, 1), d(2026, 9, 30))),
+    ("Vad hände förra månaden?", FRI, span(d(2026, 9, 1), d(2026, 9, 30))),
+    ("Vad hände förra månaden?", JAN, span(d(2025, 12, 1), d(2025, 12, 31))),
     ("What happened this month?", FRI, span(d(2026, 10, 1), FRI)),
+    ("Vad hände denna månad?", FRI, span(d(2026, 10, 1), FRI)),
     ("Vad hände den här månaden?", FRI, span(d(2026, 10, 1), FRI)),
     ("What happened in September?", FRI, span(d(2026, 9, 1), d(2026, 9, 30))),
     ("Vad hände i december?", JAN, span(d(2025, 12, 1), d(2025, 12, 31))),
@@ -144,7 +155,8 @@ class DateMatrixTests(unittest.TestCase):
     def test_the_documented_matrix_lists_the_same_questions(self):
         doc = (Path(__file__).resolve().parent.parent / "docs" / "date-phrases.md").read_text(
             encoding="utf-8")
-        documented = re.findall(r"^\| [^|]*\| (.+?) \| \d{4}-\d{2}-\d{2}", doc, flags=re.M)
+        matrix_section = doc[doc.index("## Test matrix"):]
+        documented = re.findall(r"^\| [^|]*\| (.+?) \| \d{4}-\d{2}-\d{2}", matrix_section, flags=re.M)
         self.assertEqual(sorted(set(documented)), sorted({q for q, _, _ in MATRIX}))
 
 

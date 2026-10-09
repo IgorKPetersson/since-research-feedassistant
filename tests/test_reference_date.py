@@ -114,8 +114,9 @@ class ManualRangeTests(unittest.TestCase):
         manual = (date(2026, 9, 1), date(2026, 9, 10))
         interpreted = (date(2026, 10, 3), date(2026, 10, 9))
         text = describe_retrieval_mode(interpreted, False, manual)
-        self.assertIn("manually set): 2026-09-01 – 2026-09-10", text)
-        self.assertIn("the question's own period (2026-10-03 – 2026-10-09) is not used", text)
+        self.assertIn("manually set): Tue 2026-09-01 – Thu 2026-09-10 (10 days)", text)
+        self.assertIn("the question's own period (Sat 2026-10-03 – Fri 2026-10-09 (7 days)) is not used",
+                      text)
         self.assertNotIn("not used", describe_retrieval_mode(None, False, manual))
 
 

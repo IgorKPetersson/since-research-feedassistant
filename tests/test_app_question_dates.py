@@ -19,6 +19,7 @@ from vg09.answer import AnswerResult
 from vg09.retrieval import RetrievalResult
 from vg09.retrieval import retrieve as _REAL_RETRIEVE
 from vg09.sources import Sources
+from vg09.ui_helpers import format_interval
 
 APP = Path(__file__).resolve().parent.parent / "app.py"
 TODAY = date(2026, 10, 12)  # a Monday
@@ -105,7 +106,8 @@ class AppQuestionDatesTests(_AppTestCase):
 
         self.assertEqual(self.calls["retrieve_range"], manual)
         self.assertEqual(self.calls["answer_today"], TODAY)
-        self.assertTrue(any("the question's own period (2026-10-06 – 2026-10-12) is not used" in c
+        self.assertTrue(any("the question's own period (Tue 2026-10-06 – Mon 2026-10-12 (7 days)) "
+                            "is not used" in c
                             for c in self.texts(at.caption)))
 
     def test_an_empty_index_asks_nothing_and_still_runs(self):
@@ -143,7 +145,7 @@ class AppDateFilterTests(_AppTestCase):
     def assert_filter(self, at, start: date, end: date):
         self.assertEqual(self.where(), {"$and": [{"feed_date_ordinal": {"$gte": start.toordinal()}},
                                                   {"feed_date_ordinal": {"$lte": end.toordinal()}}]})
-        self.assertIn(f"{start} – {end}", self.shown_interval(at))
+        self.assertIn(format_interval((start, end)), self.shown_interval(at))
 
     def test_parsed_intervals_reach_the_vector_store_filter_as_shown(self):
         for question, start, end in (
@@ -151,6 +153,12 @@ class AppDateFilterTests(_AppTestCase):
             ("Vad kom för två dagar sedan?", date(2026, 10, 10), date(2026, 10, 10)),
             ("What is new since 2026-10-01?", date(2026, 10, 1), TODAY),
             ("Vad hände mellan den 1 och den 5 oktober?", date(2026, 10, 1), date(2026, 10, 5)),
+            # T-105: calendar weeks and months (TODAY is Monday 2026-10-12)
+            ("What happened last week?", date(2026, 10, 5), date(2026, 10, 11)),
+            ("Vad hände denna vecka?", TODAY, TODAY),
+            ("Vad hände förra månaden?", date(2026, 9, 1), date(2026, 9, 30)),
+            ("What happened this month?", date(2026, 10, 1), TODAY),
+            ("What happened in the last month?", date(2026, 9, 12), TODAY),
         ):
             with self.subTest(question=question):
                 at = self.ask(question)
