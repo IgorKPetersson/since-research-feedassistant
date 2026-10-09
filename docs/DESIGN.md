@@ -433,7 +433,8 @@ filtered by:
   veckorna/dagarna/månaderna", "senaste veckan"/"månaden" without a number, "förra veckan",
   "den D `<månad>`") **and, since T-043, its real English equivalents** ("the last/past N
   weeks/days/months", "last week"/"this week"/"last month" without a number, "September 16"/
-  "the 16th of September", "today"). English doesn't reuse the Swedish regexes translated
+  "the 16th of September", "today"). What every phrase means today, including the calendar
+  weeks and months of T-105, is in `docs/date-phrases.md`. English doesn't reuse the Swedish regexes translated
   1:1 — Swedish's "senaste" does double duty (window and ranking, disambiguated by what
   follows it); English already has separate natural words for the two jobs ("last"/"past"
   for a window, "latest"/"most recent" for ranking), so T-043 uses those instead of

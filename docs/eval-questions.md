@@ -77,6 +77,13 @@ leaves the result because of the extra day — confirmed by T-027/T-028's real r
 HIT/MISS outcomes didn't change), but a real, acknowledged mismatch between this document's
 written window text and what a literal code re-run computes, not a coincidence resolved away.
 
+**Note, 2026-10-09 (T-105):** "förra veckan" / "last week" now means the previous Monday to
+Sunday, not the last 7 days. At the reference date 2026-09-17 that is 2026-09-07 –
+2026-09-13. Only F11 is affected; the facit and the graded results above and in
+`docs/eval-results/` are left as they were graded. A re-run under the current rules must
+grade F11 against 2026-09-07 – 2026-09-13. Details, and how the app now handles F09, in
+`docs/date-phrases.md` § The evaluation questions.
+
 ## Questions
 
 ### Fråga 01

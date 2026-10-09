@@ -15,7 +15,7 @@ PR title `T-0NN — Title`. One ticket ID per commit.
 
 ### T-105 — "Last week" and "last month" mean calendar periods
 
-**Status:** in-progress
+**Status:** done
 **Size:** S  ·  **Branch:** `t/T-105-calendar-week-month`  ·  **Phase:** v2-1 (P1-06 follow-up)
 
 **Goal:** "last week", "this week", "last month" and "this month" mean the calendar periods
@@ -26,21 +26,39 @@ veckan" as the last 7 days to match the evaluation's old convention; that is not
 the words mean.
 
 **Acceptance criteria**
-- [ ] "Last week" / "förra veckan": the previous Monday to Sunday. "This week" / "denna
+- [x] "Last week" / "förra veckan": the previous Monday to Sunday. "This week" / "denna
   vecka": this Monday through today. "Last month" / "förra månaden": the previous whole
   calendar month. "This month" / "denna månad": the 1st through today. Matrix cases and
-  parser-to-retrieval tests cover each
-- [ ] Rolling phrases ("the last 7 days", "past month", "senaste veckan", "in the last
-  week") keep their meaning, with exact definitions in `docs/date-phrases.md`
-- [ ] The interval shown names its weekdays and length, so a calendar week is visible as
-  Monday to Sunday
-- [ ] The frozen dataset, its reference date and the historical results are unchanged;
+  parser-to-retrieval tests cover each → 12 calendar cases in `tests/test_date_matrix.py`
+  (a Friday, a Monday, the Monday after New Year); 4 more in `AppDateFilterTests`, where
+  the vector-store filter equals the interval shown
+- [x] Rolling phrases ("the last 7 days", "past month", "senaste veckan", "in the last
+  week") keep their meaning, with exact definitions in `docs/date-phrases.md` → table
+  "Weeks and months: calendar or rolling"
+- [x] The interval shown names its weekdays and length, so a calendar week is visible as
+  Monday to Sunday → `ui_helpers.format_interval()`; live app: "Mon 2026-09-28 – Sun
+  2026-10-04 (7 days)"
+- [x] The frozen dataset, its reference date and the historical results are unchanged;
   evaluation questions that now resolve differently are recorded, direct-parser results
-  kept apart from what the app does (F09)
+  kept apart from what the app does (F09) → `docs/date-phrases.md` § The evaluation
+  questions; dated note in `docs/eval-questions.md`
 
 **Out of scope:** re-running or re-grading the evaluation.
 
 **Depends on:** T-094
+**Notes:** the rule that separates the two in English is "the": "last week" is the
+previous calendar week, "in the last week" the 7 days ending today; the same for month.
+Swedish: "förra" is calendar, "senaste" rolling. My judgement call, listed for review.
+
+Evaluation, all 30 questions at 2026-09-17 against `v1-pre-improvement`: F11 sv and en
+change from 2026-09-11 – 2026-09-17 to 2026-09-07 – 2026-09-13 in the direct parser; F09
+sv and en are unchanged in the parser (no range) and ask for a period in the app (since
+T-094); the other 26 are identical. F11's facit window (2026-09-10 – 2026-09-16) is kept
+as graded; a re-run must grade F11 against the new window.
+
+Checks: full suite 437 tests OK. Updated as intentional changes: three tests in
+`test_date_range.py` that pinned the old 7-day meaning, and the expected interval text in
+three other tests.
 
 ---
 
@@ -427,7 +445,9 @@ code at 2026-10-09):
 | recent…, two weeks ago, last year, de senaste veckorna, this weekend, Q3, i höstas | no filter, all dates | asks |
 
 Kept on purpose: "last week", "this week", "förra veckan" and "senaste veckan" stay the
-last 7 days, the convention the evaluation questions are written with. "Earlier this
+last 7 days, the convention the evaluation questions are written with. Superseded by T-105
+(2026-10-09, my review): "last week", "this week", "förra veckan", "last month" and
+"förra månaden" are now calendar periods; "senaste veckan" stays rolling. "Earlier this
 week" reads as "this week".
 
 Added: idag, the day before yesterday / i förrgår, N days ago / för N dagar sedan, ISO

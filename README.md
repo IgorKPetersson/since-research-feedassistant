@@ -185,7 +185,10 @@ A few things worth knowing before you use it:
 - **Which date phrases work**, in English and Swedish, is listed in
   [`docs/date-phrases.md`](docs/date-phrases.md): single days ("two days ago", "i
   förrgår", "2026-10-05"), rolling periods ("the past three weeks"), "since" periods,
-  week numbers ("vecka 41"), months and explicit ranges. If a question asks about time in
+  week numbers ("vecka 41"), months and explicit ranges. "Last week" and "förra veckan" are
+  the previous Monday to Sunday and "last month" the previous calendar month; "the last 7
+  days", "in the last week" and "senaste veckan" end today. The interval searched is shown
+  with its weekdays, for example "Mon 2026-09-28 – Sun 2026-10-04 (7 days)". If a question asks about time in
   words Since can't turn into dates, such as "recently", "two weeks ago" or "this weekend",
   it doesn't search. It asks you to choose the last 7 days, the last 30 days or all dates,
   or to set a custom range.
