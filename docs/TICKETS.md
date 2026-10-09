@@ -67,6 +67,12 @@ does not solve this.
 **Out of scope:** changing the recheck window itself.
 
 **Depends on:** T-091
+**Notes:** release gate: T-102 can't pass until this ticket is done or its remaining loss
+is measured and accepted by me (added 2026-10-09). Late discoveries are recorded per
+channel in `data/youtube_channels.json` (`late`) but not shown on Sources; showing them
+belongs here too. On 2026-10-09 every channel's `late` list was empty after the second
+run; the first check after migration couldn't detect any, having no earlier listing to
+compare with.
 
 ---
 
